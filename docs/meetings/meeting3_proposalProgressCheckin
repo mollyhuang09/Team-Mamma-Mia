@@ -1,0 +1,51 @@
+# Meeting 3: Proposal Progress Check-In
+
+**Meeting Name:** meeting3_proposalProgressCheckin
+**Date:** 06/04/2026
+**Time:** Thursday weekly meeting
+**Attendees:** Molly, Grace, Taylor, Angel, Yoana, Amber
+
+## Summary
+
+In this meeting, we checked in on the progress of the project proposal and discussed more specific details about the project. We decided on the app name **StudyPin**.
+
+We also discussed the main features we want to include in the app, such as:
+
+* Add new study spots
+* Find/search for study spots
+* Filter and sort study spots by user preferences
+* View study spot details
+* Check study spot availability
+* Add and read ratings and comments
+* Save study spaces to collections
+* Create personal collections
+* Report incorrect or inappropriate information
+* Update occupancy status
+
+## Project Discussion
+
+We discussed how availability tracking should work in the app. We decided that relying only on user reports may create gaps because users might forget to update the status, or study spots may be occupied by people who are not using the app.
+
+Because of this, availability should not simply be shown as **Available** or **Full**. Instead, the app could use statuses such as:
+
+* **Likely available**: updated recently, such as 5 minutes ago
+* **Unverified**: last updated a while ago, such as 2 hours ago
+* **Unknown**: no recent information is available
+
+We also discussed GPS-based notifications. For example, if a user leaves a geofenced area around a study spot and stays away for around 10 minutes, the app could send a notification asking if they are done studying there.
+
+## Potential Add-Ons
+
+If there is extra time near the end of the project, we may add a feature that allows users to share study spots with others.
+
+## Action Items
+
+* Continue working on the assigned proposal sections.
+* Add more project details to the shared proposal document.
+* Refine the availability tracking idea and how occupancy updates will work.
+* Prepare to discuss implementation details in the next meeting.
+
+## Next Meeting
+
+**Date/Time:** Next scheduled meeting
+**Topic:** Project implementation planning
