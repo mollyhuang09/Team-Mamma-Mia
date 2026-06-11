@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "769658695942",
+    "project_id": "studypin-3f9fb",
+    "storage_bucket": "studypin-3f9fb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:769658695942:android:3e78b49fe283fad191ee87",
+        "android_client_info": {
+          "package_name": "com.studypin.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBinMh5CUR8CQ8GjRG0MgYAhqwu697eDHA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
