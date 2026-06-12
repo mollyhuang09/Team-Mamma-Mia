@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/mapFragment">
+
+    <fragment
+        android:id="@+id/mapFragment"
+        android:name="com.studypin.app.ui.map.MapFragment"
+        android:label="Map">
+        <action
+            android:id="@+id/action_map_to_spotDetail"
+            app:destination="@id/spotDetailFragment"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/listFragment"
+        android:name="com.studypin.app.ui.list.ListFragment"
+        android:label="List">
+        <action
+            android:id="@+id/action_list_to_spotDetail"
+            app:destination="@id/spotDetailFragment"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/addSpotFragment"
+        android:name="com.studypin.app.ui.add.AddSpotFragment"
+        android:label="Add Spot"/>
+
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.studypin.app.ui.profile.ProfileFragment"
+        android:label="Profile"/>
+
+    <fragment
+        android:id="@+id/spotDetailFragment"
+        android:name="com.studypin.app.ui.detail.SpotDetailFragment"
+        android:label="Spot Detail">
+        <action
+            android:id="@+id/action_spotDetail_to_editSpot"
+            app:destination="@id/editSpotFragment"/>
+        <action
+            android:id="@+id/action_spotDetail_to_reportFlag"
+            app:destination="@id/reportFlagFragment"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/editSpotFragment"
+        android:name="com.studypin.app.ui.edit.EditSpotFragment"
+        android:label="Edit Spot"/>
+
+    <fragment
+        android:id="@+id/reportFlagFragment"
+        android:name="com.studypin.app.ui.report.ReportFlagFragment"
+        android:label="Report / Flag"/>
+
+</navigation>
