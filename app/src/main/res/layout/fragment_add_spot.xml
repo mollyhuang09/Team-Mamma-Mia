@@ -1,21 +1,102 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:gravity="center"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Add Spot Screen"
-        android:textSize="20sp"
-        android:textStyle="bold"/>
+        android:orientation="vertical"
+        android:padding="16dp">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="TODO: implement add spot"
-        android:layout_marginTop="8dp"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add a study spot"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp"/>
 
-</LinearLayout>
+        <EditText
+            android:id="@+id/etSpotName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Name *"
+            android:layout_marginBottom="12dp"/>
+
+        <EditText
+            android:id="@+id/etDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Description"
+            android:minLines="2"
+            android:layout_marginBottom="12dp"/>
+
+        <EditText
+            android:id="@+id/etAddress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Address *"
+            android:layout_marginBottom="12dp"/>
+
+        <EditText
+            android:id="@+id/etHours"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Hours (e.g. 8:00 AM - 10:00 PM)"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Amenities"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp"/>
+
+        <CheckBox
+            android:id="@+id/cbWifiAdd"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Wi-Fi"/>
+
+        <CheckBox
+            android:id="@+id/cbOutletsAdd"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Outlets"/>
+
+        <CheckBox
+            android:id="@+id/cbWashroom"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Washroom"/>
+
+        <CheckBox
+            android:id="@+id/cbPrinting"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Printing"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Capacity"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp"/>
+
+        <Spinner
+            android:id="@+id/capacitySpinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"/>
+
+        <Button
+            android:id="@+id/btnSubmitSpot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Submit spot"/>
+
+    </LinearLayout>
+
+</ScrollView>

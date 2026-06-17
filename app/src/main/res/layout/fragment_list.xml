@@ -2,20 +2,55 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:padding="12dp">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <EditText
+        android:id="@+id/etSearch"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="List Screen"
-        android:textSize="20sp"
-        android:textStyle="bold"/>
+        android:hint="Search by name..."
+        android:layout_marginBottom="8dp"/>
 
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="TODO: implement list"
-        android:layout_marginTop="8dp"/>
+        android:orientation="horizontal"
+        android:layout_marginBottom="8dp">
+
+        <CheckBox
+            android:id="@+id/cbWifi"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Wi-Fi"/>
+
+        <CheckBox
+            android:id="@+id/cbOutlets"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Outlets"/>
+
+        <CheckBox
+            android:id="@+id/cbAvailableOnly"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Available"/>
+
+    </LinearLayout>
+
+    <Spinner
+        android:id="@+id/sortSpinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerSpots"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
 
 </LinearLayout>

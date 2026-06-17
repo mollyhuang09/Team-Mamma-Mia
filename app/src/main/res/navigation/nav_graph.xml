@@ -20,6 +20,21 @@
         <action
             android:id="@+id/action_list_to_spotDetail"
             app:destination="@id/spotDetailFragment"/>
+        <action
+            android:id="@+id/action_list_to_spotGroup"
+            app:destination="@id/spotGroupFragment"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/spotGroupFragment"
+        android:name="com.studypin.app.ui.group.SpotGroupFragment"
+        android:label="Spot group">
+        <argument
+            android:name="parentSpotId"
+            app:argType="string"/>
+        <action
+            android:id="@+id/action_spotGroup_to_spotDetail"
+            app:destination="@id/spotDetailFragment"/>
     </fragment>
 
     <fragment
