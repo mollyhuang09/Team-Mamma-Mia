@@ -8,6 +8,7 @@ import android.widget.Button
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.studypin.app.R
+import com.studypin.app.data.MockData
 
 class SpotDetailFragment : Fragment() {
     override fun onCreateView(
@@ -25,7 +26,16 @@ class SpotDetailFragment : Fragment() {
         }
 
         view.findViewById<Button>(R.id.btnReport).setOnClickListener {
-            findNavController().navigate(R.id.action_spotDetail_to_reportFlag)
+            val spotId = arguments?.getString("spotId")
+            val spotName = arguments?.getString("spotName")
+                ?: MockData.studySpots.firstOrNull { it.id == spotId }?.name
+
+            val bundle = Bundle().apply {
+                spotId?.let { putString("spotId", it) }
+                spotName?.let { putString("spotName", it) }
+            }
+
+            findNavController().navigate(R.id.action_spotDetail_to_reportFlag, bundle)
         }
     }
 }
