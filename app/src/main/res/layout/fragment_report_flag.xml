@@ -1,75 +1,208 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:paddingStart="20dp"
+        android:paddingTop="28dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="32dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Report or Suggest an Edit"
-            android:textSize="20sp"
+            android:text="Report a Problem"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="28sp"
             android:textStyle="bold"
-            android:layout_marginBottom="8dp"/>
+            android:layout_marginBottom="6dp"/>
 
         <TextView
-            android:id="@+id/tvReportSpotContext"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="For: Mock Study Spot"
-            android:layout_marginBottom="16dp"/>
+            android:text="Tell us what needs to be fixed so this spot stays accurate for everyone."
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="15sp"
+            android:layout_marginBottom="14dp"/>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Report category *"
-            android:textStyle="bold"
-            android:layout_marginBottom="4dp"/>
-
-        <Spinner
-            android:id="@+id/spinnerReportCategory"
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"/>
+            android:layout_marginBottom="16dp"
+            app:cardBackgroundColor="?attr/colorSurface"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="0dp"
+            app:strokeColor="?attr/colorOutlineVariant"
+            app:strokeWidth="1dp">
 
-        <EditText
-            android:id="@+id/etSuggestedCorrection"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingStart="12dp"
+                android:paddingTop="8dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="8dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Report for"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="3dp"/>
+
+                    <TextView
+                        android:id="@+id/tvReportSpotContext"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Mock Study Spot"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="15sp"/>
+
+                    <TextView
+                        android:id="@+id/tvReportPlaceContext"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="13sp"
+                        android:layout_marginTop="2dp"
+                        android:visibility="gone"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilReportCategory"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:hint="Problem category *"
+            app:boxBackgroundMode="outline"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:hintTextAppearance="@style/TextAppearance.MaterialComponents.Body1"
+            app:boxStrokeWidth="1dp"
+            app:boxStrokeWidthFocused="2dp"
+            app:endIconMode="dropdown_menu">
+
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                android:id="@+id/actvReportCategory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:cursorVisible="false"
+                android:gravity="center_vertical|start"
+                android:includeFontPadding="false"
+                android:inputType="none"
+                android:minHeight="56dp"
+                android:paddingStart="16dp"
+                android:paddingTop="14dp"
+                android:paddingEnd="48dp"
+                android:paddingBottom="14dp"
+                android:singleLine="true"
+                android:textSize="16sp"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
             android:hint="Suggested correction (optional)"
-            android:minLines="2"
-            android:gravity="top"
-            android:inputType="textMultiLine|textCapSentences"
-            android:layout_marginBottom="12dp"/>
+            app:boxBackgroundMode="outline"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:hintTextAppearance="@style/TextAppearance.MaterialComponents.Body1"
+            app:boxStrokeWidth="1dp"
+            app:boxStrokeWidthFocused="2dp">
 
-        <EditText
-            android:id="@+id/etReportDetails"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etSuggestedCorrection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="top|start"
+                android:inputType="textMultiLine|textCapSentences"
+                android:minLines="3"
+                android:paddingStart="16dp"
+                android:paddingTop="14dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="14dp"
+                android:textSize="16sp"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilReportDetails"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
             android:hint="Additional details *"
-            android:minLines="4"
-            android:gravity="top"
-            android:inputType="textMultiLine|textCapSentences"
-            android:layout_marginBottom="24dp"/>
+            app:boxBackgroundMode="outline"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:hintTextAppearance="@style/TextAppearance.MaterialComponents.Body1"
+            app:boxStrokeWidth="1dp"
+            app:boxStrokeWidthFocused="2dp">
 
-        <Button
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etReportDetails"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="top|start"
+                android:inputType="textMultiLine|textCapSentences"
+                android:minLines="4"
+                android:paddingStart="16dp"
+                android:paddingTop="14dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="14dp"
+                android:textSize="16sp"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSubmitReport"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:minHeight="52dp"
             android:text="Submit report"
-            android:layout_marginBottom="12dp"/>
+            android:textAllCaps="false"
+            app:cornerRadius="26dp"/>
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCancelReport"
-            style="@style/Widget.AppCompat.Button.Borderless"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Cancel"/>
+            android:minHeight="52dp"
+            android:text="Cancel"
+            android:textAllCaps="false"
+            android:textColor="?attr/colorPrimary"
+            android:layout_marginTop="12dp"
+            app:backgroundTint="@android:color/transparent"
+            app:cornerRadius="26dp"
+            app:strokeColor="?attr/colorPrimary"
+            app:strokeWidth="1dp"/>
 
     </LinearLayout>
 

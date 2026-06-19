@@ -67,6 +67,6 @@
     <fragment
         android:id="@+id/reportFlagFragment"
         android:name="com.studypin.app.ui.report.ReportFlagFragment"
-        android:label="Report / Flag"/>
+        android:label="Report a Problem"/>
 
 </navigation>

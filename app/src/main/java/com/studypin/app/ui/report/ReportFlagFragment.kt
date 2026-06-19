@@ -6,9 +6,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import android.widget.Button
 import android.widget.EditText
-import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -17,13 +17,17 @@ import com.studypin.app.R
 import com.studypin.app.data.MockData
 import com.studypin.app.data.ReportEditRepository
 import com.studypin.app.model.ReportEditSubmission
+import com.google.android.material.textfield.TextInputLayout
 
 class ReportFlagFragment : Fragment() {
     private val defaultSpotId = "spot_mock_report"
     private val defaultSpotName = "Mock Study Spot"
 
     private lateinit var tvSpotContext: TextView
-    private lateinit var categorySpinner: Spinner
+    private lateinit var tvPlaceContext: TextView
+    private lateinit var categoryInput: AutoCompleteTextView
+    private lateinit var categoryLayout: TextInputLayout
+    private lateinit var detailsLayout: TextInputLayout
     private lateinit var etSuggestedCorrection: EditText
     private lateinit var etDetails: EditText
     private lateinit var btnSubmit: Button
@@ -43,14 +47,17 @@ class ReportFlagFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         tvSpotContext = view.findViewById(R.id.tvReportSpotContext)
-        categorySpinner = view.findViewById(R.id.spinnerReportCategory)
+        tvPlaceContext = view.findViewById(R.id.tvReportPlaceContext)
+        categoryInput = view.findViewById(R.id.actvReportCategory)
+        categoryLayout = view.findViewById(R.id.tilReportCategory)
+        detailsLayout = view.findViewById(R.id.tilReportDetails)
         etSuggestedCorrection = view.findViewById(R.id.etSuggestedCorrection)
         etDetails = view.findViewById(R.id.etReportDetails)
         btnSubmit = view.findViewById(R.id.btnSubmitReport)
         btnCancel = view.findViewById(R.id.btnCancelReport)
 
         setupSpotContext()
-        setupCategorySpinner()
+        setupCategoryDropdown()
 
         btnSubmit.setOnClickListener { submitReport() }
         btnCancel.setOnClickListener { findNavController().popBackStack() }
@@ -66,12 +73,21 @@ class ReportFlagFragment : Fragment() {
         spotId = argumentSpotId ?: matchingSpot?.id ?: defaultSpotId
         spotName = argumentSpotName ?: matchingSpot?.name ?: defaultSpotName
 
-        tvSpotContext.text = "For: $spotName ($spotId)"
+        tvSpotContext.text = spotName
+
+        val placeName = matchingSpot?.parentSpotId?.let { parentSpotId ->
+            MockData.studySpots.firstOrNull { it.id == parentSpotId }?.name
+        }
+        if (placeName.isNullOrBlank()) {
+            tvPlaceContext.visibility = View.GONE
+        } else {
+            tvPlaceContext.text = placeName
+            tvPlaceContext.visibility = View.VISIBLE
+        }
     }
 
-    private fun setupCategorySpinner() {
+    private fun setupCategoryDropdown() {
         val categories = listOf(
-            "Select a category *",
             "Incorrect hours",
             "Incorrect address/location",
             "Incorrect amenities",
@@ -80,21 +96,28 @@ class ReportFlagFragment : Fragment() {
             "Other"
         )
 
-        categorySpinner.adapter = ArrayAdapter(
+        categoryInput.setAdapter(ArrayAdapter(
             requireContext(),
-            android.R.layout.simple_spinner_dropdown_item,
+            android.R.layout.simple_dropdown_item_1line,
             categories
-        )
+        ))
+        categoryInput.setOnClickListener { categoryInput.showDropDown() }
     }
 
     private fun submitReport() {
-        if (categorySpinner.selectedItemPosition == 0) {
+        categoryLayout.error = null
+        detailsLayout.error = null
+
+        val category = categoryInput.text.toString().trim()
+        if (category.isEmpty()) {
+            categoryLayout.error = "Choose a problem category"
             Toast.makeText(requireContext(), "Choose a report category", Toast.LENGTH_SHORT).show()
             return
         }
 
         val details = etDetails.text.toString().trim()
         if (details.isEmpty()) {
+            detailsLayout.error = "Add a few details"
             Toast.makeText(requireContext(), "Additional details are required", Toast.LENGTH_SHORT).show()
             return
         }
@@ -102,7 +125,7 @@ class ReportFlagFragment : Fragment() {
         val submission = ReportEditSubmission(
             spotId = spotId,
             spotName = spotName,
-            category = categorySpinner.selectedItem.toString(),
+            category = category,
             suggestedCorrection = etSuggestedCorrection.text.toString().trim(),
             details = details,
             timestamp = System.currentTimeMillis(),
@@ -125,7 +148,9 @@ class ReportFlagFragment : Fragment() {
     }
 
     private fun clearForm() {
-        categorySpinner.setSelection(0)
+        categoryInput.setText("", false)
+        categoryLayout.error = null
+        detailsLayout.error = null
         etSuggestedCorrection.text.clear()
         etDetails.text.clear()
     }
