@@ -51,6 +51,10 @@
         android:id="@+id/spotDetailFragment"
         android:name="com.studypin.app.ui.detail.SpotDetailFragment"
         android:label="Spot Detail">
+        <argument
+            android:name="spotId"
+            app:argType="string"
+            android:defaultValue="" />
         <action
             android:id="@+id/action_spotDetail_to_editSpot"
             app:destination="@id/editSpotFragment"/>
