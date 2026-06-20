@@ -31,7 +31,7 @@ class SpotDetailFragment : Fragment() {
             bindSpot(view, spot)
         }
 
-        view.findViewById<Button>(R.id.btnBack).setOnClickListener {
+        view.findViewById<View>(R.id.btnBack).setOnClickListener {
             findNavController().navigateUp()
         }
         view.findViewById<Button>(R.id.btnEdit).setOnClickListener {
@@ -57,11 +57,14 @@ class SpotDetailFragment : Fragment() {
             if (spot.isHiddenGem) View.VISIBLE else View.GONE
         view.findViewById<TextView>(R.id.tvAvailability).text = spot.occupancyLabel()
         view.findViewById<TextView>(R.id.tvOccupancyDetail).text =
-            "${spot.currentCheckIns} checked in · ${spot.capacity.label}"
+            "${spot.currentCheckIns} / ${spot.capacity.approxSeats} seats occupied (${spot.capacity.label})"
         view.findViewById<TextView>(R.id.tvRatingDetail).text = String.format(
             Locale.CANADA, "★ %.1f / 5 (%d rating%s)", spot.avgRating, spot.totalRatings,
             if (spot.totalRatings == 1) "" else "s"
         )
+
+        bindCategoryRatings(view, spot.id)
+
         view.findViewById<TextView>(R.id.tvDescription).text = spot.description
         view.findViewById<TextView>(R.id.tvLocation).text = spot.address
         view.findViewById<TextView>(R.id.tvHours).text = spot.hours
@@ -70,6 +73,37 @@ class SpotDetailFragment : Fragment() {
         } else {
             spot.amenities.joinToString(" · ") { it.replaceFirstChar(Char::titlecase) }
         }
+    }
+
+    private fun bindCategoryRatings(view: View, spotId: String) {
+        val ratings = MockData.sampleRatings.filter { it["spotId"] == spotId }
+        val layout = view.findViewById<View>(R.id.layoutCategoryRatings)
+
+        if (ratings.isEmpty()) {
+            layout.visibility = View.GONE
+            return
+        }
+
+        layout.visibility = View.VISIBLE
+
+        // Calculate averages for this specific spot
+        val avgNoise = ratings.mapNotNull { it["noise"] as? Int }.average()
+        val avgWifi = ratings.mapNotNull { it["wifi"] as? Int }.average()
+        val avgSeating = ratings.mapNotNull { it["seating"] as? Int }.average()
+        val avgOutlets = ratings.mapNotNull { it["outlets"] as? Int }.average()
+
+        view.findViewById<TextView>(R.id.tvNoiseRating).text =
+            getString(R.string.noise_level) + ": " + formatRating(avgNoise)
+        view.findViewById<TextView>(R.id.tvWifiRating).text =
+            getString(R.string.wifi_strength) + ": " + formatRating(avgWifi)
+        view.findViewById<TextView>(R.id.tvSeatingRating).text =
+            getString(R.string.seating_comfort) + ": " + formatRating(avgSeating)
+        view.findViewById<TextView>(R.id.tvOutletsRating).text =
+            getString(R.string.outlet_availability) + ": " + formatRating(avgOutlets)
+    }
+
+    private fun formatRating(value: Double): String {
+        return if (value.isNaN()) "-" else String.format(Locale.CANADA, "%.1f / 5", value)
     }
 
     private fun showMissingSpot(view: View) {
