@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">StudyPin</string>
+    <string name="back">Back</string>
+    <string name="ratings">Ratings</string>
+    <string name="noise_level">Noise Level</string>
+    <string name="wifi_strength">WiFi Strength</string>
+    <string name="seating_comfort">Seating Comfort</string>
+    <string name="outlet_availability">Outlet Availability</string>
 </resources>
