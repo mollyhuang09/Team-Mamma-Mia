@@ -61,6 +61,37 @@
         <action
             android:id="@+id/action_spotDetail_to_reportFlag"
             app:destination="@id/reportFlagFragment"/>
+        <action
+            android:id="@+id/action_spotDetail_to_reviewList"
+            app:destination="@id/reviewListFragment" />
+        <action
+            android:id="@+id/action_spotDetail_to_addReview"
+            app:destination="@id/addReviewFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/reviewListFragment"
+        android:name="com.studypin.app.ui.review.ReviewListFragment"
+        android:label="Reviews">
+        <argument
+            android:name="spotId"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_reviewList_to_addReview"
+            app:destination="@id/addReviewFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/addReviewFragment"
+        android:name="com.studypin.app.ui.review.AddReviewFragment"
+        android:label="Add Review">
+        <argument
+            android:name="spotId"
+            app:argType="string" />
+        <argument
+            android:name="initialRating"
+            app:argType="integer"
+            android:defaultValue="0" />
     </fragment>
 
     <fragment
