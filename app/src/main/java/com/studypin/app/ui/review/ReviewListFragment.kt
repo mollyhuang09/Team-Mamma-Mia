@@ -92,7 +92,6 @@ class ReviewListFragment : Fragment() {
             val row = TextView(requireContext()).apply {
                 text = "$label: " + String.format(Locale.CANADA, "%.1f / 5", avg)
                 textSize = 14f
-                setTextColor(context.getColor(R.color.subtle_box_bg)) // Use a defined color
                 setPadding(0, 4, 0, 4)
             }
             // Actually, let's just use the secondary text color
