@@ -33,7 +33,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Sign Up"
-        style="@style/Widget.AppCompat.Button.Borderless"
+        style="@style/Widget.Material3.Button.OutlinedButton"
         android:layout_marginBottom="12dp"/>
 
     <Button
@@ -41,6 +41,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Skip for now"
-        style="@style/Widget.AppCompat.Button.Borderless"/>
+        style="@style/Widget.Material3.Button.TextButton"/>
 
 </LinearLayout>

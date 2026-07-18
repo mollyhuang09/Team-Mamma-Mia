@@ -16,4 +16,7 @@
     <string name="logout">Logout</string>
     <string name="user_email_placeholder">user@example.com</string>
     <string name="user_name_placeholder">John Doe</string>
+    <string name="guest_user">Guest User</string>
+    <string name="sign_in_to_sync">Sign in to sync your data</string>
+    <string name="sign_in">Sign In</string>
 </resources>

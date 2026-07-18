@@ -7,13 +7,16 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import com.google.firebase.auth.FirebaseAuth
 import com.studypin.app.LandingActivity
+import com.studypin.app.R
 import com.studypin.app.databinding.FragmentProfileBinding
 
 class ProfileFragment : Fragment() {
 
     private var _binding: FragmentProfileBinding? = null
     private val binding get() = _binding!!
+    private lateinit var auth: FirebaseAuth
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -26,7 +29,23 @@ class ProfileFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        auth = FirebaseAuth.getInstance()
+        
+        displayUserInfo()
         setupClickListeners()
+    }
+
+    private fun displayUserInfo() {
+        val user = auth.currentUser
+        if (user != null) {
+            binding.userName.text = user.displayName ?: getString(R.string.user_name_placeholder)
+            binding.userEmail.text = user.email ?: getString(R.string.user_email_placeholder)
+        } else {
+            // Guest mode or not logged in
+            binding.userName.text = getString(R.string.guest_user)
+            binding.userEmail.text = getString(R.string.sign_in_to_sync)
+            binding.btnLogout.text = getString(R.string.sign_in)
+        }
     }
 
     private fun setupClickListeners() {
@@ -43,12 +62,20 @@ class ProfileFragment : Fragment() {
         }
 
         binding.btnLogout.setOnClickListener {
-            logout()
+            if (auth.currentUser != null) {
+                logout()
+            } else {
+                goToLanding()
+            }
         }
     }
 
     private fun logout() {
-        // For now, just navigate to LandingActivity
+        auth.signOut()
+        goToLanding()
+    }
+
+    private fun goToLanding() {
         val intent = Intent(requireContext(), LandingActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)

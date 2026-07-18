@@ -37,11 +37,18 @@
         android:text="Log In"
         android:layout_marginBottom="12dp"/>
 
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:layout_marginBottom="12dp"/>
+
     <Button
         android:id="@+id/btnGoToSignUp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Don't have an account? Sign Up"
-        style="@style/Widget.AppCompat.Button.Borderless"/>
+        style="@style/Widget.Material3.Button.TextButton"/>
 
 </LinearLayout>

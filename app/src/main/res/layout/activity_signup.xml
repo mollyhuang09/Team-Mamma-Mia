@@ -45,11 +45,18 @@
         android:text="Sign Up"
         android:layout_marginBottom="12dp"/>
 
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:layout_marginBottom="12dp"/>
+
     <Button
         android:id="@+id/btnGoToLogin"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Already have an account? Log In"
-        style="@style/Widget.AppCompat.Button.Borderless"/>
+        style="@style/Widget.Material3.Button.TextButton"/>
 
 </LinearLayout>
