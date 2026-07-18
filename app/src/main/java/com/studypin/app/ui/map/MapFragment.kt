@@ -12,11 +12,13 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.tasks.CancellationTokenSource
 import com.studypin.app.R
 import com.studypin.app.databinding.FragmentMapBinding
 
@@ -26,6 +28,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private val binding get() = _binding!!
     private var googleMap: GoogleMap? = null
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private var locationCancellationTokenSource: CancellationTokenSource? = null
 
     companion object {
         private val WATERLOO_ON_CANADA = LatLng(43.4643, -80.5204)
@@ -112,13 +115,22 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         if (!checkLocationPermission()) return
 
         try {
-            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                val target = if (location != null) {
-                    LatLng(location.latitude, location.longitude)
+            locationCancellationTokenSource?.cancel()
+            val cancellationTokenSource = CancellationTokenSource()
+            locationCancellationTokenSource = cancellationTokenSource
+
+            fusedLocationClient.getCurrentLocation(
+                Priority.PRIORITY_HIGH_ACCURACY,
+                cancellationTokenSource.token
+            ).addOnSuccessListener { location ->
+                if (location != null) {
+                    val target = LatLng(location.latitude, location.longitude)
+                    googleMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(target, 15f))
                 } else {
-                    WATERLOO_ON_CANADA
+                    Toast.makeText(requireContext(), getString(R.string.location_fetch_failed), Toast.LENGTH_SHORT).show()
                 }
-                googleMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(target, 15f))
+            }.addOnFailureListener {
+                Toast.makeText(requireContext(), getString(R.string.location_fetch_failed), Toast.LENGTH_SHORT).show()
             }
         } catch (e: SecurityException) {
             e.printStackTrace()
@@ -127,6 +139,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        locationCancellationTokenSource?.cancel()
+        locationCancellationTokenSource = null
         _binding = null
     }
 }
