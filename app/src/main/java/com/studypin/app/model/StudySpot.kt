@@ -39,6 +39,11 @@ data class StudySpot(
     val capacity: Capacity = Capacity.SMALL,
     val currentCheckIns: Int = 0,
 
+    // --- Validation & Photos ---
+    val imageUrl: String? = null,
+    val isValidated: Boolean = false,
+    val requestCount: Int = 0,
+
     // --- Hidden gem nesting ---
     val parentSpotId: String? = null,
     val isHiddenGem: Boolean = false

@@ -89,6 +89,30 @@
             android:id="@+id/capacitySpinner"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/photo_required"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp"/>
+
+        <ImageView
+            android:id="@+id/ivSpotPhoto"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginBottom="8dp"
+            android:scaleType="centerCrop"
+            android:background="#EEEEEE"
+            android:contentDescription="@string/photo_preview"/>
+
+        <Button
+            android:id="@+id/btnAddPhoto"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/add_photo"
             android:layout_marginBottom="24dp"/>
 
         <Button

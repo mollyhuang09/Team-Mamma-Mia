@@ -1,7 +1,14 @@
 package com.studypin.app.ui.add
 
 import android.app.AlertDialog
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.drawable.BitmapDrawable
+import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,9 +16,14 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.Spinner
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.face.FaceDetection
+import com.google.mlkit.vision.face.FaceDetectorOptions
 import com.studypin.app.R
 import com.studypin.app.data.MockData
 import com.studypin.app.model.Capacity
@@ -20,14 +32,10 @@ import com.studypin.app.utils.LocationUtils
 
 class AddSpotFragment : Fragment() {
 
-    // Hardcoded device location for testing the radius check, since
-    // there's no real GPS/map-pin yet. Sits ~30m from Dana Porter
-    // (spot_001) so the "is this inside an existing spot" prompt
-    // reliably triggers during the demo.
     private val simulatedLat = 43.4700
     private val simulatedLng = -80.5428
-
     private val radiusCheckMeters = 75.0
+    private val validationRadiusMeters = 30.0
 
     private lateinit var etName: EditText
     private lateinit var etDescription: EditText
@@ -39,6 +47,16 @@ class AddSpotFragment : Fragment() {
     private lateinit var cbPrinting: CheckBox
     private lateinit var capacitySpinner: Spinner
     private lateinit var btnSubmit: Button
+    private lateinit var ivSpotPhoto: ImageView
+    private lateinit var btnAddPhoto: Button
+
+    private var selectedImageBitmap: Bitmap? = null
+
+    private val pickImageLauncher = registerForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { processImage(it) }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -60,6 +78,8 @@ class AddSpotFragment : Fragment() {
         cbPrinting = view.findViewById(R.id.cbPrinting)
         capacitySpinner = view.findViewById(R.id.capacitySpinner)
         btnSubmit = view.findViewById(R.id.btnSubmitSpot)
+        ivSpotPhoto = view.findViewById(R.id.ivSpotPhoto)
+        btnAddPhoto = view.findViewById(R.id.btnAddPhoto)
 
         capacitySpinner.adapter = ArrayAdapter(
             requireContext(),
@@ -67,7 +87,51 @@ class AddSpotFragment : Fragment() {
             Capacity.values().map { it.label }
         )
 
+        btnAddPhoto.setOnClickListener {
+            pickImageLauncher.launch("image/*")
+        }
+
         btnSubmit.setOnClickListener { onSubmitClicked() }
+    }
+
+    private fun processImage(uri: Uri) {
+        val bitmap = MediaStore.Images.Media.getBitmap(requireContext().contentResolver, uri)
+        applyPrivacyFilter(bitmap)
+    }
+
+    private fun applyPrivacyFilter(originalBitmap: Bitmap) {
+        val options = FaceDetectorOptions.Builder()
+            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
+            .build()
+        val detector = FaceDetection.getClient(options)
+        val image = InputImage.fromBitmap(originalBitmap, 0)
+
+        detector.process(image)
+            .addOnSuccessListener { faces ->
+                if (faces.isEmpty()) {
+                    selectedImageBitmap = originalBitmap
+                    ivSpotPhoto.setImageBitmap(originalBitmap)
+                } else {
+                    val mutableBitmap = originalBitmap.copy(Bitmap.Config.ARGB_8888, true)
+                    val canvas = Canvas(mutableBitmap)
+                    val paint = Paint().apply {
+                        color = Color.DKGRAY
+                        style = Paint.Style.FILL
+                    }
+
+                    for (face in faces) {
+                        canvas.drawRect(face.boundingBox, paint)
+                    }
+                    selectedImageBitmap = mutableBitmap
+                    ivSpotPhoto.setImageBitmap(mutableBitmap)
+                    Toast.makeText(requireContext(), "Faces blurred for privacy", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .addOnFailureListener {
+                selectedImageBitmap = originalBitmap
+                ivSpotPhoto.setImageBitmap(originalBitmap)
+                Toast.makeText(requireContext(), "Privacy filter failed, using original", Toast.LENGTH_SHORT).show()
+            }
     }
 
     private fun onSubmitClicked() {
@@ -75,57 +139,67 @@ class AddSpotFragment : Fragment() {
         val address = etAddress.text.toString().trim()
 
         if (name.isEmpty()) {
-            Toast.makeText(requireContext(), "Name is required", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), getString(R.string.name_required), Toast.LENGTH_SHORT).show()
             return
         }
         if (address.isEmpty()) {
-            Toast.makeText(requireContext(), "Address is required", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), getString(R.string.address_required), Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (selectedImageBitmap == null) {
+            Toast.makeText(requireContext(), getString(R.string.photo_is_required), Toast.LENGTH_SHORT).show()
             return
         }
 
-        // Step 1: check if this new spot sits inside an existing top-level spot
-        val possibleParent = findNearbyTopLevelSpot()
+        // New Logic: Check for unvalidated spots nearby to vouch
+        val unvalidatedNearby = findNearbyUnvalidatedSpot()
+        if (unvalidatedNearby != null) {
+            showVouchPrompt(unvalidatedNearby)
+            return
+        }
 
+        // Parent/Orphan logic remains for nesting
+        val possibleParent = findNearbyTopLevelSpot()
         if (possibleParent != null) {
             showParentPrompt(possibleParent)
-            return // wait for the user's choice before creating anything
-        }
-
-        // Step 2: no parent found, so check if this new spot should adopt
-        // any nearby orphaned top-level spots as hidden gems
-        val possibleOrphan = findNearbyOrphanSpot()
-
-        if (possibleOrphan != null) {
-            createSpot(parentId = null, isHiddenGem = false) { newSpot ->
-                showOrphanPrompt(possibleOrphan, newSpot)
-            }
             return
         }
 
-        // Step 3: no relationships detected, just create a normal top-level spot
         createSpot(parentId = null, isHiddenGem = false) {
-            Toast.makeText(requireContext(), "Spot added!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Spot added for validation!", Toast.LENGTH_SHORT).show()
         }
     }
 
-    /** Finds an existing top-level spot whose coordinates are within radius. */
-    private fun findNearbyTopLevelSpot(): StudySpot? {
+    private fun findNearbyUnvalidatedSpot(): StudySpot? {
+        // In a real app, this would query the DB for isValidated=false spots nearby
         return MockData.topLevelSpots().firstOrNull { existing ->
-            LocationUtils.distanceInMeters(
+            !existing.isValidated && LocationUtils.distanceInMeters(
                 simulatedLat, simulatedLng,
                 existing.latitude, existing.longitude
-            ) <= radiusCheckMeters
+            ) <= validationRadiusMeters
         }
     }
 
-    /**
-     * Finds an existing top-level spot that has no parent and sits within
-     * radius — a candidate to be retroactively adopted as a hidden gem
-     * inside the spot currently being created.
-     */
-    private fun findNearbyOrphanSpot(): StudySpot? {
+    private fun showVouchPrompt(spot: StudySpot) {
+        AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.vouch_prompt_title))
+            .setMessage(getString(R.string.vouch_prompt_message, spot.name))
+            .setPositiveButton(getString(R.string.vouch_yes)) { _, _ ->
+                // TODO: Update spot.requestCount and set isValidated=true if count >= 2
+                Toast.makeText(requireContext(), getString(R.string.spot_vouched), Toast.LENGTH_SHORT).show()
+                clearForm()
+            }
+            .setNegativeButton(getString(R.string.vouch_no)) { _, _ ->
+                createSpot(parentId = null, isHiddenGem = false) {
+                    Toast.makeText(requireContext(), "New spot added!", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .show()
+    }
+
+    private fun findNearbyTopLevelSpot(): StudySpot? {
         return MockData.topLevelSpots().firstOrNull { existing ->
-            LocationUtils.distanceInMeters(
+            existing.isValidated && LocationUtils.distanceInMeters(
                 simulatedLat, simulatedLng,
                 existing.latitude, existing.longitude
             ) <= radiusCheckMeters
@@ -138,11 +212,7 @@ class AddSpotFragment : Fragment() {
             .setMessage("This looks like it's inside \"${parent.name}\". Is this a hidden spot within that location?")
             .setPositiveButton("Yes, it's a hidden gem") { _, _ ->
                 createSpot(parentId = parent.id, isHiddenGem = true) {
-                    Toast.makeText(
-                        requireContext(),
-                        "Added as a hidden gem inside ${parent.name}!",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    Toast.makeText(requireContext(), "Added as a hidden gem inside ${parent.name}!", Toast.LENGTH_SHORT).show()
                 }
             }
             .setNegativeButton("No, it's separate") { _, _ ->
@@ -153,29 +223,6 @@ class AddSpotFragment : Fragment() {
             .show()
     }
 
-    private fun showOrphanPrompt(orphan: StudySpot, newParent: StudySpot) {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Link existing spot?")
-            .setMessage("We found \"${orphan.name}\" nearby. Should it become a hidden gem inside this new spot?")
-            .setPositiveButton("Yes, link it") { _, _ ->
-                // TODO once Firestore is wired: update(orphan.id) { parentSpotId = newParent.id; isHiddenGem = true }
-                Toast.makeText(
-                    requireContext(),
-                    "${orphan.name} linked as a hidden gem inside ${newParent.name}!",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-            .setNegativeButton("No, keep separate") { _, _ ->
-                Toast.makeText(requireContext(), "Spot added!", Toast.LENGTH_SHORT).show()
-            }
-            .show()
-    }
-
-    /**
-     * Builds a StudySpot from the form fields and "saves" it.
-     * For the prototype this just calls onComplete with the new object;
-     * once Firestore is wired in, this is where the actual write happens.
-     */
     private fun createSpot(
         parentId: String?,
         isHiddenGem: Boolean,
@@ -204,10 +251,12 @@ class AddSpotFragment : Fragment() {
             capacity = selectedCapacity,
             currentCheckIns = 0,
             parentSpotId = parentId,
-            isHiddenGem = isHiddenGem
+            isHiddenGem = isHiddenGem,
+            imageUrl = "placeholder_uri", // In real app, upload bitmap to storage first
+            isValidated = false,
+            requestCount = 1
         )
 
-        // TODO once Firestore is wired: write newSpot to the studySpots collection
         onComplete(newSpot)
         clearForm()
     }
@@ -222,5 +271,7 @@ class AddSpotFragment : Fragment() {
         cbWashroom.isChecked = false
         cbPrinting.isChecked = false
         capacitySpinner.setSelection(0)
+        ivSpotPhoto.setImageDrawable(null)
+        selectedImageBitmap = null
     }
 }

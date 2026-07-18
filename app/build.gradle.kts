@@ -49,4 +49,6 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("com.google.android.gms:play-services-maps:19.0.0")
     implementation("com.google.android.gms:play-services-location:21.3.0")
+    implementation("com.google.mlkit:face-detection:16.1.7")
+    implementation("com.google.firebase:firebase-storage")
 }
