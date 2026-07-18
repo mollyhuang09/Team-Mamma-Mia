@@ -10,6 +10,8 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -23,6 +25,11 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private var _binding: FragmentMapBinding? = null
     private val binding get() = _binding!!
     private var googleMap: GoogleMap? = null
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+
+    companion object {
+        private val WATERLOO_ON_CANADA = LatLng(43.4643, -80.5204)
+    }
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -41,6 +48,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentMapBinding.inflate(inflater, container, false)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
         return binding.root
     }
 
@@ -62,13 +70,12 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     override fun onMapReady(map: GoogleMap) {
         googleMap = map
-        
-        // Default location (e.g., San Francisco) if permission not granted yet
-        val defaultLatLng = LatLng(37.7749, -122.4194)
-        googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLatLng, 12f))
+
+        googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(WATERLOO_ON_CANADA, 12f))
 
         if (checkLocationPermission()) {
             enableMyLocation()
+            moveToCurrentLocation()
         } else {
             requestLocationPermission()
         }
@@ -102,9 +109,20 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun moveToCurrentLocation() {
-        // In a real app, you'd use FusedLocationProviderClient here.
-        // For now, we rely on the user enabling the "My Location" layer.
-        Toast.makeText(requireContext(), "Centering on location...", Toast.LENGTH_SHORT).show()
+        if (!checkLocationPermission()) return
+
+        try {
+            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                val target = if (location != null) {
+                    LatLng(location.latitude, location.longitude)
+                } else {
+                    WATERLOO_ON_CANADA
+                }
+                googleMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(target, 15f))
+            }
+        } catch (e: SecurityException) {
+            e.printStackTrace()
+        }
     }
 
     override fun onDestroyView() {
