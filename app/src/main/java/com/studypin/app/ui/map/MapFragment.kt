@@ -23,6 +23,8 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.studypin.app.R
+import com.studypin.app.MainActivity
+import com.studypin.app.data.CheckInManager
 import com.studypin.app.data.MockData
 import com.studypin.app.databinding.FragmentMapBinding
 
@@ -73,6 +75,36 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 requestLocationPermission()
             }
         }
+
+        binding.fabQuickCheckIn.setOnClickListener {
+            showCheckInDialog()
+        }
+        updateFabVisibility()
+    }
+
+    private fun updateFabVisibility() {
+        binding.fabQuickCheckIn.visibility = if (CheckInManager.currentSpotId != null) {
+            View.GONE
+        } else {
+            View.VISIBLE
+        }
+    }
+
+    private fun showCheckInDialog() {
+        val spots = MockData.studySpots
+        val spotNames = spots.map { it.name }.toTypedArray()
+
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("Select a spot to check in")
+            .setItems(spotNames) { _, which ->
+                val selectedSpot = spots[which]
+                CheckInManager.checkIn(selectedSpot.id)
+                (activity as? MainActivity)?.updateBannerVisibility()
+                updateFabVisibility()
+                Toast.makeText(requireContext(), "Checked into ${selectedSpot.name}", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     override fun onMapReady(map: GoogleMap) {
