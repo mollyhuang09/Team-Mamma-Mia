@@ -56,15 +56,18 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
         // If the user came back before the alarm fired, do not show a stale reminder.
         if (LocationReminderManager.hasEntered(context, spotId)) return
 
+        LocationReminderManager.markReminderPending(context, spotId, spotName)
         createNotificationChannel(context)
-        val openSpotIntent = Intent(context, MainActivity::class.java)
+        val openSpotIntent = Intent(context, com.studypin.app.LeaveSpotPromptActivity::class.java)
             .putExtra(LocationReminderManager.EXTRA_SPOT_ID, spotId)
+            .putExtra(LocationReminderManager.EXTRA_SPOT_NAME, spotName)
+            .putExtra(LocationReminderManager.EXTRA_SHOW_PROMPT, true)
             .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         val contentIntent = PendingIntent.getActivity(
             context,
             spotId.hashCode() and 0x7fffffff,
             openSpotIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val notification = NotificationCompat.Builder(
@@ -78,7 +81,10 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
                 NotificationCompat.BigTextStyle()
                     .bigText("You left $spotName about 10 minutes ago. Open StudyPin to update its availability.")
             )
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setAutoCancel(true)
             .setContentIntent(contentIntent)
             .build()
@@ -94,7 +100,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
             val channel = NotificationChannel(
                 LocationReminderManager.notificationChannelId(),
                 "Availability reminders",
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Reminders to update study-spot availability after leaving"
             }

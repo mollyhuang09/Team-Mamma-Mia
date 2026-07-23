@@ -21,17 +21,21 @@ object LocationReminderManager {
     const val ACTION_REMINDER = "com.studypin.app.location.REMINDER"
     const val EXTRA_SPOT_ID = "spot_id"
     const val EXTRA_SPOT_NAME = "spot_name"
+    const val EXTRA_SHOW_PROMPT = "show_leave_prompt"
 
     // The project proposal calls for reminding users after they have been away for about 5 minutes.
-//    const val REMINDER_DELAY_MILLIS = 5 * 60 * 1000L
-    const val REMINDER_DELAY_MILLIS = 10 * 1000L
+    const val REMINDER_DELAY_MILLIS = 5 * 60 * 1000L
+    // for testing purposes
+//    const val REMINDER_DELAY_MILLIS = 10 * 1000L
 
     const val GEOFENCE_RADIUS_METERS = 10f
 
     private const val PREFS_NAME = "location_reminders"
     private const val KEY_ENTERED_PREFIX = "entered_"
     private const val KEY_TRACKING_PREFIX = "tracking_"
-    private const val NOTIFICATION_CHANNEL_ID = "availability_reminders"
+    private const val KEY_PENDING_SPOT_ID = "pending_spot_id"
+    private const val KEY_PENDING_SPOT_NAME = "pending_spot_name"
+    private const val NOTIFICATION_CHANNEL_ID = "availability_reminders_high"
     private const val NOTIFICATION_CHANNEL_NAME = "Availability reminders"
 
     fun geofenceId(spotId: String): String = "study_spot_$spotId"
@@ -103,11 +107,17 @@ object LocationReminderManager {
     fun geofencePendingIntent(context: Context): PendingIntent {
         val intent = Intent(context, GeofenceBroadcastReceiver::class.java)
             .setAction(ACTION_GEOFENCE_EVENT)
+        // GeofencingClient requires a mutable PendingIntent on Android 12/API 31+.
+        val mutabilityFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            PendingIntent.FLAG_MUTABLE
+        } else {
+            0
+        }
         return PendingIntent.getBroadcast(
             context,
             1001,
             intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or mutabilityFlag
         )
     }
 
@@ -162,6 +172,32 @@ object LocationReminderManager {
     fun isTracking(context: Context, spotId: String): Boolean =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .getBoolean(KEY_TRACKING_PREFIX + spotId, false)
+
+    fun markReminderPending(context: Context, spotId: String, spotName: String) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putString(KEY_PENDING_SPOT_ID, spotId)
+            .putString(KEY_PENDING_SPOT_NAME, spotName)
+            .apply()
+    }
+
+    fun pendingReminder(context: Context): Pair<String, String>? {
+        val preferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val spotId = preferences.getString(KEY_PENDING_SPOT_ID, null) ?: return null
+        val spotName = preferences.getString(KEY_PENDING_SPOT_NAME, "this study spot")
+            ?: "this study spot"
+        return spotId to spotName
+    }
+
+    fun clearPendingReminder(context: Context, spotId: String) {
+        val preferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        if (preferences.getString(KEY_PENDING_SPOT_ID, null) == spotId) {
+            preferences.edit()
+                .remove(KEY_PENDING_SPOT_ID)
+                .remove(KEY_PENDING_SPOT_NAME)
+                .apply()
+        }
+    }
 
     fun notificationChannelId(): String = NOTIFICATION_CHANNEL_ID
 

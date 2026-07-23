@@ -16,6 +16,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.location.GeofenceStatusCodes
 import com.google.android.gms.tasks.CancellationTokenSource
+import com.google.android.material.snackbar.Snackbar
 import com.studypin.app.R
 import com.studypin.app.data.MockData
 import com.studypin.app.data.ReviewRepository
@@ -158,13 +159,22 @@ class SpotDetailFragment : Fragment() {
             ConnectionResult.SERVICE_MISSING,
             ConnectionResult.SERVICE_VERSION_UPDATE_REQUIRED ->
                 "This emulator needs Google Play services for location reminders"
-            else ->
-                "Couldn’t start the location reminder. Turn on Location and try again"
+            else -> {
+                val code = statusCode?.let { " Error code: $it." } ?: ""
+                "Couldn’t start the location reminder.$code Use a Google Play emulator image and allow background location."
+            }
         }
     }
 
     private fun showTrackingMessage(message: String) {
-        android.widget.Toast.makeText(requireContext(), message, android.widget.Toast.LENGTH_LONG).show()
+        val root = view ?: return
+        val snackbar = Snackbar.make(root, message, Snackbar.LENGTH_LONG)
+        snackbar.view.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
+            ?.apply {
+                maxLines = 4
+                textSize = 16f
+            }
+        snackbar.show()
     }
 
     private fun setupClickableStars(view: View, spotId: String) {

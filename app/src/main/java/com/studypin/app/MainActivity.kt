@@ -6,6 +6,8 @@ import android.os.Bundle
 import android.content.Intent
 import android.os.Build
 import android.widget.Toast
+import android.app.AlertDialog
+import android.view.LayoutInflater
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -14,6 +16,10 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.studypin.app.location.LocationReminderManager
 
 class MainActivity : AppCompatActivity() {
+    private var pendingLeaveSpotId: String? = null
+    private var pendingLeaveSpotName: String? = null
+    private var leavePromptVisible = false
+
     private val initialPermissionPreferences by lazy {
         getSharedPreferences("initial_permissions", MODE_PRIVATE)
     }
@@ -77,6 +83,11 @@ class MainActivity : AppCompatActivity() {
         openSpotFromReminder(intent)
     }
 
+    override fun onPostResume() {
+        super.onPostResume()
+        showPendingLeaveSpotPromptIfReady()
+    }
+
     private fun openSpotFromReminder(intent: Intent?) {
         val spotId = intent?.getStringExtra("spot_id") ?: return
         val bundle = Bundle().apply { putString("spotId", spotId) }
@@ -85,7 +96,64 @@ class MainActivity : AppCompatActivity() {
             .findFragmentById(R.id.nav_host_fragment) as? NavHostFragment)
             ?.navController ?: return
         navController.navigate(R.id.spotDetailFragment, bundle)
+        if (intent.getBooleanExtra(LocationReminderManager.EXTRA_SHOW_PROMPT, false)) {
+            pendingLeaveSpotId = spotId
+            pendingLeaveSpotName = intent.getStringExtra(LocationReminderManager.EXTRA_SPOT_NAME)
+                ?: "this study spot"
+            showPendingLeaveSpotPromptIfReady()
+        }
         intent.removeExtra("spot_id")
+        intent.removeExtra(LocationReminderManager.EXTRA_SHOW_PROMPT)
+    }
+
+    private fun showPendingLeaveSpotPromptIfReady() {
+        if (leavePromptVisible) return
+        if (pendingLeaveSpotId == null) {
+            val pendingReminder = LocationReminderManager.pendingReminder(this)
+            pendingLeaveSpotId = pendingReminder?.first
+            pendingLeaveSpotName = pendingReminder?.second
+        }
+
+        val spotId = pendingLeaveSpotId ?: return
+        if (!lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) return
+
+        val spotName = pendingLeaveSpotName ?: "this study spot"
+        pendingLeaveSpotId = null
+        pendingLeaveSpotName = null
+        leavePromptVisible = true
+        showLeaveSpotPrompt(spotId, spotName)
+    }
+
+    private fun showLeaveSpotPrompt(spotId: String, spotName: String) {
+        val dialogView = LayoutInflater.from(this)
+            .inflate(R.layout.dialog_leave_spot, null)
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .create()
+
+        dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnLeft)
+            .setOnClickListener {
+                LocationReminderManager.clearPendingReminder(this, spotId)
+                LocationReminderManager.stopTracking(this, spotId)
+                Toast.makeText(this, "Thanks for updating the study spot", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            }
+        dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnStillHere)
+            .setOnClickListener {
+                LocationReminderManager.clearPendingReminder(this, spotId)
+                LocationReminderManager.cancelReminder(this, spotId)
+                LocationReminderManager.setEntered(this, spotId, true)
+                Toast.makeText(this, "Okay, we’ll keep tracking your visit", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            }
+
+        dialog.setOnShowListener {
+            dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        }
+        dialog.setOnDismissListener {
+            leavePromptVisible = false
+        }
+        dialog.show()
     }
 
     private fun requestInitialPermissionsIfNeeded() {

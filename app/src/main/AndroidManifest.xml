@@ -28,6 +28,11 @@
         <activity android:name=".LoginActivity"/>
         <activity android:name=".SignUpActivity"/>
         <activity android:name=".MainActivity"/>
+        <activity
+            android:name=".LeaveSpotPromptActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:theme="@style/Theme.StudyPin.LeavePrompt" />
 
         <receiver
             android:name=".location.GeofenceBroadcastReceiver"
