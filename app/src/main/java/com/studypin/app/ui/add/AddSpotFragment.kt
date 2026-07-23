@@ -2,10 +2,10 @@ package com.studypin.app.ui.add
 
 import android.app.AlertDialog
 import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
+import android.graphics.Matrix
+import android.graphics.Rect
 import android.graphics.drawable.BitmapDrawable
+import android.media.ExifInterface
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -96,7 +96,26 @@ class AddSpotFragment : Fragment() {
 
     private fun processImage(uri: Uri) {
         val bitmap = MediaStore.Images.Media.getBitmap(requireContext().contentResolver, uri)
-        applyPrivacyFilter(bitmap)
+        applyPrivacyFilter(correctOrientation(bitmap, uri))
+    }
+
+    private fun correctOrientation(bitmap: Bitmap, uri: Uri): Bitmap {
+        val degrees = requireContext().contentResolver.openInputStream(uri)?.use { stream ->
+            when (ExifInterface(stream).getAttributeInt(
+                ExifInterface.TAG_ORIENTATION,
+                ExifInterface.ORIENTATION_NORMAL
+            )) {
+                ExifInterface.ORIENTATION_ROTATE_90 -> 90
+                ExifInterface.ORIENTATION_ROTATE_180 -> 180
+                ExifInterface.ORIENTATION_ROTATE_270 -> 270
+                else -> 0
+            }
+        } ?: 0
+
+        if (degrees == 0) return bitmap
+
+        val matrix = Matrix().apply { postRotate(degrees.toFloat()) }
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
     }
 
     private fun applyPrivacyFilter(originalBitmap: Bitmap) {
@@ -113,14 +132,11 @@ class AddSpotFragment : Fragment() {
                     ivSpotPhoto.setImageBitmap(originalBitmap)
                 } else {
                     val mutableBitmap = originalBitmap.copy(Bitmap.Config.ARGB_8888, true)
-                    val canvas = Canvas(mutableBitmap)
-                    val paint = Paint().apply {
-                        color = Color.DKGRAY
-                        style = Paint.Style.FILL
-                    }
 
                     for (face in faces) {
-                        canvas.drawRect(face.boundingBox, paint)
+                        val box = face.boundingBox
+                        val dynamicBlockSize = (minOf(box.width(), box.height()) / 12).coerceAtLeast(8)
+                        pixelateRegion(mutableBitmap, box, dynamicBlockSize)
                     }
                     selectedImageBitmap = mutableBitmap
                     ivSpotPhoto.setImageBitmap(mutableBitmap)
@@ -132,6 +148,52 @@ class AddSpotFragment : Fragment() {
                 ivSpotPhoto.setImageBitmap(originalBitmap)
                 Toast.makeText(requireContext(), "Privacy filter failed, using original", Toast.LENGTH_SHORT).show()
             }
+    }
+
+    private fun pixelateRegion(bitmap: Bitmap, region: Rect, blockSize: Int = 16) {
+        val left = region.left.coerceIn(0, bitmap.width)
+        val top = region.top.coerceIn(0, bitmap.height)
+        val right = region.right.coerceIn(0, bitmap.width)
+        val bottom = region.bottom.coerceIn(0, bitmap.height)
+
+        var blockY = top
+        while (blockY < bottom) {
+            val blockHeight = minOf(blockSize, bottom - blockY)
+            var blockX = left
+            while (blockX < right) {
+                val blockWidth = minOf(blockSize, right - blockX)
+
+                var redSum = 0L
+                var greenSum = 0L
+                var blueSum = 0L
+                var pixelCount = 0
+                for (y in blockY until blockY + blockHeight) {
+                    for (x in blockX until blockX + blockWidth) {
+                        val pixel = bitmap.getPixel(x, y)
+                        redSum += (pixel shr 16) and 0xFF
+                        greenSum += (pixel shr 8) and 0xFF
+                        blueSum += pixel and 0xFF
+                        pixelCount++
+                    }
+                }
+
+                if (pixelCount > 0) {
+                    val avgRed = (redSum / pixelCount).toInt()
+                    val avgGreen = (greenSum / pixelCount).toInt()
+                    val avgBlue = (blueSum / pixelCount).toInt()
+                    val avgColor = (0xFF shl 24) or (avgRed shl 16) or (avgGreen shl 8) or avgBlue
+
+                    for (y in blockY until blockY + blockHeight) {
+                        for (x in blockX until blockX + blockWidth) {
+                            bitmap.setPixel(x, y, avgColor)
+                        }
+                    }
+                }
+
+                blockX += blockSize
+            }
+            blockY += blockSize
+        }
     }
 
     private fun onSubmitClicked() {

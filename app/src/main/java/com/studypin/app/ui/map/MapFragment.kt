@@ -9,7 +9,9 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -18,8 +20,10 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.studypin.app.R
+import com.studypin.app.data.MockData
 import com.studypin.app.databinding.FragmentMapBinding
 
 class MapFragment : Fragment(), OnMapReadyCallback {
@@ -76,11 +80,37 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
         googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(WATERLOO_ON_CANADA, 12f))
 
+        addSpotMarkers()
+
         if (checkLocationPermission()) {
             enableMyLocation()
             moveToCurrentLocation()
         } else {
             requestLocationPermission()
+        }
+    }
+
+    // TODO: replace MockData.topLevelSpots() with a real spots repository once backend is wired up
+    private fun addSpotMarkers() {
+        val map = googleMap ?: return
+
+        MockData.topLevelSpots().forEach { spot ->
+            val marker = map.addMarker(
+                MarkerOptions()
+                    .position(LatLng(spot.latitude, spot.longitude))
+                    .title(spot.name)
+                    .snippet(spot.address)
+            )
+            marker?.tag = spot.id
+        }
+
+        map.setOnMarkerClickListener { marker ->
+            val spotId = marker.tag as? String ?: return@setOnMarkerClickListener false
+            findNavController().navigate(
+                R.id.action_map_to_spotDetail,
+                bundleOf("spotId" to spotId)
+            )
+            true
         }
     }
 
