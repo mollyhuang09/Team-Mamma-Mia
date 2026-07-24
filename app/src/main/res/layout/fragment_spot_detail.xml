@@ -38,16 +38,6 @@
             android:textStyle="bold"
             android:visibility="gone" />
 
-        <ImageView
-            android:id="@+id/ivSpotPhotoDetail"
-            android:layout_width="match_parent"
-            android:layout_height="220dp"
-            android:layout_marginTop="12dp"
-            android:adjustViewBounds="true"
-            android:contentDescription="Study spot photo"
-            android:scaleType="centerCrop"
-            android:visibility="gone" />
-
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

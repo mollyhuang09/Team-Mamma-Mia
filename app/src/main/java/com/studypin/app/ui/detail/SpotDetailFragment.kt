@@ -5,7 +5,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -17,7 +16,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.data.OccupancyRepository
 import com.studypin.app.data.ReviewRepository
-import com.studypin.app.data.StorageRepository
 import com.studypin.app.model.StudySpot
 import com.studypin.app.ui.review.StarRatingViews
 import java.util.Locale
@@ -168,18 +166,6 @@ class SpotDetailFragment : Fragment() {
 
         bindCategoryRatings(view, spot, stats)
 
-        val photoView = view.findViewById<ImageView>(R.id.ivSpotPhotoDetail)
-        photoView.visibility = View.GONE
-        StorageRepository.loadSpotPhoto(
-            imageUrl = spot.imageUrl,
-            onSuccess = { bitmap ->
-                if (!isAdded) return@loadSpotPhoto
-                photoView.setImageBitmap(bitmap)
-                photoView.visibility = View.VISIBLE
-            },
-            onError = { photoView.visibility = View.GONE }
-        )
-
         view.findViewById<TextView>(R.id.tvDescription).text = spot.description
         view.findViewById<TextView>(R.id.tvLocation).text = spot.address
         view.findViewById<TextView>(R.id.tvHours).text = spot.hours
@@ -233,7 +219,7 @@ class SpotDetailFragment : Fragment() {
             "This study spot could not be found. Return to the list and choose another spot."
         listOf(R.id.tvAvailability, R.id.tvOccupancyDetail, R.id.tvRatingDetail,
             R.id.tvLocation, R.id.tvHours, R.id.tvAmenitiesDetail, R.id.btnEdit, R.id.btnReport,
-            R.id.btnCheckInToggle, R.id.ivSpotPhotoDetail)
+            R.id.btnCheckInToggle)
             .forEach { view.findViewById<View>(it).visibility = View.GONE }
     }
 }
