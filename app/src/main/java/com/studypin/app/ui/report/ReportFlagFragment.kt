@@ -132,8 +132,16 @@ class ReportFlagFragment : Fragment() {
             status = "pending"
         )
 
-        ReportEditRepository.submit(submission)
-        showSuccessConfirmation()
+        btnSubmit.isEnabled = false
+        ReportEditRepository.submit(submission) { error ->
+            if (!isAdded) return@submit
+            btnSubmit.isEnabled = true
+            if (error == null) {
+                showSuccessConfirmation()
+            } else {
+                Toast.makeText(requireContext(), "Could not submit report: ${error.message}", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     private fun showSuccessConfirmation() {

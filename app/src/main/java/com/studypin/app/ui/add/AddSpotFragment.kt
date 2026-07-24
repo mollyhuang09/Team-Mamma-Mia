@@ -26,6 +26,7 @@ import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import com.studypin.app.R
 import com.studypin.app.data.MockData
+import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.model.Capacity
 import com.studypin.app.model.StudySpot
 import com.studypin.app.utils.LocationUtils
@@ -307,7 +308,8 @@ class AddSpotFragment : Fragment() {
             longitude = simulatedLng,
             amenities = amenities,
             hours = etHours.text.toString().trim(),
-            createdBy = "device_local_user",
+            createdBy = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+                ?: "anonymous",
             avgRating = 0.0,
             totalRatings = 0,
             capacity = selectedCapacity,
@@ -319,8 +321,18 @@ class AddSpotFragment : Fragment() {
             requestCount = 1
         )
 
-        onComplete(newSpot)
-        clearForm()
+        btnSubmit.isEnabled = false
+        StudySpotRepository.addSpot(newSpot)
+            .addOnSuccessListener {
+                onComplete(newSpot)
+                clearForm()
+            }
+            .addOnFailureListener { error ->
+                Toast.makeText(requireContext(), "Could not save spot: ${error.message}", Toast.LENGTH_LONG).show()
+            }
+            .addOnCompleteListener {
+                btnSubmit.isEnabled = true
+            }
     }
 
     private fun clearForm() {
