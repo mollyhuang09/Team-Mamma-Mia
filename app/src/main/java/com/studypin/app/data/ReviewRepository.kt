@@ -14,6 +14,7 @@ import com.studypin.app.model.StudySpotReview
 object ReviewRepository {
 
     private val database = FirebaseDatabase.getInstance("https://studypin-3f9fb-default-rtdb.firebaseio.com/").reference.child("reviews")
+    private val helpfulVotesByCurrentUser = mutableSetOf<String>()
 
     private val reviews = mutableListOf(
         StudySpotReview(
@@ -26,6 +27,7 @@ object ReviewRepository {
             visitTimeOfDay = "Morning",
             crowdLevel = "Quiet",
             mediaCount = 2,
+            helpfulCount = 12,
             submittedAtLabel = "Today"
         ),
         StudySpotReview(
@@ -38,6 +40,7 @@ object ReviewRepository {
             visitTimeOfDay = "Afternoon",
             crowdLevel = "Busy",
             mediaCount = 1,
+            helpfulCount = 12,
             submittedAtLabel = "Yesterday"
         ),
         StudySpotReview(
@@ -50,6 +53,7 @@ object ReviewRepository {
             visitTimeOfDay = "Evening",
             crowdLevel = "Moderate",
             mediaCount = 0,
+            helpfulCount = 8,
             submittedAtLabel = "3 days ago"
         ),
         StudySpotReview(
@@ -116,6 +120,28 @@ object ReviewRepository {
 
     fun reviewsForSpot(spotId: String): List<StudySpotReview> =
         reviews.filter { it.spotId == spotId }
+
+    fun helpfulCountFor(reviewId: String): Int =
+        reviews.firstOrNull { it.id == reviewId }?.helpfulCount ?: 0
+
+    fun isHelpfulByCurrentUser(reviewId: String): Boolean =
+        helpfulVotesByCurrentUser.contains(reviewId)
+
+    /** Toggles the current user's local helpful vote and returns the new selected state. */
+    fun toggleHelpful(reviewId: String): Boolean {
+        val index = reviews.indexOfFirst { it.id == reviewId }
+        if (index == -1) return false
+
+        val review = reviews[index]
+        return if (helpfulVotesByCurrentUser.add(reviewId)) {
+            reviews[index] = review.copy(helpfulCount = review.helpfulCount + 1)
+            true
+        } else {
+            helpfulVotesByCurrentUser.remove(reviewId)
+            reviews[index] = review.copy(helpfulCount = (review.helpfulCount - 1).coerceAtLeast(0))
+            false
+        }
+    }
 
     fun hasUserReviewedSpot(userId: String, spotId: String): Boolean {
         return reviews.any { it.reviewerName == userId && it.spotId == spotId }

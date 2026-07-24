@@ -54,7 +54,7 @@ class SpotListAdapter(
             holder.ivSpotImage.setImageURI(Uri.parse(imageUri))
         } else {
             // placeholder - TBC
-            holder.ivSpotImage.setImageResource(R.drawable.ic_launcher_background)
+            holder.ivSpotImage.setImageResource(R.drawable.photo_placeholder)
         }
 
         val gemCount = if (showHiddenGemBadge) MockData.hiddenGemCountFor(spot.id) else 0

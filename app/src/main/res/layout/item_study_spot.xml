@@ -23,7 +23,7 @@
             android:layout_width="96dp"
             android:layout_height="96dp"
             android:scaleType="centerCrop"
-            android:src="@drawable/ic_launcher_background"
+            android:src="@drawable/photo_placeholder"
             android:contentDescription="Study spot image" />
 
         <!-- Info -->

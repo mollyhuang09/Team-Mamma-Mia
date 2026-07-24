@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
@@ -104,11 +105,14 @@ class ReviewListFragment : Fragment() {
 class ReviewAdapter(private val reviews: List<StudySpotReview>) : RecyclerView.Adapter<ReviewAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val avatar: TextView = view.findViewById(R.id.tvReviewerAvatar)
         val name: TextView = view.findViewById(R.id.tvReviewerName)
         val date: TextView = view.findViewById(R.id.tvReviewSubmittedAt)
         val text: TextView = view.findViewById(R.id.tvReviewText)
         val meta: TextView = view.findViewById(R.id.tvReviewMeta)
         val stars: LinearLayout = view.findViewById(R.id.llReviewStars)
+        val helpfulButton: ImageButton = view.findViewById(R.id.btnHelpful)
+        val helpfulCount: TextView = view.findViewById(R.id.tvHelpfulCount)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -118,6 +122,7 @@ class ReviewAdapter(private val reviews: List<StudySpotReview>) : RecyclerView.A
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val review = reviews[position]
+        holder.avatar.text = review.reviewerName.firstOrNull()?.uppercase() ?: "?"
         holder.name.text = review.reviewerName
         holder.date.text = review.submittedAtLabel
         holder.text.text = review.reviewText
@@ -130,6 +135,8 @@ class ReviewAdapter(private val reviews: List<StudySpotReview>) : RecyclerView.A
 
         holder.stars.removeAllViews()
         holder.stars.addView(StarRatingViews.buildStarRow(holder.itemView.context, review.overallRating, false, 16f))
+
+        ReviewHelpfulBinder.bind(holder.helpfulButton, holder.helpfulCount, review)
     }
 
     override fun getItemCount() = reviews.size

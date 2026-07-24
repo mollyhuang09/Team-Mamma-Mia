@@ -1,24 +1,35 @@
 package com.studypin.app.ui.detail
 
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
+import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
 import com.studypin.app.R
 import com.studypin.app.data.MockData
 import com.studypin.app.data.ReviewRepository
 import com.studypin.app.model.StudySpot
+import com.studypin.app.model.StudySpotReview
+import com.studypin.app.ui.review.ReviewHelpfulBinder
 import com.studypin.app.ui.review.StarRatingViews
+import com.studypin.app.ui.toTagLabel
 import java.util.Locale
 
 class SpotDetailFragment : Fragment() {
+
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View = inflater.inflate(R.layout.fragment_spot_detail, container, false)
 
@@ -30,129 +41,194 @@ class SpotDetailFragment : Fragment() {
 
         if (spot == null) {
             showMissingSpot(view)
-        } else {
-            bindSpot(view, spot)
+            return
         }
+
+        bindSpot(view, spot)
 
         view.findViewById<View>(R.id.btnBack).setOnClickListener {
             findNavController().navigateUp()
         }
-        view.findViewById<Button>(R.id.btnEdit).setOnClickListener {
+
+        view.findViewById<View>(R.id.btnReport).setOnClickListener {
+            navigateToReport(spotId, spot.name)
+        }
+
+        view.findViewById<View>(R.id.btnShare).setOnClickListener {
+            Toast.makeText(requireContext(), "Sharing will be connected later", Toast.LENGTH_SHORT).show()
+        }
+        view.findViewById<View>(R.id.btnEdit).setOnClickListener {
             findNavController().navigate(R.id.action_spotDetail_to_editSpot)
         }
-        view.findViewById<Button>(R.id.btnReport).setOnClickListener {
-            val spotName = arguments?.getString("spotName")
-                ?: MockData.studySpots.firstOrNull { it.id == spotId }?.name
-
-            val bundle = Bundle().apply {
-                putString("spotId", spotId)
-                spotName?.let { putString("spotName", it) }
-            }
-
-            findNavController().navigate(R.id.action_spotDetail_to_reportFlag, bundle)
+        view.findViewById<View>(R.id.btnSave).setOnClickListener { button ->
+            val saveButton = button as MaterialButton
+            saveButton.text = if (saveButton.text == "Save") "Saved" else "Save"
+        }
+        view.findViewById<View>(R.id.btnAddPhoto).setOnClickListener {
+            Toast.makeText(requireContext(), "Photo upload will be connected later", Toast.LENGTH_SHORT).show()
         }
 
-        setupClickableStars(view, spotId)
-
-        view.findViewById<View>(R.id.tvRatingsHeader).setOnClickListener {
+        view.findViewById<View>(R.id.btnAddReview).setOnClickListener {
             val bundle = Bundle().apply { putString("spotId", spotId) }
-            findNavController().navigate(R.id.action_spotDetail_to_reviewList, bundle)
+            findNavController().navigate(R.id.action_spotDetail_to_addReview, bundle)
         }
+
         view.findViewById<View>(R.id.tvRatingDetail).setOnClickListener {
             val bundle = Bundle().apply { putString("spotId", spotId) }
             findNavController().navigate(R.id.action_spotDetail_to_reviewList, bundle)
         }
+
+        if (ReviewRepository.hasUserReviewedSpot("You", spotId)) {
+            view.findViewById<View>(R.id.btnAddReview).visibility = View.GONE
+        }
     }
 
-    private fun setupClickableStars(view: View, spotId: String) {
-        val actionLayout = view.findViewById<View>(R.id.layoutUserRatingAction)
-        if (ReviewRepository.hasUserReviewedSpot("You", spotId)) {
-            actionLayout.visibility = View.GONE
-            return
+    private fun navigateToReport(spotId: String, spotName: String) {
+        val bundle = Bundle().apply {
+            putString("spotId", spotId)
+            putString("spotName", spotName)
         }
-        actionLayout.visibility = View.VISIBLE
-        
-        val layout = view.findViewById<LinearLayout>(R.id.layoutClickableStars)
-        layout.removeAllViews() // Clear existing stars to avoid duplicates
-        val starRow = StarRatingViews.buildStarRow(requireContext(), 0, true, 36f) { rating ->
-            val bundle = Bundle().apply {
-                putString("spotId", spotId)
-                putInt("initialRating", rating)
-            }
-            findNavController().navigate(R.id.action_spotDetail_to_addReview, bundle)
-        }
-        layout.addView(starRow)
+        findNavController().navigate(R.id.action_spotDetail_to_reportFlag, bundle)
     }
 
     private fun bindSpot(view: View, spot: StudySpot) {
-        val stats = ReviewRepository.displayStatsForSpot(spot)
         view.findViewById<TextView>(R.id.tvSpotName).text = spot.name
-        view.findViewById<TextView>(R.id.tvHiddenGem).visibility =
-            if (spot.isHiddenGem) View.VISIBLE else View.GONE
         view.findViewById<TextView>(R.id.tvAvailability).text = spot.occupancyLabel()
-        view.findViewById<TextView>(R.id.tvOccupancyDetail).text =
-            "${spot.currentCheckIns} / ${spot.capacity.approxSeats} seats occupied (${spot.capacity.label})"
-        
-        view.findViewById<TextView>(R.id.tvRatingDetail).text = String.format(
-            Locale.CANADA, "★ %.1f / 5 (%d rating%s)", stats.averageOverall, stats.reviewCount,
-            if (stats.reviewCount == 1) "" else "s"
+        view.findViewById<TextView>(R.id.tvLocation).text = spot.address
+
+        val hasGemConnection = spot.isHiddenGem || MockData.hiddenGemCountFor(spot.id) > 0
+        view.findViewById<TextView>(R.id.tvHiddenGem).visibility =
+            if (hasGemConnection) View.VISIBLE else View.GONE
+
+        val ratingText = String.format(
+            Locale.CANADA,
+            "%.1f (%d Reviews)",
+            spot.avgRating,
+            spot.totalRatings
+        )
+        view.findViewById<TextView>(R.id.tvRatingDetail).text = ratingText
+        view.findViewById<TextView>(R.id.tvReviewAverage).text =
+            String.format(Locale.CANADA, "%.1f", spot.avgRating)
+        view.findViewById<TextView>(R.id.tvReviewCount).text =
+            "Based on ${spot.totalRatings} reviews"
+
+        bindTags(view, spot)
+        bindImages(view, spot)
+        bindRatingBreakdown(view, spot)
+        bindReviewCards(view, spot)
+    }
+
+    private fun bindTags(view: View, spot: StudySpot) {
+        val chipGroup = view.findViewById<ChipGroup>(R.id.chipGroupTags)
+        chipGroup.removeAllViews()
+
+        spot.amenities.forEach { amenity ->
+            val chip = LayoutInflater.from(requireContext())
+                .inflate(R.layout.item_spot_tag, chipGroup, false) as Chip
+            chip.isCheckable = false
+            chip.isClickable = false
+            chip.isFocusable = false
+            chip.text = amenity.toTagLabel()
+            chipGroup.addView(chip)
+        }
+    }
+
+    private fun bindImages(view: View, spot: StudySpot) {
+        val images = listOf(
+            view.findViewById<ImageView>(R.id.ivSpotHero),
+            view.findViewById<ImageView>(R.id.ivPhotoOne),
+            view.findViewById<ImageView>(R.id.ivPhotoTwo),
+            view.findViewById<ImageView>(R.id.ivPhotoThree)
         )
 
-        bindCategoryRatings(view, spot, stats)
+        val imageUri = spot.imageUrl
+            ?.takeUnless { it.isBlank() || it == "placeholder_uri" }
 
-        view.findViewById<TextView>(R.id.tvDescription).text = spot.description
-        view.findViewById<TextView>(R.id.tvLocation).text = spot.address
-        view.findViewById<TextView>(R.id.tvHours).text = spot.hours
-        view.findViewById<TextView>(R.id.tvAmenitiesDetail).text = if (spot.amenities.isEmpty()) {
-            "No amenities listed"
-        } else {
-            spot.amenities.joinToString(" · ") { it.replaceFirstChar(Char::titlecase) }
+        images.forEach { imageView ->
+            if (imageUri == null) {
+                imageView.setImageResource(R.drawable.photo_placeholder)
+            } else {
+                imageView.setImageURI(Uri.parse(imageUri))
+            }
         }
     }
 
-    private fun bindCategoryRatings(view: View, spot: StudySpot, stats: com.studypin.app.model.ReviewDisplayStats) {
-        val layout = view.findViewById<View>(R.id.layoutCategoryRatings)
-
-        if (stats.reviewCount == 0) {
-            layout.visibility = View.GONE
-            return
+    private fun bindRatingBreakdown(view: View, spot: StudySpot) {
+        val reviews = ReviewRepository.reviewsForSpot(spot.id)
+        val counts = (1..5).associateWith { rating ->
+            reviews.count { it.overallRating == rating }
         }
+        val largestCount = counts.values.maxOrNull()?.coerceAtLeast(1) ?: 1
 
-        layout.visibility = View.VISIBLE
-
-        val noiseVal = stats.amenityAverages["noise"] ?: Double.NaN
-        val wifiVal = stats.amenityAverages["wifi"] ?: Double.NaN
-        val seatingVal = stats.amenityAverages["seating"] ?: Double.NaN
-        val outletsVal = stats.amenityAverages["outlets"] ?: Double.NaN
-
-        val tvNoise = view.findViewById<TextView>(R.id.tvNoiseRating)
-        val tvWifi = view.findViewById<TextView>(R.id.tvWifiRating)
-        val tvSeating = view.findViewById<TextView>(R.id.tvSeatingRating)
-        val tvOutlets = view.findViewById<TextView>(R.id.tvOutletsRating)
-
-        tvNoise.text = "Noise Level: ${formatRating(noiseVal)}"
-        tvNoise.visibility = if (noiseVal.isNaN()) View.GONE else View.VISIBLE
-
-        tvWifi.text = "WiFi Strength: ${formatRating(wifiVal)}"
-        tvWifi.visibility = if (wifiVal.isNaN()) View.GONE else View.VISIBLE
-
-        tvSeating.text = "Seating Comfort: ${formatRating(seatingVal)}"
-        tvSeating.visibility = if (seatingVal.isNaN()) View.GONE else View.VISIBLE
-
-        tvOutlets.text = "Outlet Availability: ${formatRating(outletsVal)}"
-        tvOutlets.visibility = if (outletsVal.isNaN()) View.GONE else View.VISIBLE
+        (1..5).forEach { rating ->
+            val count = counts[rating] ?: 0
+            val progress = view.findViewById<ProgressBar>(ratingProgressId(rating))
+            progress.progress = count * 100 / largestCount
+            view.findViewById<TextView>(ratingCountId(rating)).text = count.toString()
+        }
     }
 
-    private fun formatRating(value: Double): String {
-        return if (value.isNaN()) "-" else String.format(Locale.CANADA, "%.1f / 5", value)
+    private fun bindReviewCards(view: View, spot: StudySpot) {
+        val reviewContainer = view.findViewById<LinearLayout>(R.id.layoutReviewCards)
+        reviewContainer.removeAllViews()
+
+        ReviewRepository.reviewsForSpot(spot.id).take(3).forEach { review ->
+            val reviewView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.item_review, reviewContainer, false)
+            bindReviewView(reviewView, review)
+            reviewContainer.addView(reviewView)
+        }
+    }
+
+    private fun bindReviewView(view: View, review: StudySpotReview) {
+        view.findViewById<TextView>(R.id.tvReviewerAvatar).text =
+            review.reviewerName.firstOrNull()?.uppercase() ?: "?"
+        view.findViewById<TextView>(R.id.tvReviewerName).text = review.reviewerName
+        view.findViewById<TextView>(R.id.tvReviewSubmittedAt).text = review.submittedAtLabel
+        view.findViewById<TextView>(R.id.tvReviewText).text = review.reviewText
+
+        val meta = listOf(review.visitTimeOfDay, review.crowdLevel)
+            .filter { it.isNotBlank() }
+            .joinToString(" • ")
+        view.findViewById<TextView>(R.id.tvReviewMeta).apply {
+            text = meta
+            visibility = if (meta.isBlank()) View.GONE else View.VISIBLE
+        }
+
+        view.findViewById<TextView>(R.id.tvReviewMedia).apply {
+            text = if (review.mediaCount > 0) "${review.mediaCount} photos" else ""
+            visibility = if (review.mediaCount > 0) View.VISIBLE else View.GONE
+        }
+
+        val stars = view.findViewById<LinearLayout>(R.id.llReviewStars)
+        stars.removeAllViews()
+        stars.addView(StarRatingViews.buildStarRow(requireContext(), review.overallRating, false, 16f))
+
+        ReviewHelpfulBinder.bind(
+            view.findViewById(R.id.btnHelpful),
+            view.findViewById(R.id.tvHelpfulCount),
+            review
+        )
+    }
+
+    private fun ratingProgressId(rating: Int): Int = when (rating) {
+        1 -> R.id.progressRating1
+        2 -> R.id.progressRating2
+        3 -> R.id.progressRating3
+        4 -> R.id.progressRating4
+        else -> R.id.progressRating5
+    }
+
+    private fun ratingCountId(rating: Int): Int = when (rating) {
+        1 -> R.id.tvRatingCount1
+        2 -> R.id.tvRatingCount2
+        3 -> R.id.tvRatingCount3
+        4 -> R.id.tvRatingCount4
+        else -> R.id.tvRatingCount5
     }
 
     private fun showMissingSpot(view: View) {
         view.findViewById<TextView>(R.id.tvSpotName).text = "Study spot unavailable"
-        view.findViewById<TextView>(R.id.tvDescription).text =
-            "This study spot could not be found. Return to the list and choose another spot."
-        listOf(R.id.tvAvailability, R.id.tvOccupancyDetail, R.id.tvRatingDetail,
-            R.id.tvLocation, R.id.tvHours, R.id.tvAmenitiesDetail, R.id.btnEdit, R.id.btnReport)
-            .forEach { view.findViewById<View>(it).visibility = View.GONE }
+        view.findViewById<View>(R.id.detailPanel).visibility = View.GONE
     }
 }
