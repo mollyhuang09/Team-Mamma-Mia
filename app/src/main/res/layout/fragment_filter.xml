@@ -40,14 +40,17 @@
 
                 <ImageButton
                     android:id="@+id/btnCloseFilters"
-                    android:layout_width="42dp"
-                    android:layout_height="42dp"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginHorizontal="0dp"
+                    android:layout_marginVertical="0dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="Close filters"
                     android:src="@drawable/ic_close" />
 
             </LinearLayout>
 
+            <!-- Amenities Filters -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -83,6 +86,17 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Outlets"
+                    android:textColor="@color/filter_chip_text"
+                    app:checkedIconVisible="false"
+                    app:chipBackgroundColor="@color/filter_chip_background"
+                    app:chipStrokeWidth="0dp" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipFilterPrinting"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Printing"
                     android:textColor="@color/filter_chip_text"
                     app:checkedIconVisible="false"
                     app:chipBackgroundColor="@color/filter_chip_background"
@@ -134,6 +148,7 @@
 
             </com.google.android.material.chip.ChipGroup>
 
+            <!-- Environment Filters -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -187,6 +202,7 @@
 
             </com.google.android.material.chip.ChipGroup>
 
+            <!-- Availability Filters -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -217,24 +233,29 @@
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
+            <!-- Drop-down menu -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/layoutFilterSort"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                android:hint="Sort by"
+                app:boxStrokeColor="@color/dropdown_border"
                 app:boxBackgroundMode="outline"
                 app:boxCornerRadiusBottomEnd="8dp"
                 app:boxCornerRadiusBottomStart="8dp"
                 app:boxCornerRadiusTopEnd="8dp"
                 app:boxCornerRadiusTopStart="8dp"
-                app:endIconMode="dropdown_menu">
+                app:endIconMode="dropdown_menu"
+                app:endIconTint="@color/brand_main">
 
                 <com.google.android.material.textfield.MaterialAutoCompleteTextView
                     android:id="@+id/dropdownFilterSort"
+                    style="@style/Widget.Material3.AutoCompleteTextView.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:cursorVisible="false"
+                    android:popupBackground="@drawable/bg_dropdown_popup"
+                    android:dropDownVerticalOffset="8dp"
                     android:gravity="center_vertical|start"
                     android:includeFontPadding="false"
                     android:inputType="none"
@@ -242,7 +263,11 @@
                     android:paddingStart="12dp"
                     android:paddingEnd="48dp"
                     android:singleLine="true"
-                    android:textSize="14sp" />
+                    android:textSize="16sp"
+                    android:textColor="@color/brand_main"
+                    app:simpleItemSelectedColor="@color/dropdown_selected_background"
+                    app:simpleItemSelectedRippleColor="@color/dropdown_selected_background"
+                    app:simpleItemLayout="@layout/item_dropdown_option" />
 
             </com.google.android.material.textfield.TextInputLayout>
 

@@ -135,7 +135,8 @@ class ListFragment : Fragment() {
         // Sort
         result = when (selectedSortPosition) {
             0 -> result.sortedByDescending { it.avgRating }
-            1 -> result.sortedByDescending { it.capacity.approxSeats - it.currentCheckIns }
+            1 -> result.sortedByDescending { it.totalRatings }
+            2 -> result // Recently added needs a createdAt field
             else -> result
         }
 
