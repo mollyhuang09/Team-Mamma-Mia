@@ -7,12 +7,14 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.studypin.app.R
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.auth.FirebaseAuth
 import com.studypin.app.data.StudySpotRepository
+import com.studypin.app.data.OccupancyRepository
 import com.studypin.app.data.ReviewRepository
 import com.studypin.app.model.StudySpot
 import com.studypin.app.ui.review.StarRatingViews
@@ -20,6 +22,7 @@ import java.util.Locale
 
 class SpotDetailFragment : Fragment() {
     private var spotListener: ListenerRegistration? = null
+    private var checkInListener: ListenerRegistration? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -30,6 +33,7 @@ class SpotDetailFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val spotId = arguments?.getString("spotId") ?: ""
+        setupCheckInButton(view, spotId)
         spotListener = StudySpotRepository.observeSpot(
             spotId = spotId,
             onSuccess = { spot ->
@@ -71,6 +75,8 @@ class SpotDetailFragment : Fragment() {
     override fun onDestroyView() {
         spotListener?.remove()
         spotListener = null
+        checkInListener?.remove()
+        checkInListener = null
         super.onDestroyView()
     }
 
@@ -93,6 +99,50 @@ class SpotDetailFragment : Fragment() {
             findNavController().navigate(R.id.action_spotDetail_to_addReview, bundle)
         }
         layout.addView(starRow)
+    }
+
+    private fun setupCheckInButton(view: View, spotId: String) {
+        val button = view.findViewById<Button>(R.id.btnCheckInToggle)
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
+        if (userId == null || spotId.isBlank()) {
+            button.text = "Sign in to check in"
+            button.isEnabled = false
+            return
+        }
+
+        button.isEnabled = false
+        checkInListener = OccupancyRepository.observeCheckIn(
+            spotId = spotId,
+            userId = userId,
+            onSuccess = { checkedIn ->
+                if (!isAdded) return@observeCheckIn
+                button.isEnabled = true
+                button.text = if (checkedIn) "Check Out" else "Check In"
+            },
+            onError = {
+                if (isAdded) {
+                    button.isEnabled = false
+                    button.text = "Check-in unavailable"
+                }
+            }
+        )
+
+        button.setOnClickListener {
+            button.isEnabled = false
+            val checkedIn = button.text == "Check Out"
+            val operation = if (checkedIn) {
+                OccupancyRepository.checkOut(spotId, userId)
+            } else {
+                OccupancyRepository.checkIn(spotId, userId)
+            }
+            operation
+                .addOnFailureListener { error ->
+                    if (isAdded) {
+                        button.isEnabled = true
+                        Toast.makeText(requireContext(), "Could not update check-in: ${error.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
+        }
     }
 
     private fun bindSpot(view: View, spot: StudySpot) {
@@ -163,7 +213,8 @@ class SpotDetailFragment : Fragment() {
         view.findViewById<TextView>(R.id.tvDescription).text =
             "This study spot could not be found. Return to the list and choose another spot."
         listOf(R.id.tvAvailability, R.id.tvOccupancyDetail, R.id.tvRatingDetail,
-            R.id.tvLocation, R.id.tvHours, R.id.tvAmenitiesDetail, R.id.btnEdit, R.id.btnReport)
+            R.id.tvLocation, R.id.tvHours, R.id.tvAmenitiesDetail, R.id.btnEdit, R.id.btnReport,
+            R.id.btnCheckInToggle)
             .forEach { view.findViewById<View>(it).visibility = View.GONE }
     }
 }

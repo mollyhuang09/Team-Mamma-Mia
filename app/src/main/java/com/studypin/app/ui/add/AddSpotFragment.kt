@@ -310,6 +310,7 @@ class AddSpotFragment : Fragment() {
             hours = etHours.text.toString().trim(),
             createdBy = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
                 ?: "anonymous",
+            createdAt = System.currentTimeMillis(),
             avgRating = 0.0,
             totalRatings = 0,
             capacity = selectedCapacity,
