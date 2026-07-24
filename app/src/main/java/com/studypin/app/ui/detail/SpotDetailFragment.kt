@@ -10,13 +10,16 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.studypin.app.R
-import com.studypin.app.data.MockData
+import com.google.firebase.firestore.ListenerRegistration
+import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.data.ReviewRepository
 import com.studypin.app.model.StudySpot
 import com.studypin.app.ui.review.StarRatingViews
 import java.util.Locale
 
 class SpotDetailFragment : Fragment() {
+    private var spotListener: ListenerRegistration? = null
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -26,13 +29,14 @@ class SpotDetailFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val spotId = arguments?.getString("spotId") ?: ""
-        val spot = MockData.studySpots.firstOrNull { it.id == spotId }
-
-        if (spot == null) {
-            showMissingSpot(view)
-        } else {
-            bindSpot(view, spot)
-        }
+        spotListener = StudySpotRepository.observeSpot(
+            spotId = spotId,
+            onSuccess = { spot ->
+                if (!isAdded) return@observeSpot
+                if (spot == null) showMissingSpot(view) else bindSpot(view, spot)
+            },
+            onError = { if (isAdded) showMissingSpot(view) }
+        )
 
         view.findViewById<View>(R.id.btnBack).setOnClickListener {
             findNavController().navigateUp()
@@ -42,7 +46,6 @@ class SpotDetailFragment : Fragment() {
         }
         view.findViewById<Button>(R.id.btnReport).setOnClickListener {
             val spotName = arguments?.getString("spotName")
-                ?: MockData.studySpots.firstOrNull { it.id == spotId }?.name
 
             val bundle = Bundle().apply {
                 putString("spotId", spotId)
@@ -62,6 +65,12 @@ class SpotDetailFragment : Fragment() {
             val bundle = Bundle().apply { putString("spotId", spotId) }
             findNavController().navigate(R.id.action_spotDetail_to_reviewList, bundle)
         }
+    }
+
+    override fun onDestroyView() {
+        spotListener?.remove()
+        spotListener = null
+        super.onDestroyView()
     }
 
     private fun setupClickableStars(view: View, spotId: String) {

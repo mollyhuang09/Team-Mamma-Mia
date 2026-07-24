@@ -12,6 +12,18 @@ object StudySpotRepository {
     // save a study spot
     fun addSpot(spot: StudySpot) = spots.document(spot.id).set(spot.toFirestoreMap())
 
+    fun observeSpot(
+        spotId: String,
+        onSuccess: (StudySpot?) -> Unit,
+        onError: (Exception) -> Unit
+    ): ListenerRegistration = spots.document(spotId).addSnapshotListener { snapshot, error ->
+        if (error != null) {
+            onError(error)
+            return@addSnapshotListener
+        }
+        onSuccess(snapshot?.takeIf { it.exists() }?.toStudySpot())
+    }
+
     // read study spots back from Firestore
     fun observeSpots(
         onSuccess: (List<StudySpot>) -> Unit,

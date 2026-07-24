@@ -6,7 +6,6 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.studypin.app.R
-import com.studypin.app.data.MockData
 import com.studypin.app.model.StudySpot
 
 class SpotListAdapter(
@@ -14,6 +13,8 @@ class SpotListAdapter(
     private val showHiddenGemBadge: Boolean = true,
     private val onSpotClick: (StudySpot) -> Unit
 ) : RecyclerView.Adapter<SpotListAdapter.SpotViewHolder>() {
+
+    private var allSpots: List<StudySpot> = spots
 
     inner class SpotViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val tvName: TextView = view.findViewById(R.id.tvSpotName)
@@ -36,7 +37,9 @@ class SpotListAdapter(
         holder.tvRating.text = "★ ${spot.avgRating} (${spot.totalRatings})"
         holder.tvAmenities.text = spot.amenities.joinToString(" · ")
 
-        val gemCount = if (showHiddenGemBadge) MockData.hiddenGemCountFor(spot.id) else 0
+        val gemCount = if (showHiddenGemBadge) {
+            allSpots.count { it.parentSpotId == spot.id }
+        } else 0
         if (gemCount > 0) {
             holder.tvHiddenGemBadge.text = "💎 $gemCount hidden gem${if (gemCount > 1) "s" else ""}"
             holder.tvHiddenGemBadge.visibility = View.VISIBLE
@@ -52,8 +55,9 @@ class SpotListAdapter(
     override fun getItemCount(): Int = spots.size
 
     /** Replace the currently displayed list (used after search/filter/sort). */
-    fun updateList(newSpots: List<StudySpot>) {
+    fun updateList(newSpots: List<StudySpot>, allSpots: List<StudySpot> = newSpots) {
         spots = newSpots
+        this.allSpots = allSpots
         notifyDataSetChanged()
     }
 }
