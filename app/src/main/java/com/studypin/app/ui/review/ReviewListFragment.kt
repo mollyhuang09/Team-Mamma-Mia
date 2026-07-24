@@ -23,6 +23,7 @@ class ReviewListFragment : Fragment() {
     private var spotId: String = ""
     private lateinit var adapter: ReviewAdapter
     private var spotListener: ListenerRegistration? = null
+    private var reviewListener: ListenerRegistration? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -90,11 +91,23 @@ class ReviewListFragment : Fragment() {
             },
             onError = { if (isAdded) view.findViewById<TextView>(R.id.tvReviewSpotName).text = "Spot unavailable" }
         )
+        reviewListener = ReviewRepository.observeReviews(
+            spotId = spotId,
+            onSuccess = { reviews ->
+                if (!isAdded) return@observeReviews
+                adapter.updateReviews(reviews)
+                view.findViewById<View>(R.id.tvEmptyReviews).visibility =
+                    if (reviews.isEmpty()) View.VISIBLE else View.GONE
+            },
+            onError = { /* The local cached list remains visible if the listener fails. */ }
+        )
     }
 
     override fun onDestroyView() {
         spotListener?.remove()
         spotListener = null
+        reviewListener?.remove()
+        reviewListener = null
         super.onDestroyView()
     }
 

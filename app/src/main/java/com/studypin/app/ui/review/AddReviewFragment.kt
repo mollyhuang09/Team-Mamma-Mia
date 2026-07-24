@@ -147,14 +147,17 @@ class AddReviewFragment : Fragment() {
             submittedAtLabel = "Just now"
         )
 
+        view.findViewById<View>(R.id.btnSubmitReview).isEnabled = false
         ReviewRepository.addReview(review) { success, error ->
+            if (!isAdded) return@addReview
+            view.findViewById<View>(R.id.btnSubmitReview).isEnabled = true
             if (success) {
                 Toast.makeText(requireContext(), "Review posted and saved to cloud!", Toast.LENGTH_SHORT).show()
+                findNavController().navigateUp()
             } else {
-                Toast.makeText(requireContext(), "Saved locally, but cloud sync failed: $error", Toast.LENGTH_LONG).show()
+                Toast.makeText(requireContext(), "Could not save review: $error", Toast.LENGTH_LONG).show()
             }
         }
-        findNavController().navigateUp()
     }
 
     private fun getSelectedChipText(chipGroup: ChipGroup): String {
