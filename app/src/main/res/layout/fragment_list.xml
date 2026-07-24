@@ -10,41 +10,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="8dp">
-
-        <CheckBox
-            android:id="@+id/cbWifi"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Wi-Fi"/>
-
-        <CheckBox
-            android:id="@+id/cbOutlets"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Outlets"/>
-
-        <CheckBox
-            android:id="@+id/cbAvailableOnly"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Available"/>
-
-    </LinearLayout>
-
-    <Spinner
-        android:id="@+id/sortSpinner"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"/>
-
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerSpots"
         android:layout_width="match_parent"

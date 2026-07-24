@@ -6,11 +6,7 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.CheckBox
 import android.widget.EditText
-import android.widget.Spinner
-import android.widget.ArrayAdapter
-import android.widget.AdapterView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -20,16 +16,16 @@ import com.google.android.material.textfield.TextInputLayout
 import com.studypin.app.R
 import com.studypin.app.data.MockData
 import com.studypin.app.model.StudySpot
+import com.studypin.app.ui.filter.FilterFragment
 
 
 class ListFragment : Fragment() {
 
     private lateinit var adapter: SpotListAdapter
     private lateinit var etSearch: EditText
-    private lateinit var cbWifi: CheckBox
-    private lateinit var cbOutlets: CheckBox
-    private lateinit var cbAvailableOnly: CheckBox
-    private lateinit var sortSpinner: Spinner
+    private var selectedAmenities: Set<String> = emptySet()
+    private var selectedAvailableOnly = false
+    private var selectedSortPosition = 0
 
     // Always sort/filter from the full original list, never from the
     // currently-displayed (already-filtered) list.
@@ -46,15 +42,36 @@ class ListFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         etSearch = view.findViewById(R.id.etHeaderSearch)
-        cbWifi = view.findViewById(R.id.cbWifi)
-        cbOutlets = view.findViewById(R.id.cbOutlets)
-        cbAvailableOnly = view.findViewById(R.id.cbAvailableOnly)
-        sortSpinner = view.findViewById(R.id.sortSpinner)
 
         // set up header
         view.findViewById<TextView>(R.id.tvHeaderTitle).text = "List"
         view.findViewById<TextView>(R.id.tvHeaderSubtitle).text = "Find and pin the best study spot"
         view.findViewById<TextInputLayout>(R.id.layoutHeaderSearch).hint = "Search for location..."
+
+        view.findViewById<View>(R.id.btnHeaderFilters).setOnClickListener {
+            val arguments = Bundle().apply {
+                putStringArrayList(
+                    FilterFragment.KEY_AMENITIES,
+                    ArrayList(selectedAmenities)
+                )
+                putBoolean(FilterFragment.KEY_AVAILABLE_ONLY, selectedAvailableOnly)
+                putInt(FilterFragment.KEY_SORT_POSITION, selectedSortPosition)
+            }
+            findNavController().navigate(R.id.action_list_to_filter, arguments)
+        }
+
+        parentFragmentManager.setFragmentResultListener(
+            FilterFragment.RESULT_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            selectedAmenities = result
+                .getStringArrayList(FilterFragment.KEY_AMENITIES)
+                ?.toSet()
+                .orEmpty()
+            selectedAvailableOnly = result.getBoolean(FilterFragment.KEY_AVAILABLE_ONLY)
+            selectedSortPosition = result.getInt(FilterFragment.KEY_SORT_POSITION, 0)
+            applyFiltersAndSort()
+        }
 
         val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerSpots)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
@@ -75,26 +92,8 @@ class ListFragment : Fragment() {
         }
         recyclerView.adapter = adapter
 
-        setupSortSpinner()
         setupSearchListener()
-        setupFilterListeners()
-
         applyFiltersAndSort()
-    }
-
-    private fun setupSortSpinner() {
-        val options = listOf("Sort: Rating (high to low)", "Sort: Occupancy (available first)")
-        sortSpinner.adapter = ArrayAdapter(
-            requireContext(),
-            android.R.layout.simple_spinner_dropdown_item,
-            options
-        )
-        sortSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(p: AdapterView<*>?, v: View?, pos: Int, id: Long) {
-                applyFiltersAndSort()
-            }
-            override fun onNothingSelected(p: AdapterView<*>?) {}
-        }
     }
 
     private fun setupSearchListener() {
@@ -105,12 +104,6 @@ class ListFragment : Fragment() {
             }
             override fun afterTextChanged(s: Editable?) {}
         })
-    }
-
-    private fun setupFilterListeners() {
-        cbWifi.setOnClickListener { applyFiltersAndSort() }
-        cbOutlets.setOnClickListener { applyFiltersAndSort() }
-        cbAvailableOnly.setOnClickListener { applyFiltersAndSort() }
     }
 
     /**
@@ -127,21 +120,20 @@ class ListFragment : Fragment() {
             result = result.filter { it.name.contains(query, ignoreCase = true) }
         }
 
-        // Filter by amenities
-        if (cbWifi.isChecked) {
-            result = result.filter { it.amenities.contains("wifi") }
-        }
-        if (cbOutlets.isChecked) {
-            result = result.filter { it.amenities.contains("outlets") }
+        // Filter by every selected amenity.
+        if (selectedAmenities.isNotEmpty()) {
+            result = result.filter { spot ->
+                selectedAmenities.all { amenity -> spot.amenities.contains(amenity) }
+            }
         }
 
         // Filter by occupancy
-        if (cbAvailableOnly.isChecked) {
+        if (selectedAvailableOnly) {
             result = result.filter { it.occupancyLabel() in listOf("Empty", "Available") }
         }
 
         // Sort
-        result = when (sortSpinner.selectedItemPosition) {
+        result = when (selectedSortPosition) {
             0 -> result.sortedByDescending { it.avgRating }
             1 -> result.sortedByDescending { it.capacity.approxSeats - it.currentCheckIns }
             else -> result

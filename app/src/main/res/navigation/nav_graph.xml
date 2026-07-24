@@ -23,7 +23,15 @@
         <action
             android:id="@+id/action_list_to_spotGroup"
             app:destination="@id/spotGroupFragment"/>
+        <action
+            android:id="@+id/action_list_to_filter"
+            app:destination="@id/filterFragment"/>
     </fragment>
+
+    <fragment
+        android:id="@+id/filterFragment"
+        android:name="com.studypin.app.ui.filter.FilterFragment"
+        android:label="Filters" />
 
     <fragment
         android:id="@+id/spotGroupFragment"
