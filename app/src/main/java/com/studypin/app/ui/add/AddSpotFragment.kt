@@ -25,6 +25,7 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import com.studypin.app.R
+import com.studypin.app.data.StorageRepository
 import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.model.Capacity
 import com.studypin.app.model.StudySpot
@@ -341,23 +342,43 @@ class AddSpotFragment : Fragment() {
             currentCheckIns = 0,
             parentSpotId = parentId,
             isHiddenGem = isHiddenGem,
-            imageUrl = "placeholder_uri", // In real app, upload bitmap to storage first
+            imageUrl = null,
             isValidated = false,
             requestCount = 1
         )
 
         btnSubmit.isEnabled = false
-        StudySpotRepository.addSpot(newSpot)
-            .addOnSuccessListener {
-                onComplete(newSpot)
-                clearForm()
+        val photo = selectedImageBitmap
+        if (photo == null) {
+            btnSubmit.isEnabled = true
+            Toast.makeText(requireContext(), getString(R.string.photo_is_required), Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        Toast.makeText(requireContext(), "Uploading photo...", Toast.LENGTH_SHORT).show()
+        StorageRepository.uploadSpotPhoto(
+            spotId = newSpot.id,
+            bitmap = photo,
+            onSuccess = { imageUrl ->
+                if (!isAdded) return@uploadSpotPhoto
+                StudySpotRepository.addSpot(newSpot.copy(imageUrl = imageUrl))
+                    .addOnSuccessListener {
+                        onComplete(newSpot.copy(imageUrl = imageUrl))
+                        clearForm()
+                    }
+                    .addOnFailureListener { error ->
+                        StorageRepository.deleteSpotPhoto(imageUrl)
+                        Toast.makeText(requireContext(), "Photo uploaded, but spot save failed: ${error.message}", Toast.LENGTH_LONG).show()
+                    }
+                    .addOnCompleteListener { btnSubmit.isEnabled = true }
+            },
+            onError = { error ->
+                if (isAdded) {
+                    btnSubmit.isEnabled = true
+                    Toast.makeText(requireContext(), "Could not upload photo: ${error.message}", Toast.LENGTH_LONG).show()
+                }
             }
-            .addOnFailureListener { error ->
-                Toast.makeText(requireContext(), "Could not save spot: ${error.message}", Toast.LENGTH_LONG).show()
-            }
-            .addOnCompleteListener {
-                btnSubmit.isEnabled = true
-            }
+        )
     }
 
     private fun clearForm() {
