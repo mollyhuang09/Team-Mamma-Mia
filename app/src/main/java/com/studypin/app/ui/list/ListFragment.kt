@@ -19,6 +19,8 @@ import com.studypin.app.R
 import com.studypin.app.data.MockData
 import com.studypin.app.model.StudySpot
 import com.studypin.app.ui.filter.FilterFragment
+import com.studypin.app.ui.search.SearchFragment
+import com.studypin.app.ui.toTagLabel
 
 
 class ListFragment : Fragment() {
@@ -28,6 +30,7 @@ class ListFragment : Fragment() {
     private lateinit var chipGroupTags: ChipGroup
     private lateinit var tvSpotCount: TextView
     private lateinit var tvSortSummary: TextView
+    private var searchNavigationStarted = false
     private var selectedAmenities: Set<String> = emptySet()
     private var selectedEnvironments: Set<String> = emptySet()
     private var selectedAvailableOnly = false
@@ -37,19 +40,6 @@ class ListFragment : Fragment() {
         "Rating",
         "Most reviews",
         "Recently added"
-    )
-
-    private val tagLabels = linkedMapOf(
-        "wifi" to "Wi-Fi",
-        "outlets" to "Outlets",
-        "printing" to "Printing",
-        "quiet" to "Quiet",
-        "washroom" to "Washroom",
-        "food" to "Food",
-        "parking" to "Parking",
-        "group_friendly" to "Group Friendly",
-        "indoor" to "Indoor",
-        "outdoor" to "Outdoor"
     )
 
     // Always sort/filter from the full original list, never from the
@@ -75,6 +65,25 @@ class ListFragment : Fragment() {
         view.findViewById<TextView>(R.id.tvHeaderTitle).text = "List"
         view.findViewById<TextView>(R.id.tvHeaderSubtitle).text = "Find and pin the best study spot"
         view.findViewById<TextInputLayout>(R.id.layoutHeaderSearch).hint = "Search for location..."
+
+        val headerSearch = view.findViewById<TextInputLayout>(R.id.layoutHeaderSearch)
+        headerSearch.setOnClickListener { openSearchScreen() }
+        etSearch.setOnClickListener { openSearchScreen() }
+        etSearch.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                openSearchScreen()
+            }
+        }
+
+        parentFragmentManager.setFragmentResultListener(
+            SearchFragment.RESULT_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            val query = result.getString(SearchFragment.KEY_QUERY).orEmpty()
+            etSearch.setText(query)
+            etSearch.setSelection(query.length)
+            applyFiltersAndSort()
+        }
 
         view.findViewById<View>(R.id.btnHeaderFilters).setOnClickListener {
             val arguments = Bundle().apply {
@@ -142,6 +151,22 @@ class ListFragment : Fragment() {
         })
     }
 
+    private fun openSearchScreen() {
+        if (searchNavigationStarted) return
+        searchNavigationStarted = true
+        etSearch.clearFocus()
+
+        val arguments = Bundle().apply {
+            putString(SearchFragment.KEY_INITIAL_QUERY, etSearch.text.toString())
+        }
+        findNavController().navigate(R.id.action_list_to_search, arguments)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        searchNavigationStarted = false
+    }
+
     /**
      * Re-runs search -> filter -> sort every time any control changes.
      * Simple and correct for prototype scale (10 mock spots);
@@ -204,8 +229,8 @@ class ListFragment : Fragment() {
             val label = if (key == "available_only") {
                 "Open"
             } else {
-                tagLabels[key]
-            } ?: return@forEach
+                key.toTagLabel()
+            }
 
             val chip = layoutInflater.inflate(
                 R.layout.item_spot_tag,

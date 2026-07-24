@@ -51,7 +51,7 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnHeaderFilters"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="48dp"
                 android:text="Filters"
                 android:textStyle="bold"
                 android:textColor="@color/brand_main"
