@@ -11,6 +11,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.studypin.app.R
+import com.google.firebase.auth.FirebaseAuth
 import com.studypin.app.data.MockData
 import com.studypin.app.data.ReviewRepository
 import com.studypin.app.model.StudySpotReview
@@ -68,7 +69,8 @@ class ReviewListFragment : Fragment() {
             findNavController().navigate(R.id.action_reviewList_to_addReview, bundle)
         }
         
-        if (ReviewRepository.hasUserReviewedSpot("You", spotId)) {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: "anonymous"
+        if (ReviewRepository.hasUserReviewedSpot(currentUserId, spotId)) {
             view.findViewById<View>(R.id.btnWriteReview).visibility = View.GONE
         }
         

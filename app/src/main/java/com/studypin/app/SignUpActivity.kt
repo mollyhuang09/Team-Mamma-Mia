@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
+import com.studypin.app.data.UserProfileRepository
 import com.studypin.app.databinding.ActivitySignupBinding
 
 class SignUpActivity : AppCompatActivity() {
@@ -57,11 +58,22 @@ class SignUpActivity : AppCompatActivity() {
 
                     user?.updateProfile(profileUpdates)
                         ?.addOnCompleteListener { profileTask ->
-                            setLoading(false)
                             if (profileTask.isSuccessful) {
-                                startActivity(Intent(this, MainActivity::class.java))
-                                finish()
+                                UserProfileRepository.saveProfile(
+                                    uid = user.uid,
+                                    displayName = displayName,
+                                    email = user.email.orEmpty()
+                                ) { profileError ->
+                                    setLoading(false)
+                                    if (profileError == null) {
+                                        startActivity(Intent(this, MainActivity::class.java))
+                                        finish()
+                                    } else {
+                                        Toast.makeText(this, "Account created, but profile sync failed: ${profileError.message}", Toast.LENGTH_LONG).show()
+                                    }
+                                }
                             } else {
+                                setLoading(false)
                                 Toast.makeText(this, "Failed to update profile", Toast.LENGTH_SHORT).show()
                             }
                         }

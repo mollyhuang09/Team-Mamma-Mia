@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.studypin.app.R
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.auth.FirebaseAuth
 import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.data.ReviewRepository
 import com.studypin.app.model.StudySpot
@@ -75,7 +76,8 @@ class SpotDetailFragment : Fragment() {
 
     private fun setupClickableStars(view: View, spotId: String) {
         val actionLayout = view.findViewById<View>(R.id.layoutUserRatingAction)
-        if (ReviewRepository.hasUserReviewedSpot("You", spotId)) {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: "anonymous"
+        if (ReviewRepository.hasUserReviewedSpot(currentUserId, spotId)) {
             actionLayout.visibility = View.GONE
             return
         }

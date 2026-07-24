@@ -13,6 +13,7 @@ import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.textfield.TextInputEditText
 import com.studypin.app.R
+import com.google.firebase.auth.FirebaseAuth
 import com.studypin.app.data.MockData
 import com.studypin.app.data.ReviewRepository
 import com.studypin.app.model.StudySpotReview
@@ -123,7 +124,8 @@ class AddReviewFragment : Fragment() {
         val review = StudySpotReview(
             id = UUID.randomUUID().toString(),
             spotId = spotId,
-            reviewerName = "You", // In a real app, this would be the logged-in user
+            reviewerId = FirebaseAuth.getInstance().currentUser?.uid ?: "anonymous",
+            reviewerName = FirebaseAuth.getInstance().currentUser?.displayName ?: "Anonymous",
             overallRating = selectedOverallRating,
             amenityRatings = amenityRatings.toMap(),
             reviewText = reviewText,

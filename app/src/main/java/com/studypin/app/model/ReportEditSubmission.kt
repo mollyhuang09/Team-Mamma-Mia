@@ -7,5 +7,6 @@ data class ReportEditSubmission(
     val suggestedCorrection: String,
     val details: String,
     val timestamp: Long,
-    val status: String = "pending"
+    val status: String = "pending",
+    val submittedBy: String = "anonymous"
 )

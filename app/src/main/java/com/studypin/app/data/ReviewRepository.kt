@@ -118,7 +118,9 @@ object ReviewRepository {
         reviews.filter { it.spotId == spotId }
 
     fun hasUserReviewedSpot(userId: String, spotId: String): Boolean {
-        return reviews.any { it.reviewerName == userId && it.spotId == spotId }
+        return reviews.any {
+            it.spotId == spotId && (it.reviewerId == userId || it.reviewerName == userId)
+        }
     }
 
     fun addReview(review: StudySpotReview, onComplete: ((Boolean, String?) -> Unit)? = null) {
@@ -153,4 +155,3 @@ object ReviewRepository {
         )
     }
 }
-

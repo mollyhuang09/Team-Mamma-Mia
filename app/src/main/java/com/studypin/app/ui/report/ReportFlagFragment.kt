@@ -15,6 +15,7 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.studypin.app.R
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.auth.FirebaseAuth
 import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.data.ReportEditRepository
 import com.studypin.app.model.ReportEditSubmission
@@ -140,7 +141,8 @@ class ReportFlagFragment : Fragment() {
             suggestedCorrection = etSuggestedCorrection.text.toString().trim(),
             details = details,
             timestamp = System.currentTimeMillis(),
-            status = "pending"
+            status = "pending",
+            submittedBy = FirebaseAuth.getInstance().currentUser?.uid ?: "anonymous"
         )
 
         btnSubmit.isEnabled = false
