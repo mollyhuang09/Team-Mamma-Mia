@@ -62,6 +62,7 @@ class FilterFragment : Fragment() {
     companion object {
         const val RESULT_KEY = "filter_result"
         const val KEY_AMENITIES = "filter_amenities"
+        const val KEY_ENVIRONMENTS = "filter_environments"
         const val KEY_AVAILABLE_ONLY = "filter_available_only"
         const val KEY_SORT_POSITION = "filter_sort_position"
     }
@@ -82,6 +83,12 @@ class FilterFragment : Fragment() {
         R.id.chipFilterParking to "parking"
     )
 
+    private val environmentChips = mapOf(
+        R.id.chipFilterIndoor to "indoor",
+        R.id.chipFilterOutdoor to "outdoor",
+        R.id.chipFilterGroupFriendly to "group_friendly"
+    )
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -98,6 +105,15 @@ class FilterFragment : Fragment() {
 
         amenityChips.forEach { (chipId, amenity) ->
             view.findViewById<Chip>(chipId).isChecked = amenity in initialAmenities
+        }
+
+        val initialEnvironments = arguments
+            ?.getStringArrayList(KEY_ENVIRONMENTS)
+            ?.toSet()
+            .orEmpty()
+
+        environmentChips.forEach { (chipId, environment) ->
+            view.findViewById<Chip>(chipId).isChecked = environment in initialEnvironments
         }
 
         val availableOnlyChip = view.findViewById<Chip>(R.id.chipFilterAvailableOnly)
@@ -129,8 +145,15 @@ class FilterFragment : Fragment() {
                     .values
             )
 
+            val selectedEnvironments = ArrayList(
+                environmentChips
+                    .filter { (chipId, _) -> view.findViewById<Chip>(chipId).isChecked }
+                    .values
+            )
+
             val result = Bundle().apply {
                 putStringArrayList(KEY_AMENITIES, selectedAmenities)
+                putStringArrayList(KEY_ENVIRONMENTS, selectedEnvironments)
                 putBoolean(KEY_AVAILABLE_ONLY, availableOnlyChip.isChecked)
                 putInt(KEY_SORT_POSITION, selectedSortPosition)
             }

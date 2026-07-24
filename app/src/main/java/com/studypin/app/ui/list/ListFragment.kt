@@ -12,6 +12,8 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.navigation.fragment.findNavController
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
 import com.google.android.material.textfield.TextInputLayout
 import com.studypin.app.R
 import com.studypin.app.data.MockData
@@ -23,9 +25,32 @@ class ListFragment : Fragment() {
 
     private lateinit var adapter: SpotListAdapter
     private lateinit var etSearch: EditText
+    private lateinit var chipGroupTags: ChipGroup
+    private lateinit var tvSpotCount: TextView
+    private lateinit var tvSortSummary: TextView
     private var selectedAmenities: Set<String> = emptySet()
+    private var selectedEnvironments: Set<String> = emptySet()
     private var selectedAvailableOnly = false
     private var selectedSortPosition = 0
+
+    private val sortSummaryLabels = listOf(
+        "Rating",
+        "Most reviews",
+        "Recently added"
+    )
+
+    private val tagLabels = linkedMapOf(
+        "wifi" to "Wi-Fi",
+        "outlets" to "Outlets",
+        "printing" to "Printing",
+        "quiet" to "Quiet",
+        "washroom" to "Washroom",
+        "food" to "Food",
+        "parking" to "Parking",
+        "group_friendly" to "Group Friendly",
+        "indoor" to "Indoor",
+        "outdoor" to "Outdoor"
+    )
 
     // Always sort/filter from the full original list, never from the
     // currently-displayed (already-filtered) list.
@@ -42,6 +67,9 @@ class ListFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         etSearch = view.findViewById(R.id.etHeaderSearch)
+        chipGroupTags = view.findViewById(R.id.chipGroupTags)
+        tvSpotCount = view.findViewById(R.id.tvSpotCount)
+        tvSortSummary = view.findViewById(R.id.tvSortSummary)
 
         // set up header
         view.findViewById<TextView>(R.id.tvHeaderTitle).text = "List"
@@ -53,6 +81,10 @@ class ListFragment : Fragment() {
                 putStringArrayList(
                     FilterFragment.KEY_AMENITIES,
                     ArrayList(selectedAmenities)
+                )
+                putStringArrayList(
+                    FilterFragment.KEY_ENVIRONMENTS,
+                    ArrayList(selectedEnvironments)
                 )
                 putBoolean(FilterFragment.KEY_AVAILABLE_ONLY, selectedAvailableOnly)
                 putInt(FilterFragment.KEY_SORT_POSITION, selectedSortPosition)
@@ -66,6 +98,10 @@ class ListFragment : Fragment() {
         ) { _, result ->
             selectedAmenities = result
                 .getStringArrayList(FilterFragment.KEY_AMENITIES)
+                ?.toSet()
+                .orEmpty()
+            selectedEnvironments = result
+                .getStringArrayList(FilterFragment.KEY_ENVIRONMENTS)
                 ?.toSet()
                 .orEmpty()
             selectedAvailableOnly = result.getBoolean(FilterFragment.KEY_AVAILABLE_ONLY)
@@ -141,6 +177,52 @@ class ListFragment : Fragment() {
         }
 
         adapter.updateList(result)
+        updateListSummary(result.size)
+        updateSelectedTagChips()
+    }
+
+    private fun updateListSummary(resultCount: Int) {
+        val spotLabel = if (resultCount == 1) "Spot" else "Spots"
+        tvSpotCount.text = "$resultCount $spotLabel Found"
+
+        val sortLabel = sortSummaryLabels
+            .getOrNull(selectedSortPosition)
+            ?: sortSummaryLabels.first()
+        tvSortSummary.text = "Sort: $sortLabel"
+    }
+
+    private fun updateSelectedTagChips() {
+        chipGroupTags.removeAllViews()
+
+        val selectedKeys = buildList {
+            addAll(selectedAmenities)
+            addAll(selectedEnvironments)
+            if (selectedAvailableOnly) add("available_only")
+        }
+
+        selectedKeys.forEach { key ->
+            val label = if (key == "available_only") {
+                "Open"
+            } else {
+                tagLabels[key]
+            } ?: return@forEach
+
+            val chip = layoutInflater.inflate(
+                R.layout.item_spot_tag,
+                chipGroupTags,
+                false
+            ) as Chip
+            chip.text = label
+            chip.isClickable = false
+            chip.isFocusable = false
+            chipGroupTags.addView(chip)
+        }
+
+        chipGroupTags.visibility = if (selectedKeys.isEmpty()) {
+            View.GONE
+        } else {
+            View.VISIBLE
+        }
     }
 
 }
