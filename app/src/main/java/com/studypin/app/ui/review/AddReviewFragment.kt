@@ -67,6 +67,11 @@ class AddReviewFragment : Fragment() {
             submitReview(view)
         }
 
+        if (FirebaseAuth.getInstance().currentUser == null) {
+            view.findViewById<View>(R.id.btnSubmitReview).isEnabled = false
+            Toast.makeText(requireContext(), "Sign in to submit a review", Toast.LENGTH_SHORT).show()
+        }
+
         // Set initial rating if passed from previous screen
         if (initialRating > 0) {
             updateOverallRating(view, initialRating)

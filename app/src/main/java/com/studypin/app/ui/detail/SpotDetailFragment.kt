@@ -82,7 +82,12 @@ class SpotDetailFragment : Fragment() {
 
     private fun setupClickableStars(view: View, spotId: String) {
         val actionLayout = view.findViewById<View>(R.id.layoutUserRatingAction)
-        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: "anonymous"
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser == null) {
+            actionLayout.visibility = View.GONE
+            return
+        }
+        val currentUserId = currentUser.uid
         if (ReviewRepository.hasUserReviewedSpot(currentUserId, spotId)) {
             actionLayout.visibility = View.GONE
             return

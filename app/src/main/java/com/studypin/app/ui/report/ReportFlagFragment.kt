@@ -117,6 +117,11 @@ class ReportFlagFragment : Fragment() {
     }
 
     private fun submitReport() {
+        if (FirebaseAuth.getInstance().currentUser == null) {
+            Toast.makeText(requireContext(), "Sign in to submit a report", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         categoryLayout.error = null
         detailsLayout.error = null
 

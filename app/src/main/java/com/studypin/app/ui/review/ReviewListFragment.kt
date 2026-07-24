@@ -63,8 +63,8 @@ class ReviewListFragment : Fragment() {
             findNavController().navigate(R.id.action_reviewList_to_addReview, bundle)
         }
         
-        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: "anonymous"
-        if (ReviewRepository.hasUserReviewedSpot(currentUserId, spotId)) {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+        if (currentUserId == null || ReviewRepository.hasUserReviewedSpot(currentUserId, spotId)) {
             view.findViewById<View>(R.id.btnWriteReview).visibility = View.GONE
         }
         

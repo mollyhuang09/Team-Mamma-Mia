@@ -197,6 +197,11 @@ class AddSpotFragment : Fragment() {
     }
 
     private fun onSubmitClicked() {
+        if (com.google.firebase.auth.FirebaseAuth.getInstance().currentUser == null) {
+            Toast.makeText(requireContext(), "Sign in to add a study spot", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val name = etName.text.toString().trim()
         val address = etAddress.text.toString().trim()
 
