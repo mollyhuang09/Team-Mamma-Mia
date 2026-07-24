@@ -11,10 +11,12 @@ import android.widget.EditText
 import android.widget.Spinner
 import android.widget.ArrayAdapter
 import android.widget.AdapterView
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.navigation.fragment.findNavController
+import com.google.android.material.textfield.TextInputLayout
 import com.studypin.app.R
 import com.studypin.app.data.MockData
 import com.studypin.app.model.StudySpot
@@ -43,11 +45,16 @@ class ListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        etSearch = view.findViewById(R.id.etSearch)
+        etSearch = view.findViewById(R.id.etHeaderSearch)
         cbWifi = view.findViewById(R.id.cbWifi)
         cbOutlets = view.findViewById(R.id.cbOutlets)
         cbAvailableOnly = view.findViewById(R.id.cbAvailableOnly)
         sortSpinner = view.findViewById(R.id.sortSpinner)
+
+        // set up header
+        view.findViewById<TextView>(R.id.tvHeaderTitle).text = "List"
+        view.findViewById<TextView>(R.id.tvHeaderSubtitle).text = "Find and pin the best study spot"
+        view.findViewById<TextInputLayout>(R.id.layoutHeaderSearch).hint = "Search for location..."
 
         val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerSpots)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
