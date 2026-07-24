@@ -7,7 +7,7 @@
     app:cardBackgroundColor="@color/white"
     app:cardCornerRadius="8dp"
     app:contentPaddingTop="36dp"
-    app:contentPaddingBottom="12dp"
+    app:contentPaddingBottom="18dp"
     app:contentPaddingLeft="6dp"
     app:contentPaddingRight="6dp"
     app:strokeWidth="0dp">

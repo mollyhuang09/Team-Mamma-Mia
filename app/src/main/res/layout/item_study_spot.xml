@@ -9,8 +9,8 @@
     app:contentPadding="12dp"
     app:cardBackgroundColor="@color/surface_color"
     app:cardCornerRadius="8dp"
-    app:cardElevation="4dp"
-    app:strokeWidth="0dp" >
+    app:strokeColor="@color/border_default"
+    app:strokeWidth="1dp" >
 
     <LinearLayout
         android:layout_width="match_parent"

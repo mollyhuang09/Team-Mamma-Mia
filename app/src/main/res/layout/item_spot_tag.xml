@@ -15,7 +15,7 @@
     app:ensureMinTouchTargetSize="false"
     app:chipBackgroundColor="@color/surface_light_tint"
     app:chipStrokeWidth="0dp"
-    app:chipStartPadding="0dp"
-    app:chipEndPadding="0dp"
+    app:chipStartPadding="1dp"
+    app:chipEndPadding="2dp"
     app:chipCornerRadius="6dp"
     android:text="Spot name" />
