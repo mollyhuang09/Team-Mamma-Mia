@@ -18,6 +18,20 @@
         android:id="@+id/bottom_navigation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/surface_color"
+        android:minHeight="80dp"
+        app:itemActiveIndicatorStyle="@null"
+        app:itemBackground="@drawable/bottom_nav_item_background"
+        app:itemHorizontalTranslationEnabled="false"
+        app:itemIconSize="28dp"
+        app:itemIconTint="@color/bottom_nav_item_color"
+        app:itemPaddingTop="10dp"
+        app:itemPaddingBottom="16dp"
+        app:itemRippleColor="@android:color/transparent"
+        app:itemTextAppearanceActive="@style/BottomNavigationItemText"
+        app:itemTextAppearanceInactive="@style/BottomNavigationItemText"
+        app:itemTextColor="@color/bottom_nav_item_color"
+        app:labelVisibilityMode="labeled"
         app:menu="@menu/bottom_nav_menu"/>
 
 </LinearLayout>
