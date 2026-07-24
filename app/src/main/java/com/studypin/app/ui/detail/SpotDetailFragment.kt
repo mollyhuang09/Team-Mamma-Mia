@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.studypin.app.R
@@ -173,7 +174,16 @@ class SpotDetailFragment : Fragment() {
                 val bundle = Bundle().apply { putString("spotId", spotId) }
                 findNavController().navigate(R.id.action_spotDetail_to_addReview, bundle)
             } else {
-                CheckInManager.checkIn(spotId)
+                if (CheckInManager.currentSpotId != null) {
+                    val currentSpot = CheckInManager.getCurrentSpot()
+                    Toast.makeText(
+                        requireContext(),
+                        "Please check out of ${currentSpot?.name} first",
+                        Toast.LENGTH_LONG
+                    ).show()
+                } else {
+                    CheckInManager.checkIn(spotId)
+                }
             }
             updateButtonState()
             (activity as? MainActivity)?.updateBannerVisibility()
