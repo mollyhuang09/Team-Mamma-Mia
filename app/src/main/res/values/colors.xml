@@ -3,4 +3,11 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="subtle_box_bg">#F5F5F5</color>
+
+    <color name="surface_color">#FFFFFF</color>
+    <color name="surface_light_tint">#EAF7F9</color>
+    <color name="surface_muted">#8CB8B7</color>
+    <color name="brand_main">#1D4F58</color>
+    <color name="star_default">#FBBC05</color>
+    <color name="diamond_default">#185FA5</color>
 </resources>
