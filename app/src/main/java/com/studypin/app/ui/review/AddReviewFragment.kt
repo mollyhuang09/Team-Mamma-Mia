@@ -14,8 +14,9 @@ import com.google.android.material.chip.ChipGroup
 import com.google.android.material.textfield.TextInputEditText
 import com.studypin.app.R
 import com.google.firebase.auth.FirebaseAuth
-import com.studypin.app.data.MockData
+import com.google.firebase.firestore.ListenerRegistration
 import com.studypin.app.data.ReviewRepository
+import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.model.StudySpotReview
 import java.util.UUID
 
@@ -25,6 +26,7 @@ class AddReviewFragment : Fragment() {
     private var initialRating: Int = 0
     private var selectedOverallRating = 0
     private val amenityRatings = mutableMapOf<String, Int>()
+    private var spotListener: ListenerRegistration? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -37,14 +39,25 @@ class AddReviewFragment : Fragment() {
         spotId = arguments?.getString("spotId") ?: ""
         initialRating = arguments?.getInt("initialRating") ?: 0
 
-        val spot = MockData.studySpots.firstOrNull { it.id == spotId }
-        view.findViewById<TextView>(R.id.tvSpotName).text = spot?.name ?: "Unknown Spot"
+        view.findViewById<TextView>(R.id.tvSpotName).text = "Loading spot..."
 
         setupOverallStars(view)
-        
-        val baseAmenities = listOf("noise", "seating")
-        val allAmenities = (baseAmenities + (spot?.amenities ?: emptyList())).distinct()
-        setupAmenityRatings(view, allAmenities)
+        spotListener = StudySpotRepository.observeSpot(
+            spotId = spotId,
+            onSuccess = { spot ->
+                if (!isAdded) return@observeSpot
+                if (spot == null) {
+                    view.findViewById<TextView>(R.id.tvSpotName).text = "Unknown Spot"
+                } else {
+                    view.findViewById<TextView>(R.id.tvSpotName).text = spot.name
+                    val allAmenities = (listOf("noise", "seating") + spot.amenities).distinct()
+                    setupAmenityRatings(view, allAmenities)
+                }
+            },
+            onError = {
+                if (isAdded) view.findViewById<TextView>(R.id.tvSpotName).text = "Spot unavailable"
+            }
+        )
 
         view.findViewById<View>(R.id.btnBack).setOnClickListener {
             findNavController().navigateUp()
@@ -151,5 +164,11 @@ class AddReviewFragment : Fragment() {
         } else {
             ""
         }
+    }
+
+    override fun onDestroyView() {
+        spotListener?.remove()
+        spotListener = null
+        super.onDestroyView()
     }
 }

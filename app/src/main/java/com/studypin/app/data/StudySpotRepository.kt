@@ -38,6 +38,35 @@ object StudySpotRepository {
         })
     }
 
+    fun getSpots(
+        onSuccess: (List<StudySpot>) -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        spots.get()
+            .addOnSuccessListener { snapshot ->
+                onSuccess(snapshot.documents.mapNotNull { it.toStudySpot() })
+            }
+            .addOnFailureListener { error -> onError(error) }
+    }
+
+    fun vouchSpot(spotId: String, userId: String) = FirebaseFirestore.getInstance().runTransaction { transaction ->
+        val spotRef = spots.document(spotId)
+        val spot = transaction.get(spotRef)
+        if (!spot.exists()) throw IllegalStateException("Study spot does not exist")
+
+        val currentCount = (spot.getLong("requestCount") ?: 0L).toInt()
+        val nextCount = currentCount + 1
+        transaction.update(
+            spotRef,
+            mapOf(
+                "requestCount" to nextCount,
+                "isValidated" to (nextCount >= 2),
+                "lastVouchedBy" to userId
+            )
+        )
+        null
+    }
+
     // convert the Kotlin model to Firestore data
     private fun StudySpot.toFirestoreMap(): Map<String, Any?> = mapOf(
         "name" to name,

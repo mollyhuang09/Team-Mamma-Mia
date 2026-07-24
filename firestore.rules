@@ -1,0 +1,65 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.uid == request.auth.uid;
+      allow delete: if false;
+    }
+
+    match /studySpots/{spotId} {
+      // StudyPin supports browsing in guest mode.
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.createdBy == request.auth.uid;
+      allow update: if request.auth != null
+        && (
+          resource.data.createdBy == request.auth.uid
+          || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['currentCheckIns'])
+          || (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['requestCount', 'isValidated', 'lastVouchedBy'])
+            && request.resource.data.lastVouchedBy == request.auth.uid
+          )
+        );
+      allow delete: if request.auth != null && resource.data.createdBy == request.auth.uid;
+
+      match /activeCheckIns/{userId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.spotId == spotId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+        allow update: if false;
+      }
+
+      match /occupancyUpdates/{updateId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.spotId == spotId;
+        allow update, delete: if false;
+      }
+
+      match /ratings/{ratingId} {
+        allow read: if true;
+        allow create: if request.auth != null
+          && request.resource.data.reviewerId == request.auth.uid
+          && request.resource.data.spotId == spotId;
+        allow update, delete: if request.auth != null
+          && resource.data.reviewerId == request.auth.uid;
+      }
+    }
+
+    match /reports/{reportId} {
+      allow create: if request.auth != null
+        && request.resource.data.submittedBy == request.auth.uid;
+      allow read: if request.auth != null
+        && resource.data.submittedBy == request.auth.uid;
+      allow update, delete: if false;
+    }
+  }
+}

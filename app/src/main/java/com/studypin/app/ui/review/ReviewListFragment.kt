@@ -12,8 +12,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.studypin.app.R
 import com.google.firebase.auth.FirebaseAuth
-import com.studypin.app.data.MockData
+import com.google.firebase.firestore.ListenerRegistration
 import com.studypin.app.data.ReviewRepository
+import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.model.StudySpotReview
 import java.util.Locale
 
@@ -21,6 +22,7 @@ class ReviewListFragment : Fragment() {
 
     private var spotId: String = ""
     private lateinit var adapter: ReviewAdapter
+    private var spotListener: ListenerRegistration? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -31,13 +33,6 @@ class ReviewListFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         spotId = arguments?.getString("spotId") ?: ""
-        val spot = MockData.studySpots.firstOrNull { it.id == spotId }
-        val stats = ReviewRepository.displayStatsForSpot(spot ?: return)
-
-        view.findViewById<TextView>(R.id.tvReviewSpotName).text = spot.name
-        view.findViewById<TextView>(R.id.tvReviewAverage).text = String.format(Locale.CANADA, "%.1f", stats.averageOverall)
-        view.findViewById<TextView>(R.id.tvReviewCount).text = "${stats.reviewCount} reviews"
-
         val amenityLayout = view.findViewById<View>(R.id.layoutReviewAmenitySummary)
         val toggleBtn = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnToggleAmenities)
         
@@ -51,11 +46,9 @@ class ReviewListFragment : Fragment() {
             }
         }
 
-        setupAmenitySummary(view, stats.amenityAverages)
-
         val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerReviews)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        adapter = ReviewAdapter(ReviewRepository.reviewsForSpot(spotId))
+        adapter = ReviewAdapter(emptyList())
         recyclerView.adapter = adapter
 
         view.findViewById<View>(R.id.btnBack).setOnClickListener {
@@ -77,6 +70,32 @@ class ReviewListFragment : Fragment() {
         if (adapter.itemCount == 0) {
             view.findViewById<View>(R.id.tvEmptyReviews).visibility = View.VISIBLE
         }
+
+        spotListener = StudySpotRepository.observeSpot(
+            spotId = spotId,
+            onSuccess = { spot ->
+                if (!isAdded) return@observeSpot
+                if (spot == null) {
+                    view.findViewById<TextView>(R.id.tvReviewSpotName).text = "Spot unavailable"
+                    return@observeSpot
+                }
+                val stats = ReviewRepository.displayStatsForSpot(spot)
+                view.findViewById<TextView>(R.id.tvReviewSpotName).text = spot.name
+                view.findViewById<TextView>(R.id.tvReviewAverage).text = String.format(Locale.CANADA, "%.1f", stats.averageOverall)
+                view.findViewById<TextView>(R.id.tvReviewCount).text = "${stats.reviewCount} reviews"
+                setupAmenitySummary(view, stats.amenityAverages)
+                adapter.updateReviews(ReviewRepository.reviewsForSpot(spotId))
+                view.findViewById<View>(R.id.tvEmptyReviews).visibility =
+                    if (adapter.itemCount == 0) View.VISIBLE else View.GONE
+            },
+            onError = { if (isAdded) view.findViewById<TextView>(R.id.tvReviewSpotName).text = "Spot unavailable" }
+        )
+    }
+
+    override fun onDestroyView() {
+        spotListener?.remove()
+        spotListener = null
+        super.onDestroyView()
     }
 
     private fun setupAmenitySummary(view: View, averages: Map<String, Double>) {
@@ -103,7 +122,7 @@ class ReviewListFragment : Fragment() {
     }
 }
 
-class ReviewAdapter(private val reviews: List<StudySpotReview>) : RecyclerView.Adapter<ReviewAdapter.ViewHolder>() {
+class ReviewAdapter(private var reviews: List<StudySpotReview>) : RecyclerView.Adapter<ReviewAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val name: TextView = view.findViewById(R.id.tvReviewerName)
@@ -135,4 +154,9 @@ class ReviewAdapter(private val reviews: List<StudySpotReview>) : RecyclerView.A
     }
 
     override fun getItemCount() = reviews.size
+
+    fun updateReviews(newReviews: List<StudySpotReview>) {
+        reviews = newReviews
+        notifyDataSetChanged()
+    }
 }
