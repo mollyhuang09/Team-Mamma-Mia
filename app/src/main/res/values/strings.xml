@@ -6,6 +6,7 @@
     <string name="wifi_strength">WiFi Strength</string>
     <string name="seating_comfort">Seating Comfort</string>
     <string name="outlet_availability">Outlet Availability</string>
+    <string name="star">&#9733;</string>
 
     <!-- Profile Screen -->
     <string name="profile">Profile</string>
@@ -59,4 +60,13 @@
     <string name="report_success_note">Your report helps keep StudyPin accurate and\nhelpful for everyone.</string>
     <string name="back_to_spot">Back to Spot</string>
     <string name="return_to_map">Return to Map</string>
+
+    <!-- Review -->
+    <string name="reviews">Reviews</string>
+    <string name="average_rating">Average rating</string>
+    <string name="rating_star">Rating star</string>
+    <string name="view_details">View details</string>
+    <string name="write_a_review">Write a review</string>
+    <string name="review_group_subtitle">What people are saying</string>
+    <string name="review_group_placeholder">No reviews yet. Be the first to share your experience.</string>
 </resources>

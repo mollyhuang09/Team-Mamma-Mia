@@ -12,6 +12,7 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.core.view.updateLayoutParams
@@ -70,7 +71,22 @@ class SpotDetailFragment : Fragment() {
         }
         view.findViewById<View>(R.id.btnSave).setOnClickListener { button ->
             val saveButton = button as MaterialButton
-            saveButton.text = if (saveButton.text == "Save") "Saved" else "Save"
+            val isSaved = !saveButton.isSelected
+            saveButton.isSelected = isSaved
+            saveButton.text = if (isSaved) "Saved" else "Save"
+            saveButton.setIconResource(
+                if (isSaved) R.drawable.ic_bookmark_filled else R.drawable.ic_bookmark
+            )
+            saveButton.setIconTintResource(R.color.brand_main)
+            saveButton.backgroundTintList = ContextCompat.getColorStateList(
+                requireContext(),
+                if (isSaved) R.color.surface_light_tint else R.color.surface_color
+            )
+            saveButton.contentDescription = if (isSaved) {
+                "Remove spot from saved places"
+            } else {
+                "Save spot"
+            }
         }
         view.findViewById<View>(R.id.btnAddPhoto).setOnClickListener {
             Toast.makeText(requireContext(), "Photo upload will be connected later", Toast.LENGTH_SHORT).show()
@@ -256,9 +272,15 @@ class SpotDetailFragment : Fragment() {
 
     private fun bindReviewCards(view: View, spot: StudySpot) {
         val reviewContainer = view.findViewById<LinearLayout>(R.id.layoutReviewCards)
-        reviewContainer.removeAllViews()
+        val reviewSummary = view.findViewById<View>(R.id.layoutReviewSummary)
+        val emptyReviews = view.findViewById<TextView>(R.id.tvEmptyReviews)
+        val reviews = ReviewRepository.reviewsForSpot(spot.id)
 
-        ReviewRepository.reviewsForSpot(spot.id).take(3).forEach { review ->
+        reviewContainer.removeAllViews()
+        reviewSummary.visibility = if (reviews.isEmpty()) View.GONE else View.VISIBLE
+        emptyReviews.visibility = if (reviews.isEmpty()) View.VISIBLE else View.GONE
+
+        reviews.take(3).forEach { review ->
             val reviewView = LayoutInflater.from(requireContext())
                 .inflate(R.layout.item_review, reviewContainer, false)
             bindReviewView(reviewView, review)

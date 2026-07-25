@@ -229,11 +229,13 @@
                         android:layout_marginStart="6dp"
                         android:layout_marginEnd="6dp"
                         android:layout_weight="1"
+                        android:contentDescription="Save spot"
                         android:text="Save"
                         android:textAllCaps="false"
                         android:textColor="@color/brand_main"
                         android:textSize="14sp"
                         app:cornerRadius="12dp"
+                        app:backgroundTint="@color/surface_color"
                         app:icon="@drawable/ic_bookmark"
                         app:iconGravity="textTop"
                         app:iconPadding="2dp"
@@ -296,6 +298,16 @@
                     android:textColor="@color/text_primary"
                     android:textSize="20sp"
                     android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvEmptyReviews"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="@string/review_group_placeholder"
+                    android:textColor="@color/brand_main"
+                    android:textSize="14sp"
+                    android:visibility="gone" />
 
                 <LinearLayout
                     android:id="@+id/layoutReviewSummary"

@@ -24,7 +24,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
-        android:text="Reviews"
+        android:text="@string/reviews"
         android:textColor="?attr/colorOnSurface"
         android:textSize="28sp"
         android:textStyle="bold" />
@@ -72,7 +72,7 @@
                         android:orientation="vertical">
 
                         <TextView
-                            android:text="Average rating"
+                            android:text="@string/average_rating"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textColor="@color/brand_main"
@@ -97,9 +97,9 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="8dp"
-                                android:contentDescription="Rating star"
+                                android:contentDescription="@string/rating_star"
                                 android:importantForAccessibility="no"
-                                android:text="&#9733;"
+                                android:text="@string/star"
                                 android:textColor="@color/star_default"
                                 android:textSize="28sp" />
 
@@ -120,7 +120,7 @@
                     style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="View details"
+                    android:text="@string/view_details"
                     android:textAllCaps="false"
                     android:textColor="@color/brand_main"
                     android:textSize="14sp" />
@@ -142,7 +142,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="14dp"
         android:minHeight="52dp"
-        android:text="Write a review"
+        android:text="@string/write_a_review"
         android:textAllCaps="false"
         android:textColor="@color/surface_color"
         app:backgroundTint="@color/brand_main"
@@ -153,7 +153,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
-        android:text="What people are saying"
+        android:text="@string/review_group_subtitle"
         android:textColor="?attr/colorOnSurface"
         android:textSize="22sp"
         android:textStyle="bold" />
@@ -163,8 +163,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:text="No reviews yet. Be the first to share your experience."
-        android:textColor="?attr/colorOnSurfaceVariant"
+        android:text="@string/review_group_placeholder"
+        android:textColor="@color/brand_main"
         android:textSize="14sp"
         android:visibility="gone" />
 
