@@ -1,209 +1,188 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/reportFlagRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/colorSurface"
+    android:background="@color/surface_color"
     android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingStart="20dp"
-        android:paddingTop="28dp"
-        android:paddingEnd="20dp"
-        android:paddingBottom="32dp">
+        android:paddingStart="26dp"
+        android:paddingTop="0dp"
+        android:paddingEnd="26dp"
+        android:paddingBottom="24dp">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="78dp">
+
+            <FrameLayout
+                android:layout_width="68dp"
+                android:layout_height="68dp"
+                android:layout_gravity="center_horizontal"
+                android:background="@drawable/bg_report_icon">
+
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@string/report"
+                    android:src="@drawable/ic_flag"
+                    app:tint="@color/report_red" />
+            </FrameLayout>
+
+            <ImageButton
+                android:id="@+id/btnCloseReport"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="top|end"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/close_report"
+                android:padding="10dp"
+                android:src="@drawable/ic_close" />
+        </FrameLayout>
 
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Report a Problem"
-            android:textColor="?attr/colorOnSurface"
-            android:textSize="28sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="6dp"/>
+            android:gravity="center"
+            android:text="@string/report_title"
+            android:textColor="@color/black"
+            android:textSize="22sp"
+            android:textStyle="bold" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Tell us what needs to be fixed so this spot stays accurate for everyone."
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textSize="15sp"
-            android:layout_marginBottom="14dp"/>
+            android:layout_marginTop="30dp"
+            android:text="@string/report_subtitle"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
-        <com.google.android.material.card.MaterialCardView
+        <RadioGroup
+            android:id="@+id/rgReportCategory"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardBackgroundColor="?attr/colorSurface"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="0dp"
-            app:strokeColor="?attr/colorOutlineVariant"
-            app:strokeWidth="1dp">
+            android:layout_marginTop="10dp"
+            android:orientation="vertical">
 
-            <LinearLayout
+            <androidx.appcompat.widget.AppCompatRadioButton
+                android:id="@+id/rbIncorrectLocation"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingStart="12dp"
-                android:paddingTop="8dp"
-                android:paddingEnd="12dp"
-                android:paddingBottom="8dp">
+                android:layout_height="48dp"
+                app:buttonTint="@color/report_radio_tint"
+                android:paddingHorizontal="0dp"
+                android:text="@string/incorrect_location"
+                android:textColor="@color/brand_main"
+                android:textSize="16sp" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Report for"
-                        android:textColor="?attr/colorOnSurfaceVariant"
-                        android:textSize="12sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="3dp"/>
-
-                    <TextView
-                        android:id="@+id/tvReportSpotContext"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Mock Study Spot"
-                        android:textColor="?attr/colorOnSurface"
-                        android:textSize="15sp"/>
-
-                    <TextView
-                        android:id="@+id/tvReportPlaceContext"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColor="?attr/colorOnSurfaceVariant"
-                        android:textSize="13sp"
-                        android:layout_marginTop="2dp"
-                        android:visibility="gone"/>
-
-                </LinearLayout>
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilReportCategory"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:hint="Problem category *"
-            app:boxBackgroundMode="outline"
-            app:boxCornerRadiusBottomEnd="12dp"
-            app:boxCornerRadiusBottomStart="12dp"
-            app:boxCornerRadiusTopEnd="12dp"
-            app:boxCornerRadiusTopStart="12dp"
-            app:hintTextAppearance="@style/TextAppearance.MaterialComponents.Body1"
-            app:boxStrokeWidth="1dp"
-            app:boxStrokeWidthFocused="2dp"
-            app:endIconMode="dropdown_menu">
-
-            <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                android:id="@+id/actvReportCategory"
+            <androidx.appcompat.widget.AppCompatRadioButton
+                android:id="@+id/rbDuplicateSpot"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:cursorVisible="false"
-                android:gravity="center_vertical|start"
-                android:includeFontPadding="false"
-                android:inputType="none"
-                android:minHeight="56dp"
-                android:paddingStart="16dp"
-                android:paddingTop="14dp"
-                android:paddingEnd="48dp"
-                android:paddingBottom="14dp"
-                android:singleLine="true"
-                android:textSize="16sp"/>
+                android:layout_height="48dp"
+                app:buttonTint="@color/report_radio_tint"
+                android:paddingHorizontal="0dp"
+                android:text="@string/duplicate_spot"
+                android:textColor="@color/brand_main"
+                android:textSize="16sp" />
 
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:hint="Suggested correction (optional)"
-            app:boxBackgroundMode="outline"
-            app:boxCornerRadiusBottomEnd="12dp"
-            app:boxCornerRadiusBottomStart="12dp"
-            app:boxCornerRadiusTopEnd="12dp"
-            app:boxCornerRadiusTopStart="12dp"
-            app:hintTextAppearance="@style/TextAppearance.MaterialComponents.Body1"
-            app:boxStrokeWidth="1dp"
-            app:boxStrokeWidthFocused="2dp">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etSuggestedCorrection"
+            <androidx.appcompat.widget.AppCompatRadioButton
+                android:id="@+id/rbInaccurateDetails"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="top|start"
-                android:inputType="textMultiLine|textCapSentences"
-                android:minLines="3"
-                android:paddingStart="16dp"
-                android:paddingTop="14dp"
-                android:paddingEnd="16dp"
-                android:paddingBottom="14dp"
-                android:textSize="16sp"/>
+                android:layout_height="48dp"
+                app:buttonTint="@color/report_radio_tint"
+                android:paddingHorizontal="0dp"
+                android:text="@string/inaccurate_details"
+                android:textColor="@color/brand_main"
+                android:textSize="16sp" />
 
-        </com.google.android.material.textfield.TextInputLayout>
+            <androidx.appcompat.widget.AppCompatRadioButton
+                android:id="@+id/rbInappropriatePhoto"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                app:buttonTint="@color/report_radio_tint"
+                android:paddingHorizontal="0dp"
+                android:text="@string/inappropriate_photo"
+                android:textColor="@color/brand_main"
+                android:textSize="16sp" />
+
+            <androidx.appcompat.widget.AppCompatRadioButton
+                android:id="@+id/rbSpamOrFake"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                app:buttonTint="@color/report_radio_tint"
+                android:paddingHorizontal="0dp"
+                android:text="@string/spam_or_fake_content"
+                android:textColor="@color/brand_main"
+                android:textSize="16sp" />
+
+            <androidx.appcompat.widget.AppCompatRadioButton
+                android:id="@+id/rbOther"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                app:buttonTint="@color/report_radio_tint"
+                android:paddingHorizontal="0dp"
+                android:text="@string/other"
+                android:textColor="@color/brand_main"
+                android:textSize="16sp" />
+        </RadioGroup>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilReportDetails"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            android:hint="Additional details *"
+            android:layout_marginTop="18dp"
             app:boxBackgroundMode="outline"
             app:boxCornerRadiusBottomEnd="12dp"
             app:boxCornerRadiusBottomStart="12dp"
             app:boxCornerRadiusTopEnd="12dp"
             app:boxCornerRadiusTopStart="12dp"
-            app:hintTextAppearance="@style/TextAppearance.MaterialComponents.Body1"
+            app:boxStrokeColor="@color/report_box_stroke"
             app:boxStrokeWidth="1dp"
-            app:boxStrokeWidthFocused="2dp">
+            app:boxStrokeWidthFocused="2dp"
+            app:counterEnabled="true"
+            app:counterMaxLength="200"
+            app:hintTextColor="@color/report_hint_color">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etReportDetails"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="150dp"
                 android:gravity="top|start"
+                android:hint="@string/additional_details_optional"
                 android:inputType="textMultiLine|textCapSentences"
-                android:minLines="4"
-                android:paddingStart="16dp"
+                android:maxLength="200"
+                android:paddingStart="14dp"
                 android:paddingTop="14dp"
-                android:paddingEnd="16dp"
+                android:paddingEnd="14dp"
                 android:paddingBottom="14dp"
-                android:textSize="16sp"/>
-
+                android:textSize="16sp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSubmitReport"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:minHeight="52dp"
-            android:text="Submit report"
+            android:layout_height="64dp"
+            android:layout_marginTop="18dp"
+            android:text="@string/submit_report_button"
             android:textAllCaps="false"
-            app:cornerRadius="26dp"/>
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            app:backgroundTint="@color/report_red"
+            app:cornerRadius="14dp" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnCancelReport"
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:minHeight="52dp"
-            android:text="Cancel"
-            android:textAllCaps="false"
-            android:textColor="?attr/colorPrimary"
-            android:layout_marginTop="12dp"
-            app:backgroundTint="@android:color/transparent"
-            app:cornerRadius="26dp"
-            app:strokeColor="?attr/colorPrimary"
-            app:strokeWidth="1dp"/>
-
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:text="@string/report_note"
+            android:textColor="@color/surface_muted"
+            android:textSize="16sp" />
     </LinearLayout>
-
 </ScrollView>

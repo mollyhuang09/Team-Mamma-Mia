@@ -1,6 +1,7 @@
 package com.studypin.app
 
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.fragment.NavHostFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -15,6 +16,18 @@ class MainActivity : AppCompatActivity() {
         val navController = navHostFragment.navController
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            bottomNav.menu.findItem(destination.id)?.isChecked = true
+
+            bottomNav.visibility = if (destination.id == R.id.reportFlagFragment ||
+                destination.id == R.id.reportSuccessFragment
+            ) {
+                View.GONE
+            } else {
+                View.VISIBLE
+            }
+        }
 
         bottomNav.setOnItemSelectedListener { item ->
             // Pop everything off the back stack down to (and including)

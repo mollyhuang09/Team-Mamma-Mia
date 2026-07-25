@@ -15,4 +15,7 @@
     <color name="star_default">#FBBC05</color>
     <color name="diamond_default">#185FA5</color>
     <color name="text_primary">#101918</color>
+    <color name="report_red">#C51B1B</color>
+    <color name="report_icon_bg">#F6D4D4</color>
+    <color name="report_border">#A9C8CE</color>
 </resources>

@@ -37,4 +37,26 @@
     <string name="vouch_prompt_message">Someone else suggested a spot nearby named \"%1$s\". Would you like to vouch for it instead of creating a new one?</string>
     <string name="vouch_yes">Yes, vouch for it</string>
     <string name="vouch_no">No, create new</string>
+
+    <!-- Report -->
+    <string name="report">Report</string>
+    <string name="close_report">Close Report</string>
+    <string name="report_title">Report this study spot</string>
+    <string name="report_subtitle">What’s wrong?</string>
+    <string name="incorrect_location">Incorrect location</string>
+    <string name="duplicate_spot">Duplicate spot</string>
+    <string name="inaccurate_details">Inaccurate details</string>
+    <string name="inappropriate_photo">Inappropriate photo</string>
+    <string name="spam_or_fake_content">Spam or fake content</string>
+    <string name="other">Other</string>
+    <string name="additional_details_optional">Additional details (optional)</string>
+    <string name="submit_report_button">Submit report</string>
+    <string name="report_note">Your report is anonymous. We’ll review it and take\naction if it violates our guidelines.</string>
+    <string name="close_confirmation">Close confirmation</string>
+    <string name="report_submitted">Report submitted</string>
+    <string name="report_success_title">Thanks for your report</string>
+    <string name="report_success_subtitle">We’ll review this study spot and take action if needed.</string>
+    <string name="report_success_note">Your report helps keep StudyPin accurate and\nhelpful for everyone.</string>
+    <string name="back_to_spot">Back to Spot</string>
+    <string name="return_to_map">Return to Map</string>
 </resources>

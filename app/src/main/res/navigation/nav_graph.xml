@@ -118,6 +118,28 @@
     <fragment
         android:id="@+id/reportFlagFragment"
         android:name="com.studypin.app.ui.report.ReportFlagFragment"
-        android:label="Report a Problem"/>
+        android:label="Report a Problem">
+        <argument
+            android:name="spotId"
+            app:argType="string"
+            android:defaultValue="" />
+        <argument
+            android:name="spotName"
+            app:argType="string"
+            android:defaultValue="" />
+        <action
+            android:id="@+id/action_reportFlag_to_reportSuccess"
+            app:destination="@id/reportSuccessFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/reportSuccessFragment"
+        android:name="com.studypin.app.ui.report.ReportSuccessFragment"
+        android:label="Report Submitted">
+        <argument
+            android:name="spotId"
+            app:argType="string"
+            android:defaultValue="" />
+    </fragment>
 
 </navigation>
