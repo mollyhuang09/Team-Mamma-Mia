@@ -40,7 +40,9 @@ data class StudySpot(
     val currentCheckIns: Int = 0,
 
     // --- Validation & Photos ---
+    // imageUrl is kept for compatibility with existing spot data.
     val imageUrl: String? = null,
+    val imageUrls: List<String> = emptyList(),
     val isValidated: Boolean = false,
     val requestCount: Int = 0,
 

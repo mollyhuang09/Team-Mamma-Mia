@@ -6,12 +6,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.HorizontalScrollView
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import androidx.core.view.updateLayoutParams
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
@@ -22,6 +25,7 @@ import com.studypin.app.model.StudySpot
 import com.studypin.app.model.StudySpotReview
 import com.studypin.app.ui.review.ReviewHelpfulBinder
 import com.studypin.app.ui.review.StarRatingViews
+import com.studypin.app.ui.setOnApplyStatusBarInsetsListener
 import com.studypin.app.ui.toTagLabel
 import java.util.Locale
 
@@ -45,6 +49,7 @@ class SpotDetailFragment : Fragment() {
         }
 
         bindSpot(view, spot)
+        applyStatusBarInsets(view)
 
         view.findViewById<View>(R.id.btnBack).setOnClickListener {
             findNavController().navigateUp()
@@ -59,6 +64,9 @@ class SpotDetailFragment : Fragment() {
         }
         view.findViewById<View>(R.id.btnEdit).setOnClickListener {
             findNavController().navigate(R.id.action_spotDetail_to_editSpot)
+        }
+        view.findViewById<View>(R.id.btnDirection).setOnClickListener {
+            Toast.makeText(requireContext(), "Directions will be connected later", Toast.LENGTH_SHORT).show()
         }
         view.findViewById<View>(R.id.btnSave).setOnClickListener { button ->
             val saveButton = button as MaterialButton
@@ -91,12 +99,42 @@ class SpotDetailFragment : Fragment() {
         findNavController().navigate(R.id.action_spotDetail_to_reportFlag, bundle)
     }
 
+    private fun applyStatusBarInsets(view: View) {
+        val heroContainer = view.findViewById<View>(R.id.heroContainer)
+        val backButton = view.findViewById<View>(R.id.btnBack)
+        val heroActions = view.findViewById<View>(R.id.heroActions)
+
+        heroContainer.setOnApplyStatusBarInsetsListener { statusBarHeight ->
+            val topMargin = statusBarHeight + dpToPx(4)
+
+            backButton.updateLayoutParams<FrameLayout.LayoutParams> {
+                this.topMargin = topMargin
+            }
+            heroActions.updateLayoutParams<FrameLayout.LayoutParams> {
+                this.topMargin = topMargin
+            }
+
+            if (heroImageIsHidden(heroContainer)) {
+                heroContainer.updateLayoutParams<LinearLayout.LayoutParams> {
+                    height = statusBarHeight + dpToPx(16 + 48 + 8)
+                }
+            }
+
+        }
+    }
+
+    private fun dpToPx(dp: Int): Int =
+        (dp * resources.displayMetrics.density).toInt()
+
+    private fun heroImageIsHidden(heroContainer: View): Boolean =
+        heroContainer.findViewById<ImageView>(R.id.ivSpotHero).visibility == View.GONE
+
     private fun bindSpot(view: View, spot: StudySpot) {
         view.findViewById<TextView>(R.id.tvSpotName).text = spot.name
         view.findViewById<TextView>(R.id.tvAvailability).text = spot.occupancyLabel()
         view.findViewById<TextView>(R.id.tvLocation).text = spot.address
 
-        val hasGemConnection = spot.isHiddenGem || MockData.hiddenGemCountFor(spot.id) > 0
+        val hasGemConnection = spot.isHiddenGem
         view.findViewById<TextView>(R.id.tvHiddenGem).visibility =
             if (hasGemConnection) View.VISIBLE else View.GONE
 
@@ -134,21 +172,69 @@ class SpotDetailFragment : Fragment() {
     }
 
     private fun bindImages(view: View, spot: StudySpot) {
-        val images = listOf(
-            view.findViewById<ImageView>(R.id.ivSpotHero),
-            view.findViewById<ImageView>(R.id.ivPhotoOne),
-            view.findViewById<ImageView>(R.id.ivPhotoTwo),
-            view.findViewById<ImageView>(R.id.ivPhotoThree)
-        )
+        val heroContainer = view.findViewById<View>(R.id.heroContainer)
+        val detailPanel = view.findViewById<View>(R.id.detailPanel)
+        val heroImage = view.findViewById<ImageView>(R.id.ivSpotHero)
+        val photoHeader = view.findViewById<TextView>(R.id.tvPhotosHeader)
+        val photoGallery = view.findViewById<HorizontalScrollView>(R.id.photoGallery)
+        val photoGalleryContainer =
+            view.findViewById<LinearLayout>(R.id.photoGalleryContainer)
 
-        val imageUri = spot.imageUrl
-            ?.takeUnless { it.isBlank() || it == "placeholder_uri" }
+        val imageUris = buildList {
+            addAll(spot.imageUrls)
+            spot.imageUrl?.let(::add)
+        }
+            .filter { it.isNotBlank() && it != "placeholder_uri" }
+            .distinct()
+            .map(Uri::parse)
 
-        images.forEach { imageView ->
-            if (imageUri == null) {
-                imageView.setImageResource(R.drawable.photo_placeholder)
-            } else {
-                imageView.setImageURI(Uri.parse(imageUri))
+        photoGalleryContainer.removeAllViews()
+
+        if (imageUris.isEmpty()) {
+            heroImage.visibility = View.GONE
+            photoHeader.visibility = View.GONE
+            photoGallery.visibility = View.GONE
+
+            val compactHeight = (80 * resources.displayMetrics.density).toInt()
+            heroContainer.layoutParams = heroContainer.layoutParams.apply {
+                height = compactHeight
+            }
+            detailPanel.layoutParams = detailPanel.layoutParams.apply {
+                if (this is LinearLayout.LayoutParams) topMargin = 0
+            }
+            return
+        }
+
+        val firstImageUri = imageUris.first()
+        heroImage.visibility = View.VISIBLE
+        heroImage.setImageURI(firstImageUri)
+
+        photoHeader.visibility = View.VISIBLE
+        photoGallery.visibility = View.VISIBLE
+
+        imageUris.forEachIndexed { index, uri ->
+            val imageWidth = if (index == 0) 262 else 148
+            val imageView = ImageView(requireContext()).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    dpToPx(imageWidth),
+                    dpToPx(196)
+                ).apply {
+                    marginEnd = dpToPx(12)
+                }
+                contentDescription = "Spot photo ${index + 1}"
+                scaleType = ImageView.ScaleType.CENTER_CROP
+                setImageURI(uri)
+            }
+            photoGalleryContainer.addView(imageView)
+        }
+
+        val fullHeight = (300 * resources.displayMetrics.density).toInt()
+        heroContainer.layoutParams = heroContainer.layoutParams.apply {
+            height = fullHeight
+        }
+        detailPanel.layoutParams = detailPanel.layoutParams.apply {
+            if (this is LinearLayout.LayoutParams) {
+                topMargin = (-18 * resources.displayMetrics.density).toInt()
             }
         }
     }

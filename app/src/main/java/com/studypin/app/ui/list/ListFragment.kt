@@ -20,6 +20,7 @@ import com.studypin.app.data.MockData
 import com.studypin.app.model.StudySpot
 import com.studypin.app.ui.filter.FilterFragment
 import com.studypin.app.ui.search.SearchFragment
+import com.studypin.app.ui.applyStatusBarInset
 import com.studypin.app.ui.toTagLabel
 
 
@@ -62,6 +63,8 @@ class ListFragment : Fragment() {
         tvSortSummary = view.findViewById(R.id.tvSortSummary)
 
         // set up header
+        view.findViewById<View>(R.id.headerContent)
+            .applyStatusBarInset(extraTopDp = 0)
         view.findViewById<TextView>(R.id.tvHeaderTitle).text = "List"
         view.findViewById<TextView>(R.id.tvHeaderSubtitle).text = "Find and pin the best study spot"
         view.findViewById<TextInputLayout>(R.id.layoutHeaderSearch).hint = "Search for location..."

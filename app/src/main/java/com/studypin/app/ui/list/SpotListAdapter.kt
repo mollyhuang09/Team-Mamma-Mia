@@ -48,7 +48,7 @@ class SpotListAdapter(
         } else {
             holder.tvSpotAddress.visibility = View.GONE
         }
-        val imageUri = spot.imageUrl
+        val imageUri = (spot.imageUrls.firstOrNull() ?: spot.imageUrl)
             ?.takeUnless { it.isBlank() || it == "placeholder_uri" }
         if (imageUri != null) {
             holder.ivSpotImage.setImageURI(Uri.parse(imageUri))

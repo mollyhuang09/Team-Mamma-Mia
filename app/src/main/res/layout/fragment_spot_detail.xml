@@ -13,6 +13,7 @@
         android:paddingBottom="24dp">
 
         <FrameLayout
+            android:id="@+id/heroContainer"
             android:layout_width="match_parent"
             android:layout_height="300dp">
 
@@ -30,24 +31,35 @@
                 android:layout_height="48dp"
                 android:layout_gravity="top|start"
                 android:layout_marginStart="12dp"
-                android:layout_marginTop="32dp"
+                android:layout_marginTop="12dp"
                 android:background="@drawable/bg_detail_icon_button"
                 android:contentDescription="@string/back"
                 android:padding="12dp"
                 android:src="@drawable/ic_arrow_back_brand" />
 
             <LinearLayout
+                android:id="@+id/heroActions"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="top|end"
-                android:layout_marginTop="32dp"
+                android:layout_marginTop="12dp"
                 android:layout_marginEnd="12dp"
                 android:orientation="horizontal">
+
+                <ImageButton
+                    android:id="@+id/btnEdit"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_detail_icon_button"
+                    android:contentDescription="Edit spot"
+                    android:padding="12dp"
+                    android:src="@drawable/ic_edit_detail" />
 
                 <ImageButton
                     android:id="@+id/btnShare"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
+                    android:layout_marginStart="8dp"
                     android:background="@drawable/bg_detail_icon_button"
                     android:contentDescription="Share spot"
                     android:padding="12dp"
@@ -191,18 +203,18 @@
                     android:orientation="horizontal">
 
                     <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnEdit"
+                        android:id="@+id/btnDirection"
                         style="@style/Widget.Material3.Button.OutlinedButton"
                         android:layout_width="0dp"
                         android:layout_height="76dp"
                         android:layout_marginEnd="6dp"
                         android:layout_weight="1"
-                        android:text="Edit"
+                        android:text="Direction"
                         android:textAllCaps="false"
                         android:textColor="@color/brand_main"
                         android:textSize="14sp"
                         app:cornerRadius="12dp"
-                        app:icon="@drawable/ic_edit_detail"
+                        app:icon="@drawable/ic_navigation"
                         app:iconGravity="textTop"
                         app:iconPadding="2dp"
                         app:iconTint="@color/brand_main"
@@ -261,41 +273,17 @@
                     android:textStyle="bold" />
 
                 <HorizontalScrollView
+                    android:id="@+id/photoGallery"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     android:scrollbars="none">
 
                     <LinearLayout
+                        android:id="@+id/photoGalleryContainer"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
-
-                        <ImageView
-                            android:id="@+id/ivPhotoOne"
-                            android:layout_width="262dp"
-                            android:layout_height="196dp"
-                            android:contentDescription="Spot photo 1"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/photo_placeholder" />
-
-                        <ImageView
-                            android:id="@+id/ivPhotoTwo"
-                            android:layout_width="148dp"
-                            android:layout_height="196dp"
-                            android:layout_marginStart="12dp"
-                            android:contentDescription="Spot photo 2"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/photo_placeholder" />
-
-                        <ImageView
-                            android:id="@+id/ivPhotoThree"
-                            android:layout_width="148dp"
-                            android:layout_height="196dp"
-                            android:layout_marginStart="12dp"
-                            android:contentDescription="Spot photo 3"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/photo_placeholder" />
                     </LinearLayout>
                 </HorizontalScrollView>
 

@@ -9,15 +9,13 @@ import android.widget.EditText
 import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.Toast
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.textfield.TextInputLayout
 import com.studypin.app.R
 import com.studypin.app.data.ReportEditRepository
 import com.studypin.app.model.ReportEditSubmission
+import com.studypin.app.ui.applyStatusBarInset
 
 class ReportFlagFragment : Fragment() {
     private val defaultSpotId = "spot_mock_report"
@@ -47,25 +45,12 @@ class ReportFlagFragment : Fragment() {
         btnSubmit = view.findViewById(R.id.btnSubmitReport)
         btnClose = view.findViewById(R.id.btnCloseReport)
 
-        applyStatusBarInset(view)
+        view.applyStatusBarInset(extraTopDp = 8)
         setupReportTarget()
 
         btnSubmit.setOnClickListener { submitReport() }
         btnClose.setOnClickListener { findNavController().popBackStack() }
     }
-
-    private fun applyStatusBarInset(view: View) {
-        ViewCompat.setOnApplyWindowInsetsListener(view) { root, insets ->
-            val statusBarInset =
-                insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
-            root.updatePadding(top = statusBarInset + dpToPx(8))
-            insets
-        }
-        ViewCompat.requestApplyInsets(view)
-    }
-
-    private fun dpToPx(dp: Int): Int =
-        (dp * resources.displayMetrics.density).toInt()
 
     private fun setupReportTarget() {
         spotId = arguments?.getString("spotId").orEmpty()
