@@ -4,15 +4,24 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:paddingHorizontal="12dp"
-    android:paddingTop="36dp"
+    android:paddingTop="0dp"
     android:paddingBottom="12dp" >
+
+    <ImageButton
+        android:id="@+id/btnBack"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/back"
+        android:src="@drawable/ic_arrow_back"
+        android:layout_marginStart="-8dp" />
 
     <TextView
         android:id="@+id/tvGroupHeader"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Spot name"
-        android:textSize="18sp"
+        android:textSize="28sp"
         android:textStyle="bold"
         android:layout_marginBottom="12dp"/>
 

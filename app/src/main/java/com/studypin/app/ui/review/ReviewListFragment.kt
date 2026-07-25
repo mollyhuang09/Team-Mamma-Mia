@@ -15,6 +15,7 @@ import com.studypin.app.R
 import com.studypin.app.data.MockData
 import com.studypin.app.data.ReviewRepository
 import com.studypin.app.model.StudySpotReview
+import com.studypin.app.ui.applyStatusBarInset
 import java.util.Locale
 
 class ReviewListFragment : Fragment() {
@@ -29,6 +30,8 @@ class ReviewListFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        view.applyStatusBarInset()
 
         spotId = arguments?.getString("spotId") ?: ""
         val spot = MockData.studySpots.firstOrNull { it.id == spotId }
