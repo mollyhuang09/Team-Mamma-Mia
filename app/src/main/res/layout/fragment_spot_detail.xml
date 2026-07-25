@@ -35,7 +35,7 @@
                 android:background="@drawable/bg_detail_icon_button"
                 android:contentDescription="@string/back"
                 android:padding="12dp"
-                android:src="@drawable/ic_arrow_back_brand" />
+                android:src="@drawable/ic_arrow_back" />
 
             <LinearLayout
                 android:id="@+id/heroActions"
@@ -53,7 +53,7 @@
                     android:background="@drawable/bg_detail_icon_button"
                     android:contentDescription="Edit spot"
                     android:padding="12dp"
-                    android:src="@drawable/ic_edit_detail" />
+                    android:src="@drawable/ic_edit" />
 
                 <ImageButton
                     android:id="@+id/btnShare"
