@@ -1,5 +1,7 @@
 package com.studypin.app.ui.detail
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -67,7 +69,7 @@ class SpotDetailFragment : Fragment() {
             findNavController().navigate(R.id.action_spotDetail_to_editSpot)
         }
         view.findViewById<View>(R.id.btnDirection).setOnClickListener {
-            Toast.makeText(requireContext(), "Directions will be connected later", Toast.LENGTH_SHORT).show()
+            openDirections(spot)
         }
         view.findViewById<View>(R.id.btnSave).setOnClickListener { button ->
             val saveButton = button as MaterialButton
@@ -113,6 +115,31 @@ class SpotDetailFragment : Fragment() {
             putString("spotName", spotName)
         }
         findNavController().navigate(R.id.action_spotDetail_to_reportFlag, bundle)
+    }
+
+    private fun openDirections(spot: StudySpot) {
+        val mapsUri = Uri.parse("google.navigation:q=${spot.latitude},${spot.longitude}")
+        val mapsIntent = Intent(Intent.ACTION_VIEW, mapsUri).apply {
+            setPackage("com.google.android.apps.maps")
+        }
+
+        try {
+            startActivity(mapsIntent)
+        } catch (_: ActivityNotFoundException) {
+            val browserUri = Uri.parse(
+                "https://www.google.com/maps/dir/?api=1&destination=" +
+                    "${spot.latitude},${spot.longitude}"
+            )
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, browserUri))
+            } catch (_: ActivityNotFoundException) {
+                Toast.makeText(
+                    requireContext(),
+                    "No maps app is available",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
     }
 
     private fun applyStatusBarInsets(view: View) {
