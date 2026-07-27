@@ -43,6 +43,9 @@ class ReviewListFragment : Fragment() {
 
         val amenityLayout = view.findViewById<View>(R.id.layoutReviewAmenitySummary)
         val toggleBtn = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnToggleAmenities)
+
+        val hasAmenityDetails = stats.amenityAverages.isNotEmpty()
+        toggleBtn.visibility = if (hasAmenityDetails) View.VISIBLE else View.GONE
         
         toggleBtn.setOnClickListener {
             if (amenityLayout.visibility == View.VISIBLE) {
@@ -129,6 +132,7 @@ class ReviewAdapter(private val reviews: List<StudySpotReview>) : RecyclerView.A
         holder.name.text = review.reviewerName
         holder.date.text = review.submittedAtLabel
         holder.text.text = review.reviewText
+        holder.text.visibility = if (review.reviewText.isBlank()) View.GONE else View.VISIBLE
         
         val metaInfo = mutableListOf<String>()
         if (review.visitTimeOfDay.isNotEmpty()) metaInfo.add("Visited in ${review.visitTimeOfDay}")

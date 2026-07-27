@@ -69,4 +69,6 @@
     <string name="write_a_review">Write a review</string>
     <string name="review_group_subtitle">What people are saying</string>
     <string name="review_group_placeholder">No reviews yet. Be the first to share your experience.</string>
+    <string name="add_review_title">How was your study session?</string>
+    <string name="review_details_hint">Tell others about your experience (optional)</string>
 </resources>

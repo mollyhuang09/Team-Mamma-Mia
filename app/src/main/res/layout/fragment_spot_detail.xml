@@ -426,6 +426,22 @@
                     android:orientation="vertical" />
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnViewMoreReviews"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="2dp"
+                    android:minHeight="48dp"
+                    android:text="View More Reviews"
+                    android:textAllCaps="false"
+                    android:textColor="@color/brand_main"
+                    android:textSize="18sp"
+                    android:visibility="gone"
+                    app:backgroundTint="@android:color/transparent"
+                    app:strokeWidth="0dp" />
+
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnAddReview"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"

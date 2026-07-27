@@ -29,6 +29,7 @@ import com.studypin.app.model.StudySpotReview
 import com.studypin.app.ui.review.ReviewHelpfulBinder
 import com.studypin.app.ui.review.StarRatingViews
 import com.studypin.app.ui.setOnApplyStatusBarInsetsListener
+import com.studypin.app.ui.showPhotoUploadPlaceholder
 import com.studypin.app.ui.toTagLabel
 import java.util.Locale
 
@@ -91,7 +92,7 @@ class SpotDetailFragment : Fragment() {
             }
         }
         view.findViewById<View>(R.id.btnAddPhoto).setOnClickListener {
-            Toast.makeText(requireContext(), "Photo upload will be connected later", Toast.LENGTH_SHORT).show()
+            requireContext().showPhotoUploadPlaceholder()
         }
 
         view.findViewById<View>(R.id.btnAddReview).setOnClickListener {
@@ -307,6 +308,14 @@ class SpotDetailFragment : Fragment() {
         reviewSummary.visibility = if (reviews.isEmpty()) View.GONE else View.VISIBLE
         emptyReviews.visibility = if (reviews.isEmpty()) View.VISIBLE else View.GONE
 
+        view.findViewById<View>(R.id.btnViewMoreReviews).apply {
+            visibility = if (reviews.size > 3) View.VISIBLE else View.GONE
+            setOnClickListener {
+                val bundle = Bundle().apply { putString("spotId", spot.id) }
+                findNavController().navigate(R.id.action_spotDetail_to_reviewList, bundle)
+            }
+        }
+
         reviews.take(3).forEach { review ->
             val reviewView = LayoutInflater.from(requireContext())
                 .inflate(R.layout.item_review, reviewContainer, false)
@@ -320,7 +329,10 @@ class SpotDetailFragment : Fragment() {
             review.reviewerName.firstOrNull()?.uppercase() ?: "?"
         view.findViewById<TextView>(R.id.tvReviewerName).text = review.reviewerName
         view.findViewById<TextView>(R.id.tvReviewSubmittedAt).text = review.submittedAtLabel
-        view.findViewById<TextView>(R.id.tvReviewText).text = review.reviewText
+        view.findViewById<TextView>(R.id.tvReviewText).apply {
+            text = review.reviewText
+            visibility = if (review.reviewText.isBlank()) View.GONE else View.VISIBLE
+        }
 
         val meta = listOf(review.visitTimeOfDay, review.crowdLevel)
             .filter { it.isNotBlank() }

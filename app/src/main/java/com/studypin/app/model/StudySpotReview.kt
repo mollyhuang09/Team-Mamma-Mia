@@ -13,6 +13,7 @@ data class StudySpotReview(
     val reviewerName: String = "Anonymous",
     val overallRating: Int = 0,
     val amenityRatings: Map<String, Int> = emptyMap(),
+    val descriptors: List<String> = emptyList(),
     val reviewText: String = "",
     val visitTimeOfDay: String = "",
     val crowdLevel: String = "",

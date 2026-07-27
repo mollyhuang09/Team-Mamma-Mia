@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?attr/colorSurface"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    tools:context=".ui.review.AddReviewFragment"
+    tools:theme="@style/Theme.StudyPin">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:paddingHorizontal="20dp">
 
         <ImageButton
             android:id="@+id/btnBack"
@@ -19,60 +22,42 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/back"
             android:src="@drawable/ic_arrow_back"
-            android:layout_marginStart="-8dp" />
+            android:layout_marginStart="-16dp" />
+
+        <TextView
+            android:id="@+id/tvReviewTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:text="@string/add_review_title"
+            android:textColor="@color/brand_main"
+            android:textSize="24sp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tvSpotName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textColor="?attr/colorOnSurface"
-            android:textSize="24sp"
-            android:textStyle="bold" />
-
-        <!--
-        <TextView
-            android:id="@+id/tvRatingPrompt"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Tap to rate"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textSize="14sp" />
-        -->
+            android:layout_marginTop="2dp"
+            android:gravity="center"
+            android:textColor="@color/surface_muted"
+            android:textSize="18sp" />
 
         <LinearLayout
             android:id="@+id/layoutOverallStars"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="8dp"
             android:gravity="center_horizontal"
             android:orientation="horizontal" />
 
-        <!--
-        <TextView
-            android:id="@+id/tvSelectedRatingLabel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:gravity="center_horizontal"
-            android:textColor="?attr/colorOnSurface"
-            android:textSize="18sp"
-            android:textStyle="bold" />
-        -->
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginTop="24dp"
-            android:background="?attr/colorOutlineVariant" />
-
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:text="Rate your experience"
-            android:textColor="?attr/colorOnSurface"
+            android:text="Rate specific features (optional)"
+            android:textColor="@color/brand_main"
             android:textSize="16sp"
             android:textStyle="bold" />
 
@@ -87,15 +72,17 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:hint="Tell others about your experience"
-            app:boxStrokeColor="?attr/colorPrimary">
+            android:hint="@string/review_details_hint"
+            app:boxStrokeColor="@color/brand_main"
+            app:hintTextColor="@color/surface_muted">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etReviewText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="top"
-                android:minLines="4" />
+                android:minLines="4"
+                android:textColor="@color/brand_main" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.button.MaterialButton
@@ -104,15 +91,21 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Add photos or videos" />
+            android:text="Add photos or videos"
+            android:textColor="@color/brand_main"
+            app:cornerRadius="8dp"
+            app:icon="@drawable/ic_camera"
+            app:iconTint="@color/brand_main"
+            app:strokeColor="@color/brand_main"
+            app:strokeWidth="1dp" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:text="When did you go?"
-            android:textColor="?attr/colorOnSurface"
-            android:textSize="14sp"
+            android:text="When did you go? (optional)"
+            android:textColor="@color/brand_main"
+            android:textSize="16sp"
             android:textStyle="bold" />
 
         <com.google.android.material.chip.ChipGroup
@@ -123,28 +116,28 @@
             app:singleSelection="true">
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipMorning"
-                style="@style/Widget.Material3.Chip.Filter"
+                style="@style/ReviewChoiceChip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Morning"
                 app:checkedIconVisible="false" />
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipAfternoon"
-                style="@style/Widget.Material3.Chip.Filter"
+                style="@style/ReviewChoiceChip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Afternoon"
                 app:checkedIconVisible="false" />
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipEvening"
-                style="@style/Widget.Material3.Chip.Filter"
+                style="@style/ReviewChoiceChip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Evening"
                 app:checkedIconVisible="false" />
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipNight"
-                style="@style/Widget.Material3.Chip.Filter"
+                style="@style/ReviewChoiceChip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Night"
@@ -155,9 +148,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="How busy was it?"
-            android:textColor="?attr/colorOnSurface"
-            android:textSize="14sp"
+            android:text="How busy was it? (optional)"
+            android:textColor="@color/brand_main"
+            android:textSize="16sp"
             android:textStyle="bold" />
 
         <com.google.android.material.chip.ChipGroup
@@ -168,36 +161,125 @@
             app:singleSelection="true">
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipQuiet"
-                style="@style/Widget.Material3.Chip.Filter"
+                style="@style/ReviewChoiceChip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Quiet"
                 app:checkedIconVisible="false" />
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipModerate"
-                style="@style/Widget.Material3.Chip.Filter"
+                style="@style/ReviewChoiceChip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Moderate"
                 app:checkedIconVisible="false" />
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipBusy"
-                style="@style/Widget.Material3.Chip.Filter"
+                style="@style/ReviewChoiceChip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Busy"
                 app:checkedIconVisible="false" />
         </com.google.android.material.chip.ChipGroup>
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="What best describes this spot? (optional)"
+            android:textColor="@color/brand_main"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupDescriptors"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:chipSpacingHorizontal="8dp"
+            app:chipSpacingVertical="0dp"
+            app:singleSelection="false">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipReviewPrinting"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Printing"
+                android:textColor="@color/filter_chip_text"
+                app:checkedIconVisible="false"
+                app:chipBackgroundColor="@color/filter_chip_background"
+                app:chipStrokeWidth="0dp" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipReviewFood"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Food"
+                android:textColor="@color/filter_chip_text"
+                app:checkedIconVisible="false"
+                app:chipBackgroundColor="@color/filter_chip_background"
+                app:chipStrokeWidth="0dp" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipReviewParking"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Parking"
+                android:textColor="@color/filter_chip_text"
+                app:checkedIconVisible="false"
+                app:chipBackgroundColor="@color/filter_chip_background"
+                app:chipStrokeWidth="0dp" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipReviewIndoor"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Indoor"
+                android:textColor="@color/filter_chip_text"
+                app:checkedIconVisible="false"
+                app:chipBackgroundColor="@color/filter_chip_background"
+                app:chipStrokeWidth="0dp" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipReviewOutdoor"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Outdoor"
+                android:textColor="@color/filter_chip_text"
+                app:checkedIconVisible="false"
+                app:chipBackgroundColor="@color/filter_chip_background"
+                app:chipStrokeWidth="0dp" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipReviewGroupFriendly"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Group Friendly"
+                android:textColor="@color/filter_chip_text"
+                app:checkedIconVisible="false"
+                app:chipBackgroundColor="@color/filter_chip_background"
+                app:chipStrokeWidth="0dp" />
+        </com.google.android.material.chip.ChipGroup>
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSubmitReview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:layout_marginBottom="24dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            android:enabled="false"
             android:minHeight="56dp"
-            android:text="Post"
-            app:cornerRadius="28dp" />
+            android:text="Submit Review"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            app:backgroundTint="@color/review_submit_background"
+            app:cornerRadius="14dp" />
 
     </LinearLayout>
 </ScrollView>

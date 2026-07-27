@@ -16,6 +16,8 @@ import com.studypin.app.R
 import com.studypin.app.data.MockData
 import com.studypin.app.data.ReviewRepository
 import com.studypin.app.model.StudySpotReview
+import com.studypin.app.ui.applyStatusBarInset
+import com.studypin.app.ui.showPhotoUploadPlaceholder
 import java.util.UUID
 
 class AddReviewFragment : Fragment() {
@@ -33,6 +35,8 @@ class AddReviewFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        view.applyStatusBarInset()
+
         spotId = arguments?.getString("spotId") ?: ""
         initialRating = arguments?.getInt("initialRating") ?: 0
 
@@ -42,7 +46,9 @@ class AddReviewFragment : Fragment() {
         setupOverallStars(view)
         
         val baseAmenities = listOf("noise", "seating")
-        val allAmenities = (baseAmenities + (spot?.amenities ?: emptyList())).distinct()
+        val allAmenities = (baseAmenities + (spot?.amenities ?: emptyList()))
+            .distinct()
+            .filterNot { it.equals("printing", ignoreCase = true) }
         setupAmenityRatings(view, allAmenities)
 
         view.findViewById<View>(R.id.btnBack).setOnClickListener {
@@ -53,9 +59,15 @@ class AddReviewFragment : Fragment() {
             submitReview(view)
         }
 
+        view.findViewById<View>(R.id.btnAddMedia).setOnClickListener {
+            requireContext().showPhotoUploadPlaceholder()
+        }
+
         // Set initial rating if passed from previous screen
         if (initialRating > 0) {
             updateOverallRating(view, initialRating)
+        } else {
+            updateSubmitButtonState(view)
         }
     }
 
@@ -71,6 +83,7 @@ class AddReviewFragment : Fragment() {
     private fun updateOverallRating(view: View, rating: Int) {
         selectedOverallRating = rating
         setupOverallStars(view)
+        updateSubmitButtonState(view)
 //        val label = when (rating) {
 //            1 -> "Terrible"
 //            2 -> "Bad"
@@ -80,6 +93,10 @@ class AddReviewFragment : Fragment() {
 //            else -> ""
 //        }
 //        view.findViewById<TextView>(R.id.tvSelectedRatingLabel).text = if (label.isEmpty()) "" else "$rating/5 - $label"
+    }
+
+    private fun updateSubmitButtonState(view: View) {
+        view.findViewById<View>(R.id.btnSubmitReview).isEnabled = selectedOverallRating > 0
     }
 
     private fun setupAmenityRatings(view: View, amenities: List<String>) {
@@ -119,6 +136,7 @@ class AddReviewFragment : Fragment() {
         val reviewText = view.findViewById<TextInputEditText>(R.id.etReviewText).text.toString()
         val visitTime = getSelectedChipText(view.findViewById(R.id.chipGroupVisitTime))
         val crowdLevel = getSelectedChipText(view.findViewById(R.id.chipGroupCrowd))
+        val descriptors = getSelectedChipTexts(view.findViewById(R.id.chipGroupDescriptors))
 
         val review = StudySpotReview(
             id = UUID.randomUUID().toString(),
@@ -126,6 +144,7 @@ class AddReviewFragment : Fragment() {
             reviewerName = "You", // In a real app, this would be the logged-in user
             overallRating = selectedOverallRating,
             amenityRatings = amenityRatings.toMap(),
+            descriptors = descriptors,
             reviewText = reviewText,
             visitTimeOfDay = visitTime,
             crowdLevel = crowdLevel,
@@ -145,9 +164,15 @@ class AddReviewFragment : Fragment() {
     private fun getSelectedChipText(chipGroup: ChipGroup): String {
         val checkedId = chipGroup.checkedChipId
         return if (checkedId != View.NO_ID) {
-            view?.findViewById<Chip>(checkedId)?.text?.toString() ?: ""
+            chipGroup.findViewById<Chip>(checkedId)?.text?.toString() ?: ""
         } else {
             ""
+        }
+    }
+
+    private fun getSelectedChipTexts(chipGroup: ChipGroup): List<String> {
+        return chipGroup.checkedChipIds.mapNotNull { checkedId ->
+            chipGroup.findViewById<Chip>(checkedId)?.text?.toString()
         }
     }
 }

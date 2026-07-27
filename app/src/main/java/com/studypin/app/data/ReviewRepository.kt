@@ -169,10 +169,14 @@ object ReviewRepository {
             )
         }
 
+        val rateableAmenities = (listOf("noise", "seating") + spot.amenities)
+            .distinct()
+            .filterNot { it.equals("printing", ignoreCase = true) }
+
         return ReviewDisplayStats(
             averageOverall = spotReviews.map { it.overallRating }.average(),
             reviewCount = spotReviews.size,
-            amenityAverages = (listOf("noise", "seating") + spot.amenities).distinct().associateWith { amenity ->
+            amenityAverages = rateableAmenities.associateWith { amenity ->
                 spotReviews.mapNotNull { it.amenityRatings[amenity] }.takeIf { it.isNotEmpty() }?.average()
                     ?: Double.NaN
             }.filterValues { !it.isNaN() }
