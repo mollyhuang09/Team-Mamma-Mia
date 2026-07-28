@@ -26,6 +26,8 @@ import com.studypin.app.data.MockData
 import com.studypin.app.data.ReviewRepository
 import com.studypin.app.model.StudySpot
 import com.studypin.app.model.StudySpotReview
+import com.studypin.app.model.SpotStatus
+import com.studypin.app.model.isInactive
 import com.studypin.app.ui.review.ReviewHelpfulBinder
 import com.studypin.app.ui.review.StarRatingViews
 import com.studypin.app.ui.setOnApplyStatusBarInsetsListener
@@ -53,6 +55,7 @@ class SpotDetailFragment : Fragment() {
         }
 
         bindSpot(view, spot)
+        bindInactiveSpotState(view, spot)
         applyStatusBarInsets(view)
 
         view.findViewById<View>(R.id.btnBack).setOnClickListener {
@@ -105,7 +108,7 @@ class SpotDetailFragment : Fragment() {
             findNavController().navigate(R.id.action_spotDetail_to_reviewList, bundle)
         }
 
-        if (ReviewRepository.hasUserReviewedSpot("You", spotId)) {
+        if (spot.status.isInactive() || ReviewRepository.hasUserReviewedSpot("You", spotId)) {
             view.findViewById<View>(R.id.btnAddReview).visibility = View.GONE
         }
     }
@@ -172,6 +175,44 @@ class SpotDetailFragment : Fragment() {
 
     private fun heroImageIsHidden(heroContainer: View): Boolean =
         heroContainer.findViewById<ImageView>(R.id.ivSpotHero).visibility == View.GONE
+
+    private fun bindInactiveSpotState(view: View, spot: StudySpot) {
+        val inactive = spot.status.isInactive()
+        val actionButtonIds = listOf(
+            R.id.btnDirection,
+            R.id.btnSave,
+            R.id.btnAddPhoto
+        )
+
+        actionButtonIds.forEach { buttonId ->
+            view.findViewById<MaterialButton>(buttonId).apply {
+                isEnabled = !inactive
+                alpha = if (inactive) 0.5f else 1f
+            }
+        }
+
+        view.findViewById<View>(R.id.layoutSpotInactiveInfo).visibility =
+            if (inactive) View.VISIBLE else View.GONE
+
+        if (!inactive) return
+
+        view.findViewById<TextView>(R.id.tvSpotInactiveReasonTitle).setText(
+            when (spot.status) {
+                SpotStatus.TEMPORARILY_CLOSED -> R.string.preview_closed_reason_title
+                else -> R.string.preview_inactive_reason_title
+            }
+        )
+        view.findViewById<TextView>(R.id.tvSpotInactiveReason).setText(
+            when (spot.status) {
+                SpotStatus.TEMPORARILY_CLOSED -> R.string.preview_closed_reason
+                else -> R.string.preview_inactive_reason
+            }
+        )
+        view.findViewById<TextView>(R.id.tvSpotLastVerifiedDate).text =
+            spot.lastVerifiedLabel.ifBlank {
+                getString(R.string.preview_last_verified_unknown)
+            }
+    }
 
     private fun bindSpot(view: View, spot: StudySpot) {
         view.findViewById<TextView>(R.id.tvSpotName).text = spot.name

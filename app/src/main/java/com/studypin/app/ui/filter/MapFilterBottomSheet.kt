@@ -125,7 +125,16 @@ class MapFilterBottomSheet : BottomSheetDialogFragment() {
             availableOnlyChip.isChecked = false
             selectedAmenities.clear()
             selectedEnvironments.clear()
-            updateApplyButton(view, selectedAmenities, selectedEnvironments, availableOnlyChip)
+
+            parentFragmentManager.setFragmentResult(
+                RESULT_KEY,
+                Bundle().apply {
+                    putStringArrayList(KEY_AMENITIES, arrayListOf())
+                    putStringArrayList(KEY_ENVIRONMENTS, arrayListOf())
+                    putBoolean(KEY_AVAILABLE_ONLY, false)
+                }
+            )
+            dismiss()
         }
 
         view.findViewById<MaterialButton>(R.id.btnApplyMapFilters).setOnClickListener {

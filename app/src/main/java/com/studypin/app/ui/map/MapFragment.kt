@@ -40,6 +40,7 @@ import com.studypin.app.ui.search.SearchFragment
 import com.studypin.app.ui.toTagLabel
 import com.studypin.app.model.StudySpot
 import com.studypin.app.model.SpotStatus
+import com.studypin.app.model.isInactive
 import com.google.android.material.textfield.TextInputLayout
 import java.util.Locale
 
@@ -318,26 +319,22 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             }
         }
 
-        spotPreviewSheet.findViewById<View>(R.id.layoutPreviewInactiveReason).visibility =
-            if (inactive) View.VISIBLE else View.GONE
-        spotPreviewSheet.findViewById<View>(R.id.viewPreviewLastVerifiedDivider).visibility =
-            if (inactive) View.VISIBLE else View.GONE
-        spotPreviewSheet.findViewById<View>(R.id.layoutPreviewLastVerified).visibility =
+        spotPreviewSheet.findViewById<View>(R.id.layoutSpotInactiveInfo).visibility =
             if (inactive) View.VISIBLE else View.GONE
         if (inactive) {
-            spotPreviewSheet.findViewById<TextView>(R.id.tvPreviewInactiveReasonTitle).setText(
+            spotPreviewSheet.findViewById<TextView>(R.id.tvSpotInactiveReasonTitle).setText(
                 when (spot.status) {
                     SpotStatus.TEMPORARILY_CLOSED -> R.string.preview_closed_reason_title
                     else -> R.string.preview_inactive_reason_title
                 }
             )
-            spotPreviewSheet.findViewById<TextView>(R.id.tvPreviewInactiveReason).setText(
+            spotPreviewSheet.findViewById<TextView>(R.id.tvSpotInactiveReason).setText(
                 when (spot.status) {
                     SpotStatus.TEMPORARILY_CLOSED -> R.string.preview_closed_reason
                     else -> R.string.preview_inactive_reason
                 }
             )
-            spotPreviewSheet.findViewById<TextView>(R.id.tvPreviewLastVerifiedDate).text =
+            spotPreviewSheet.findViewById<TextView>(R.id.tvSpotLastVerifiedDate).text =
                 spot.lastVerifiedLabel.ifBlank {
                     getString(R.string.preview_last_verified_unknown)
                 }
@@ -346,8 +343,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     /** Only lifecycle/moderation state makes a spot inactive; occupancy is separate. */
     private fun isSpotInactive(spot: StudySpot): Boolean =
-        spot.status == SpotStatus.UNDER_REVIEW ||
-            spot.status == SpotStatus.TEMPORARILY_CLOSED
+        spot.status.isInactive()
 
     private fun matchesSelectedMapFilters(spot: StudySpot): Boolean {
         val matchesAmenities = selectedMapAmenities.all { selectedAmenity ->

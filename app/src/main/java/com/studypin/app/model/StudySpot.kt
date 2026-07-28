@@ -20,6 +20,13 @@ enum class SpotStatus {
     REMOVED
 }
 
+fun SpotStatus.isInactive(): Boolean = when (this) {
+    SpotStatus.UNDER_REVIEW,
+    SpotStatus.TEMPORARILY_CLOSED -> true
+    SpotStatus.ACTIVE,
+    SpotStatus.REMOVED -> false
+}
+
 /**
  * Represents a single study spot — either a top-level location
  * (e.g. "DC Library") or a hidden gem nested inside one

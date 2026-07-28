@@ -263,6 +263,12 @@
                         app:strokeWidth="1dp" />
                 </LinearLayout>
 
+                <include
+                    layout="@layout/view_spot_inactive_info"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp" />
+
                 <!-- Images Section -->
                 <TextView
                     android:id="@+id/tvPhotosHeader"
