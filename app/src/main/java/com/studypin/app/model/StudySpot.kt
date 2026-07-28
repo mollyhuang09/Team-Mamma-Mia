@@ -12,6 +12,14 @@ enum class Capacity(val label: String, val approxSeats: Int) {
     LARGE("Large (100+ seats)", 120)
 }
 
+/** Lifecycle/moderation state of a study spot, independent of occupancy. */
+enum class SpotStatus {
+    ACTIVE,
+    UNDER_REVIEW,
+    TEMPORARILY_CLOSED,
+    REMOVED
+}
+
 /**
  * Represents a single study spot — either a top-level location
  * (e.g. "DC Library") or a hidden gem nested inside one
@@ -45,6 +53,13 @@ data class StudySpot(
     val imageUrls: List<String> = emptyList(),
     val isValidated: Boolean = false,
     val requestCount: Int = 0,
+
+    // --- Lifecycle/moderation status ---
+    val status: SpotStatus = SpotStatus.ACTIVE,
+
+    // Display label for the most recent verification. This can be populated
+    // from the database once verification timestamps are stored there.
+    val lastVerifiedLabel: String = "",
 
     // --- Hidden gem nesting ---
     val parentSpotId: String? = null,

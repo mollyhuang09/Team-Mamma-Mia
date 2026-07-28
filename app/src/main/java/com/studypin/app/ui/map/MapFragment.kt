@@ -39,6 +39,7 @@ import com.studypin.app.ui.filter.MapFilterBottomSheet
 import com.studypin.app.ui.search.SearchFragment
 import com.studypin.app.ui.toTagLabel
 import com.studypin.app.model.StudySpot
+import com.studypin.app.model.SpotStatus
 import com.google.android.material.textfield.TextInputLayout
 import java.util.Locale
 
@@ -57,6 +58,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private val selectedMapEnvironments = mutableSetOf<String>()
     private var selectedMapAvailableOnly = false
     private val allMapSpots = MockData.topLevelSpots()
+        .filter { it.status != SpotStatus.REMOVED }
     private var mapSearchQuery = ""
     private var searchNavigationStarted = false
     private var selectedSpotId: String? = null
@@ -268,6 +270,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun bindSpotPreview(spot: StudySpot) {
+        val inactive = isSpotInactive(spot)
+
         spotPreviewSheet.findViewById<TextView>(R.id.tvPreviewSpotName).text = spot.name
         spotPreviewSheet.findViewById<TextView>(R.id.tvPreviewHiddenGem).visibility =
             if (spot.isHiddenGem) View.VISIBLE else View.GONE
@@ -281,24 +285,77 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             "• ${spot.occupancyLabel()}"
         spotPreviewSheet.findViewById<TextView>(R.id.tvPreviewAddress).text = spot.address
 
-        val chipGroup = spotPreviewSheet.findViewById<ChipGroup>(R.id.chipGroupPreviewTags)
-        chipGroup.removeAllViews()
-        spot.amenities.take(3).forEach { amenity ->
-            val chip = layoutInflater.inflate(R.layout.item_spot_tag, chipGroup, false) as Chip
-            chip.text = amenity.toTagLabel()
-            chip.isClickable = false
-            chip.isFocusable = false
-            chipGroup.addView(chip)
+        spotPreviewSheet.findViewById<View>(R.id.tvPreviewRatingStar).visibility =
+            if (inactive) View.GONE else View.VISIBLE
+        spotPreviewSheet.findViewById<View>(R.id.tvPreviewRating).visibility =
+            if (inactive) View.GONE else View.VISIBLE
+        spotPreviewSheet.findViewById<View>(R.id.tvPreviewAvailability).visibility =
+            if (inactive) View.GONE else View.VISIBLE
+
+        val inactiveChip = spotPreviewSheet.findViewById<Chip>(R.id.chipPreviewInactive)
+        inactiveChip.visibility = if (inactive) View.VISIBLE else View.GONE
+        inactiveChip.isClickable = false
+        inactiveChip.isFocusable = false
+        if (inactive) {
+            inactiveChip.setText(
+                when (spot.status) {
+                    SpotStatus.TEMPORARILY_CLOSED -> R.string.preview_temporarily_closed
+                    else -> R.string.preview_currently_inactive
+                }
+            )
         }
 
+        val chipGroup = spotPreviewSheet.findViewById<ChipGroup>(R.id.chipGroupPreviewTags)
+        chipGroup.removeAllViews()
+        chipGroup.visibility = if (inactive) View.GONE else View.VISIBLE
+        if (!inactive) {
+            spot.amenities.take(3).forEach { amenity ->
+                val chip = layoutInflater.inflate(R.layout.item_spot_tag, chipGroup, false) as Chip
+                chip.text = amenity.toTagLabel()
+                chip.isClickable = false
+                chip.isFocusable = false
+                chipGroup.addView(chip)
+            }
+        }
+
+        spotPreviewSheet.findViewById<View>(R.id.layoutPreviewInactiveReason).visibility =
+            if (inactive) View.VISIBLE else View.GONE
+        spotPreviewSheet.findViewById<View>(R.id.viewPreviewLastVerifiedDivider).visibility =
+            if (inactive) View.VISIBLE else View.GONE
+        spotPreviewSheet.findViewById<View>(R.id.layoutPreviewLastVerified).visibility =
+            if (inactive) View.VISIBLE else View.GONE
+        if (inactive) {
+            spotPreviewSheet.findViewById<TextView>(R.id.tvPreviewInactiveReasonTitle).setText(
+                when (spot.status) {
+                    SpotStatus.TEMPORARILY_CLOSED -> R.string.preview_closed_reason_title
+                    else -> R.string.preview_inactive_reason_title
+                }
+            )
+            spotPreviewSheet.findViewById<TextView>(R.id.tvPreviewInactiveReason).setText(
+                when (spot.status) {
+                    SpotStatus.TEMPORARILY_CLOSED -> R.string.preview_closed_reason
+                    else -> R.string.preview_inactive_reason
+                }
+            )
+            spotPreviewSheet.findViewById<TextView>(R.id.tvPreviewLastVerifiedDate).text =
+                spot.lastVerifiedLabel.ifBlank {
+                    getString(R.string.preview_last_verified_unknown)
+                }
+        }
     }
+
+    /** Only lifecycle/moderation state makes a spot inactive; occupancy is separate. */
+    private fun isSpotInactive(spot: StudySpot): Boolean =
+        spot.status == SpotStatus.UNDER_REVIEW ||
+            spot.status == SpotStatus.TEMPORARILY_CLOSED
 
     private fun matchesSelectedMapFilters(spot: StudySpot): Boolean {
         val matchesAmenities = selectedMapAmenities.all { selectedAmenity ->
             spot.amenities.any { it.equals(selectedAmenity, ignoreCase = true) }
         }
         val matchesAvailability = !selectedMapAvailableOnly ||
-            spot.occupancyLabel() in listOf("Empty", "Available")
+            (spot.status == SpotStatus.ACTIVE &&
+                spot.occupancyLabel() in listOf("Empty", "Available"))
         val matchesSearch = mapSearchQuery.isBlank() ||
             spot.name.contains(mapSearchQuery, ignoreCase = true) ||
             spot.address.contains(mapSearchQuery, ignoreCase = true)
@@ -363,7 +420,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     ): BitmapDescriptor? {
         val drawableResource = when {
             isSelected -> R.drawable.ic_map_pin_active
-            spot.occupancyLabel() in listOf("Empty", "Available") ->
+            !isSpotInactive(spot) ->
                 R.drawable.ic_map_pin_available
             else -> R.drawable.ic_map_pin_unavailable
         }

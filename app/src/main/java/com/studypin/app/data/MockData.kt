@@ -2,6 +2,7 @@ package com.studypin.app.data
 
 import com.studypin.app.model.Capacity
 import com.studypin.app.model.StudySpot
+import com.studypin.app.model.SpotStatus
 
 /**
  * Hardcoded mock data for UI development before Firestore wiring is complete.
@@ -51,6 +52,8 @@ object MockData {
             totalRatings = 98,
             capacity = Capacity.MEDIUM,
             currentCheckIns = 44,
+            status = SpotStatus.UNDER_REVIEW,
+            lastVerifiedLabel = "Mar 12, 2025",
             parentSpotId = null,
             isHiddenGem = false
         ),
@@ -165,6 +168,8 @@ object MockData {
             totalRatings = 13,
             capacity = Capacity.SMALL,
             currentCheckIns = 8,
+            status = SpotStatus.TEMPORARILY_CLOSED,
+            lastVerifiedLabel = "Mar 12, 2025",
             parentSpotId = null,
             isHiddenGem = false
         ),

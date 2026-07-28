@@ -71,4 +71,16 @@
     <string name="review_group_placeholder">No reviews yet. Be the first to share your experience.</string>
     <string name="add_review_title">How was your study session?</string>
     <string name="review_details_hint">Tell others about your experience (optional)</string>
+
+    <!-- Map inactive spot preview -->
+    <string name="preview_currently_inactive">Currently inactive</string>
+    <string name="preview_inactive_reason_title">Why is this spot inactive?</string>
+    <string name="preview_inactive_reason">This location may be closed, under renovation, or no longer available for study.</string>
+    <string name="preview_inactive_reason_info">Information about why this spot is inactive</string>
+    <string name="preview_temporarily_closed">Temporarily closed</string>
+    <string name="preview_closed_reason_title">Why is this spot temporarily closed?</string>
+    <string name="preview_closed_reason">The spot may be closed for maintenance or outside its normal operating hours.</string>
+    <string name="preview_learn_more">Learn more</string>
+    <string name="preview_last_verified">Last verified</string>
+    <string name="preview_last_verified_unknown">Not available</string>
 </resources>

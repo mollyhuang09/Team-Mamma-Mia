@@ -54,15 +54,17 @@
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/layoutPreviewRatingRow"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
         <TextView
+            android:id="@+id/tvPreviewRatingStar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="★"
+            android:text="@string/star"
             android:textColor="@color/star_default"
             android:textSize="16sp" />
 
@@ -81,6 +83,24 @@
             android:layout_marginStart="6dp"
             android:textColor="@color/brand_main"
             android:textSize="14sp" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipPreviewInactive"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="2dp"
+            android:text="@string/preview_currently_inactive"
+            android:textColor="@color/brand_main"
+            android:textSize="12sp"
+            android:visibility="gone"
+            app:checkedIconVisible="false"
+            app:chipBackgroundColor="@color/subtle_box_bg"
+            app:chipCornerRadius="6dp"
+            app:chipEndPadding="2dp"
+            app:chipStartPadding="2dp"
+            app:chipStrokeWidth="0dp"
+            app:ensureMinTouchTargetSize="false" />
     </LinearLayout>
 
     <com.google.android.material.chip.ChipGroup
@@ -109,6 +129,103 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
+            android:textColor="@color/surface_muted"
+            android:textSize="14sp" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/layoutPreviewInactiveReason"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_subtle_box"
+        android:gravity="top"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:visibility="gone" >
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:contentDescription="@string/preview_inactive_reason_info"
+            android:src="@drawable/ic_info" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvPreviewInactiveReasonTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/preview_inactive_reason_title"
+                android:textColor="@color/brand_main"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvPreviewInactiveReason"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/preview_inactive_reason"
+                android:textColor="@color/brand_main"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tvPreviewLearnMore"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/preview_learn_more"
+                android:textColor="@color/brand_main"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <View
+        android:id="@+id/viewPreviewLastVerifiedDivider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="12dp"
+        android:background="@color/border_default"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/layoutPreviewLastVerified"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:visibility="gone" >
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="Last verified"
+            android:src="@drawable/ic_history" />
+
+        <TextView
+            android:id="@+id/tvPreviewLastVerifiedLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="@string/preview_last_verified"
+            android:textColor="@color/brand_main"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvPreviewLastVerifiedDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
             android:textColor="@color/surface_muted"
             android:textSize="14sp" />
 
