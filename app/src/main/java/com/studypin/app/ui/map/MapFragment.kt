@@ -23,9 +23,9 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.studypin.app.R
-import com.studypin.app.MainActivity
-import com.studypin.app.data.CheckInManager
-import com.studypin.app.data.MockData
+import com.google.firebase.firestore.ListenerRegistration
+import com.studypin.app.data.StudySpotRepository
+import com.studypin.app.model.StudySpot
 import com.studypin.app.databinding.FragmentMapBinding
 
 class MapFragment : Fragment(), OnMapReadyCallback {
@@ -35,6 +35,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private var googleMap: GoogleMap? = null
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var locationCancellationTokenSource: CancellationTokenSource? = null
+    private var spotsListener: ListenerRegistration? = null
+    private var spots: List<StudySpot> = emptyList()
 
     companion object {
         private val WATERLOO_ON_CANADA = LatLng(43.4643, -80.5204)
@@ -67,6 +69,19 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
+        spotsListener = StudySpotRepository.observeSpots(
+            onSuccess = { loadedSpots ->
+                if (!isAdded) return@observeSpots
+                spots = loadedSpots
+                addSpotMarkers()
+            },
+            onError = { error ->
+                if (isAdded) {
+                    Toast.makeText(requireContext(), "Could not load study spots: ${error.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        )
+
         binding.fabMyLocation.setOnClickListener {
             if (checkLocationPermission()) {
                 enableMyLocation()
@@ -92,11 +107,11 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
-    // TODO: replace MockData.topLevelSpots() with a real spots repository once backend is wired up
     private fun addSpotMarkers() {
         val map = googleMap ?: return
 
-        MockData.topLevelSpots().forEach { spot ->
+        map.clear()
+        spots.filter { it.parentSpotId == null }.forEach { spot ->
             val marker = map.addMarker(
                 MarkerOptions()
                     .position(LatLng(spot.latitude, spot.longitude))
@@ -173,6 +188,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         super.onDestroyView()
         locationCancellationTokenSource?.cancel()
         locationCancellationTokenSource = null
+        spotsListener?.remove()
+        spotsListener = null
         _binding = null
     }
 }

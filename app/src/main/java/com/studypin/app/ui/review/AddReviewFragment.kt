@@ -13,8 +13,10 @@ import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.textfield.TextInputEditText
 import com.studypin.app.R
-import com.studypin.app.data.MockData
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.ListenerRegistration
 import com.studypin.app.data.ReviewRepository
+import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.model.StudySpotReview
 import java.util.UUID
 
@@ -24,6 +26,7 @@ class AddReviewFragment : Fragment() {
     private var initialRating: Int = 0
     private var selectedOverallRating = 0
     private val amenityRatings = mutableMapOf<String, Int>()
+    private var spotListener: ListenerRegistration? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -36,14 +39,25 @@ class AddReviewFragment : Fragment() {
         spotId = arguments?.getString("spotId") ?: ""
         initialRating = arguments?.getInt("initialRating") ?: 0
 
-        val spot = MockData.studySpots.firstOrNull { it.id == spotId }
-        view.findViewById<TextView>(R.id.tvSpotName).text = spot?.name ?: "Unknown Spot"
+        view.findViewById<TextView>(R.id.tvSpotName).text = "Loading spot..."
 
         setupOverallStars(view)
-        
-        val baseAmenities = listOf("noise", "seating")
-        val allAmenities = (baseAmenities + (spot?.amenities ?: emptyList())).distinct()
-        setupAmenityRatings(view, allAmenities)
+        spotListener = StudySpotRepository.observeSpot(
+            spotId = spotId,
+            onSuccess = { spot ->
+                if (!isAdded) return@observeSpot
+                if (spot == null) {
+                    view.findViewById<TextView>(R.id.tvSpotName).text = "Unknown Spot"
+                } else {
+                    view.findViewById<TextView>(R.id.tvSpotName).text = spot.name
+                    val allAmenities = (listOf("noise", "seating") + spot.amenities).distinct()
+                    setupAmenityRatings(view, allAmenities)
+                }
+            },
+            onError = {
+                if (isAdded) view.findViewById<TextView>(R.id.tvSpotName).text = "Spot unavailable"
+            }
+        )
 
         view.findViewById<View>(R.id.btnBack).setOnClickListener {
             findNavController().navigateUp()
@@ -51,6 +65,11 @@ class AddReviewFragment : Fragment() {
 
         view.findViewById<View>(R.id.btnSubmitReview).setOnClickListener {
             submitReview(view)
+        }
+
+        if (FirebaseAuth.getInstance().currentUser == null) {
+            view.findViewById<View>(R.id.btnSubmitReview).isEnabled = false
+            Toast.makeText(requireContext(), "Sign in to submit a review", Toast.LENGTH_SHORT).show()
         }
 
         // Set initial rating if passed from previous screen
@@ -123,7 +142,8 @@ class AddReviewFragment : Fragment() {
         val review = StudySpotReview(
             id = UUID.randomUUID().toString(),
             spotId = spotId,
-            reviewerName = "You", // In a real app, this would be the logged-in user
+            reviewerId = FirebaseAuth.getInstance().currentUser?.uid ?: "anonymous",
+            reviewerName = FirebaseAuth.getInstance().currentUser?.displayName ?: "Anonymous",
             overallRating = selectedOverallRating,
             amenityRatings = amenityRatings.toMap(),
             reviewText = reviewText,
@@ -132,14 +152,17 @@ class AddReviewFragment : Fragment() {
             submittedAtLabel = "Just now"
         )
 
+        view.findViewById<View>(R.id.btnSubmitReview).isEnabled = false
         ReviewRepository.addReview(review) { success, error ->
+            if (!isAdded) return@addReview
+            view.findViewById<View>(R.id.btnSubmitReview).isEnabled = true
             if (success) {
                 Toast.makeText(requireContext(), "Review posted and saved to cloud!", Toast.LENGTH_SHORT).show()
+                findNavController().navigateUp()
             } else {
-                Toast.makeText(requireContext(), "Saved locally, but cloud sync failed: $error", Toast.LENGTH_LONG).show()
+                Toast.makeText(requireContext(), "Could not save review: $error", Toast.LENGTH_LONG).show()
             }
         }
-        findNavController().navigateUp()
     }
 
     private fun getSelectedChipText(chipGroup: ChipGroup): String {
@@ -149,5 +172,11 @@ class AddReviewFragment : Fragment() {
         } else {
             ""
         }
+    }
+
+    override fun onDestroyView() {
+        spotListener?.remove()
+        spotListener = null
+        super.onDestroyView()
     }
 }

@@ -14,7 +14,9 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.studypin.app.R
-import com.studypin.app.data.MockData
+import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.auth.FirebaseAuth
+import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.data.ReportEditRepository
 import com.studypin.app.model.ReportEditSubmission
 import com.google.android.material.textfield.TextInputLayout
@@ -35,6 +37,7 @@ class ReportFlagFragment : Fragment() {
 
     private lateinit var spotId: String
     private lateinit var spotName: String
+    private var spotsListener: ListenerRegistration? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -66,24 +69,33 @@ class ReportFlagFragment : Fragment() {
     private fun setupSpotContext() {
         val argumentSpotId = arguments?.getString("spotId")
         val argumentSpotName = arguments?.getString("spotName")
-        val matchingSpot = argumentSpotId?.let { id ->
-            MockData.studySpots.firstOrNull { it.id == id }
-        }
-
-        spotId = argumentSpotId ?: matchingSpot?.id ?: defaultSpotId
-        spotName = argumentSpotName ?: matchingSpot?.name ?: defaultSpotName
+        spotId = argumentSpotId ?: defaultSpotId
+        spotName = argumentSpotName ?: defaultSpotName
 
         tvSpotContext.text = spotName
+        tvPlaceContext.visibility = View.GONE
 
-        val placeName = matchingSpot?.parentSpotId?.let { parentSpotId ->
-            MockData.studySpots.firstOrNull { it.id == parentSpotId }?.name
-        }
-        if (placeName.isNullOrBlank()) {
-            tvPlaceContext.visibility = View.GONE
-        } else {
-            tvPlaceContext.text = placeName
-            tvPlaceContext.visibility = View.VISIBLE
-        }
+        if (argumentSpotId == null) return
+        spotsListener = StudySpotRepository.observeSpots(
+            onSuccess = { spots ->
+                if (!isAdded) return@observeSpots
+                val matchingSpot = spots.firstOrNull { it.id == spotId } ?: return@observeSpots
+                if (argumentSpotName == null) {
+                    spotName = matchingSpot.name
+                    tvSpotContext.text = spotName
+                }
+                val placeName = matchingSpot.parentSpotId?.let { parentId ->
+                    spots.firstOrNull { it.id == parentId }?.name
+                }
+                if (placeName.isNullOrBlank()) {
+                    tvPlaceContext.visibility = View.GONE
+                } else {
+                    tvPlaceContext.text = placeName
+                    tvPlaceContext.visibility = View.VISIBLE
+                }
+            },
+            onError = { /* Navigation arguments are enough to submit the report. */ }
+        )
     }
 
     private fun setupCategoryDropdown() {
@@ -105,6 +117,11 @@ class ReportFlagFragment : Fragment() {
     }
 
     private fun submitReport() {
+        if (FirebaseAuth.getInstance().currentUser == null) {
+            Toast.makeText(requireContext(), "Sign in to submit a report", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         categoryLayout.error = null
         detailsLayout.error = null
 
@@ -129,11 +146,20 @@ class ReportFlagFragment : Fragment() {
             suggestedCorrection = etSuggestedCorrection.text.toString().trim(),
             details = details,
             timestamp = System.currentTimeMillis(),
-            status = "pending"
+            status = "pending",
+            submittedBy = FirebaseAuth.getInstance().currentUser?.uid ?: "anonymous"
         )
 
-        ReportEditRepository.submit(submission)
-        showSuccessConfirmation()
+        btnSubmit.isEnabled = false
+        ReportEditRepository.submit(submission) { error ->
+            if (!isAdded) return@submit
+            btnSubmit.isEnabled = true
+            if (error == null) {
+                showSuccessConfirmation()
+            } else {
+                Toast.makeText(requireContext(), "Could not submit report: ${error.message}", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     private fun showSuccessConfirmation() {
@@ -153,5 +179,11 @@ class ReportFlagFragment : Fragment() {
         detailsLayout.error = null
         etSuggestedCorrection.text.clear()
         etDetails.text.clear()
+    }
+
+    override fun onDestroyView() {
+        spotsListener?.remove()
+        spotsListener = null
+        super.onDestroyView()
     }
 }

@@ -44,7 +44,8 @@
             android:id="@+id/llReviewStars"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp" />
+            android:layout_marginTop="6dp"
+            android:orientation="horizontal" />
 
         <TextView
             android:id="@+id/tvReviewText"
@@ -74,4 +75,3 @@
 
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
-
