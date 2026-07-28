@@ -36,16 +36,11 @@
         <TextView
             android:id="@+id/btnClearMapFilters"
             android:layout_width="wrap_content"
-            android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
+            style="@style/Widget.StudyPin.Button.Text"
             android:clickable="true"
             android:focusable="true"
             android:gravity="center"
-            android:minWidth="48dp"
-            android:text="Clear all"
-            android:textColor="@color/brand_main"
-            android:textSize="14sp"
-            android:textStyle="bold" />
+            android:text="Clear all" />
 
     </LinearLayout>
 
@@ -212,14 +207,13 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnApplyMapFilters"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="52dp"
         android:layout_marginTop="12dp"
-        android:minHeight="48dp"
         android:text="Apply Filters"
         android:textAllCaps="false"
-        android:textColor="@color/white"
+        android:textColor="@color/surface_color"
         android:textStyle="bold"
-        android:textSize="18sp"
+        android:textSize="16sp"
         android:enabled="false"
         app:backgroundTint="@color/button_disabled"
         app:cornerRadius="10dp" />
@@ -227,15 +221,11 @@
     <TextView
         android:id="@+id/btnCancelMapFilters"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        style="@style/Widget.StudyPin.Button.Text"
         android:layout_marginTop="2dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
         android:clickable="true"
         android:focusable="true"
         android:gravity="center"
-        android:text="Cancel"
-        android:textColor="@color/brand_main"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+        android:text="Cancel" />
 
 </LinearLayout>

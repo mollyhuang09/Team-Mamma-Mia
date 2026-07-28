@@ -279,13 +279,10 @@
         android:id="@+id/btnApplyFilters"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        style="@style/Widget.StudyPin.Button.Primary"
         android:layout_marginTop="12dp"
         android:minHeight="52dp"
         android:text="Apply Filters"
-        android:textAllCaps="false"
-        android:textStyle="bold"
-        android:textSize="18sp"
-        app:backgroundTint="@color/brand_main"
-        app:cornerRadius="10dp" />
+        android:textSize="18sp" />
 
 </LinearLayout>

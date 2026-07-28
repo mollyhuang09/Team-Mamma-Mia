@@ -143,15 +143,12 @@
     <TextView
         android:id="@+id/btnOpenSpotDetails"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
         android:layout_marginTop="8dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
         android:clickable="true"
         android:focusable="true"
         android:gravity="center"
+        style="@style/Widget.StudyPin.Button.Text"
         android:text="View full spot details"
-        android:textColor="@color/brand_main"
-        android:textSize="14sp"
         android:textStyle="bold" />
 
 </LinearLayout>

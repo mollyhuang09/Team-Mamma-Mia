@@ -117,13 +117,9 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnToggleAmenities"
-                    style="@style/Widget.Material3.Button.TextButton"
+                    style="@style/Widget.StudyPin.Button.Text"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/view_details"
-                    android:textAllCaps="false"
-                    android:textColor="@color/brand_main"
-                    android:textSize="14sp" />
+                    android:text="@string/view_details" />
             </LinearLayout>
 
             <LinearLayout
@@ -139,14 +135,10 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnWriteReview"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
         android:layout_marginTop="14dp"
-        android:minHeight="52dp"
+        style="@style/Widget.StudyPin.Button.Primary"
         android:text="@string/write_a_review"
-        android:textAllCaps="false"
-        android:textColor="@color/surface_color"
-        app:backgroundTint="@color/brand_main"
-        app:cornerRadius="12dp" />
+        android:textAllCaps="false" />
 
     <TextView
         android:id="@+id/tvReviewsHeader"

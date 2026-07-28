@@ -450,13 +450,9 @@
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnAddReview"
                     android:layout_width="match_parent"
-                    android:layout_height="56dp"
+                    style="@style/Widget.StudyPin.Button.Primary"
                     android:layout_marginTop="8dp"
-                    android:text="Add review"
-                    android:textAllCaps="false"
-                    android:textSize="18sp"
-                    app:backgroundTint="@color/brand_main"
-                    app:cornerRadius="14dp" />
+                    android:text="Add review" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>

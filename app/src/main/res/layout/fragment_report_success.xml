@@ -88,26 +88,15 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnBackToSpot"
             android:layout_width="match_parent"
-            android:layout_height="72dp"
+            style="@style/Widget.StudyPin.Button.Primary"
             android:text="@string/back_to_spot"
-            android:textAllCaps="false"
-            android:textColor="@color/white"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            app:backgroundTint="@color/brand_main"
-            app:cornerRadius="14dp" />
+            android:textStyle="bold" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnReturnToMap"
             android:layout_width="match_parent"
-            android:layout_height="72dp"
+            style="@style/Widget.StudyPin.Button.Secondary"
             android:layout_marginTop="8dp"
-            android:text="@string/return_to_map"
-            android:textAllCaps="false"
-            android:textColor="@color/brand_main"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            app:backgroundTint="@color/button_secondary"
-            app:cornerRadius="14dp" />
+            android:text="@string/return_to_map" />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -167,14 +167,15 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSubmitReport"
             android:layout_width="match_parent"
-            android:layout_height="64dp"
+            android:layout_height="52dp"
             android:layout_marginTop="18dp"
             android:text="@string/submit_report_button"
             android:textAllCaps="false"
-            android:textColor="@color/white"
-            android:textSize="20sp"
+            android:textColor="@color/surface_color"
+            android:textStyle="bold"
+            android:textSize="16sp"
             app:backgroundTint="@color/report_red"
-            app:cornerRadius="14dp" />
+            app:cornerRadius="10dp" />
 
         <TextView
             android:layout_width="match_parent"
