@@ -7,6 +7,7 @@
     android:layout_height="wrap_content"
     app:cardBackgroundColor="@color/white"
     app:cardCornerRadius="8dp"
+    app:cardElevation="0dp"
     app:contentPaddingTop="0dp"
     app:contentPaddingBottom="0dp"
     app:contentPaddingLeft="6dp"
@@ -95,6 +96,12 @@
                 android:singleLine="true" />
 
         </com.google.android.material.textfield.TextInputLayout>
+
+        <include
+            layout="@layout/view_spot_tag_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" />
 
     </LinearLayout>
 

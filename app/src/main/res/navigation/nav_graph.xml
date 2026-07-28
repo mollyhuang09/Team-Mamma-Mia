@@ -11,6 +11,9 @@
         <action
             android:id="@+id/action_map_to_spotDetail"
             app:destination="@id/spotDetailFragment"/>
+        <action
+            android:id="@+id/action_map_to_search"
+            app:destination="@id/searchFragment"/>
     </fragment>
 
     <fragment
