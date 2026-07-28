@@ -6,14 +6,16 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ListenerRegistration
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.studypin.app.data.OccupancyRepository
 import com.studypin.app.data.StudySpotRepository
 
 class MainActivity : AppCompatActivity() {
+    private lateinit var navController: NavController
     private var currentCheckInListener: ListenerRegistration? = null
     private var currentSpotListener: ListenerRegistration? = null
     private var currentSpotId: String? = null
@@ -24,14 +26,10 @@ class MainActivity : AppCompatActivity() {
 
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-        val navController = navHostFragment.navController
+        navController = navHostFragment.navController
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
-
         bottomNav.setOnItemSelectedListener { item ->
-            // Pop everything off the back stack down to (and including)
-            // the tapped destination, so re-tapping "List" always shows
-            // List itself, not a stale Detail/Group screen on top of it.
             navController.popBackStack(item.itemId, false)
             navController.navigate(item.itemId)
             true
@@ -91,6 +89,8 @@ class MainActivity : AppCompatActivity() {
         OccupancyRepository.checkOut(spotId, userId)
             .addOnSuccessListener {
                 Toast.makeText(this, "Checked out", Toast.LENGTH_SHORT).show()
+                val bundle = Bundle().apply { putString("spotId", spotId) }
+                navController.navigate(R.id.addReviewFragment, bundle)
             }
             .addOnFailureListener { error ->
                 findViewById<Button>(R.id.btnCheckOut).isEnabled = true
