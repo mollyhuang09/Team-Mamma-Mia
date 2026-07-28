@@ -32,6 +32,7 @@ data class StudySpot(
     val amenities: List<String> = emptyList(),
     val hours: String = "",
     val createdBy: String = "",
+    val createdAt: Long = 0L,
     val avgRating: Double = 0.0,
     val totalRatings: Int = 0,
 

@@ -7,19 +7,23 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.CommonStatusCodes
+import com.google.android.gms.location.GeofenceStatusCodes
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
-import com.google.android.gms.location.GeofenceStatusCodes
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.ListenerRegistration
 import com.studypin.app.R
-import com.studypin.app.data.MockData
+import com.studypin.app.data.OccupancyRepository
 import com.studypin.app.data.ReviewRepository
+import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.location.LocationReminderManager
 import com.studypin.app.model.StudySpot
 import com.studypin.app.ui.review.StarRatingViews
@@ -27,6 +31,10 @@ import com.studypin.app.utils.LocationUtils
 import java.util.Locale
 
 class SpotDetailFragment : Fragment() {
+    private var spotListener: ListenerRegistration? = null
+    private var checkInListener: ListenerRegistration? = null
+    private var currentSpot: StudySpot? = null
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -36,13 +44,24 @@ class SpotDetailFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val spotId = arguments?.getString("spotId") ?: ""
-        val spot = MockData.studySpots.firstOrNull { it.id == spotId }
-
-        if (spot == null) {
-            showMissingSpot(view)
-        } else {
-            bindSpot(view, spot)
-        }
+        setupCheckInButton(view, spotId)
+        setupTrackVisitButton(view)
+        spotListener = StudySpotRepository.observeSpot(
+            spotId = spotId,
+            onSuccess = { spot ->
+                if (!isAdded) return@observeSpot
+                currentSpot = spot
+                if (spot == null) {
+                    showMissingSpot(view)
+                } else {
+                    bindSpot(view, spot)
+                    updateTrackVisitButton(view.findViewById(R.id.btnTrackVisit), spot)
+                }
+            },
+            onError = {
+                if (isAdded) showMissingSpot(view)
+            }
+        )
 
         view.findViewById<View>(R.id.btnBack).setOnClickListener {
             findNavController().navigateUp()
@@ -52,7 +71,6 @@ class SpotDetailFragment : Fragment() {
         }
         view.findViewById<Button>(R.id.btnReport).setOnClickListener {
             val spotName = arguments?.getString("spotName")
-                ?: MockData.studySpots.firstOrNull { it.id == spotId }?.name
 
             val bundle = Bundle().apply {
                 putString("spotId", spotId)
@@ -60,22 +78,6 @@ class SpotDetailFragment : Fragment() {
             }
 
             findNavController().navigate(R.id.action_spotDetail_to_reportFlag, bundle)
-        }
-
-        view.findViewById<Button>(R.id.btnTrackVisit).apply {
-            if (spot != null && LocationReminderManager.isTracking(requireContext(), spot.id)) {
-                text = "Stop tracking this visit"
-            }
-            setOnClickListener {
-                if (spot == null) return@setOnClickListener
-                if (LocationReminderManager.isTracking(requireContext(), spot.id)) {
-                    LocationReminderManager.stopTracking(requireContext(), spot.id)
-                    text = "I’m at this study spot"
-                    showTrackingMessage("Location reminders stopped")
-                } else {
-                    verifyUserIsAtSpotAndStartTracking(spot, this@apply)
-                }
-            }
         }
 
         setupClickableStars(view, spotId)
@@ -87,6 +89,42 @@ class SpotDetailFragment : Fragment() {
         view.findViewById<View>(R.id.tvRatingDetail).setOnClickListener {
             val bundle = Bundle().apply { putString("spotId", spotId) }
             findNavController().navigate(R.id.action_spotDetail_to_reviewList, bundle)
+        }
+    }
+
+    override fun onDestroyView() {
+        spotListener?.remove()
+        spotListener = null
+        checkInListener?.remove()
+        checkInListener = null
+        currentSpot = null
+        super.onDestroyView()
+    }
+
+    private fun setupTrackVisitButton(view: View) {
+        view.findViewById<Button>(R.id.btnTrackVisit).setOnClickListener {
+            val spot = currentSpot
+            if (spot == null) {
+                showTrackingMessage("Study spot details are still loading")
+                return@setOnClickListener
+            }
+
+            val button = it as Button
+            if (LocationReminderManager.isTracking(requireContext(), spot.id)) {
+                LocationReminderManager.stopTracking(requireContext(), spot.id)
+                button.text = "I’m at this study spot"
+                showTrackingMessage("Location reminders stopped")
+            } else {
+                verifyUserIsAtSpotAndStartTracking(spot, button)
+            }
+        }
+    }
+
+    private fun updateTrackVisitButton(button: Button, spot: StudySpot) {
+        button.text = if (LocationReminderManager.isTracking(requireContext(), spot.id)) {
+            "Stop tracking this visit"
+        } else {
+            "I’m at this study spot"
         }
     }
 
@@ -179,14 +217,20 @@ class SpotDetailFragment : Fragment() {
 
     private fun setupClickableStars(view: View, spotId: String) {
         val actionLayout = view.findViewById<View>(R.id.layoutUserRatingAction)
-        if (ReviewRepository.hasUserReviewedSpot("You", spotId)) {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser == null) {
+            actionLayout.visibility = View.GONE
+            return
+        }
+        val currentUserId = currentUser.uid
+        if (ReviewRepository.hasUserReviewedSpot(currentUserId, spotId)) {
             actionLayout.visibility = View.GONE
             return
         }
         actionLayout.visibility = View.VISIBLE
-        
+
         val layout = view.findViewById<LinearLayout>(R.id.layoutClickableStars)
-        layout.removeAllViews() // Clear existing stars to avoid duplicates
+        layout.removeAllViews()
         val starRow = StarRatingViews.buildStarRow(requireContext(), 0, true, 36f) { rating ->
             val bundle = Bundle().apply {
                 putString("spotId", spotId)
@@ -197,6 +241,50 @@ class SpotDetailFragment : Fragment() {
         layout.addView(starRow)
     }
 
+    private fun setupCheckInButton(view: View, spotId: String) {
+        val button = view.findViewById<Button>(R.id.btnCheckInToggle)
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
+        if (userId == null || spotId.isBlank()) {
+            button.text = "Sign in to check in"
+            button.isEnabled = false
+            return
+        }
+
+        button.isEnabled = false
+        checkInListener = OccupancyRepository.observeCheckIn(
+            spotId = spotId,
+            userId = userId,
+            onSuccess = { checkedIn ->
+                if (!isAdded) return@observeCheckIn
+                button.isEnabled = true
+                button.text = if (checkedIn) "Check Out" else "Check In"
+            },
+            onError = {
+                if (isAdded) {
+                    button.isEnabled = false
+                    button.text = "Check-in unavailable"
+                }
+            }
+        )
+
+        button.setOnClickListener {
+            button.isEnabled = false
+            val checkedIn = button.text == "Check Out"
+            val operation = if (checkedIn) {
+                OccupancyRepository.checkOut(spotId, userId)
+            } else {
+                OccupancyRepository.checkIn(spotId, userId)
+            }
+            operation
+                .addOnFailureListener { error ->
+                    if (isAdded) {
+                        button.isEnabled = true
+                        Toast.makeText(requireContext(), "Could not update check-in: ${error.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
+        }
+    }
+
     private fun bindSpot(view: View, spot: StudySpot) {
         val stats = ReviewRepository.displayStatsForSpot(spot)
         view.findViewById<TextView>(R.id.tvSpotName).text = spot.name
@@ -205,7 +293,7 @@ class SpotDetailFragment : Fragment() {
         view.findViewById<TextView>(R.id.tvAvailability).text = spot.occupancyLabel()
         view.findViewById<TextView>(R.id.tvOccupancyDetail).text =
             "${spot.currentCheckIns} / ${spot.capacity.approxSeats} seats occupied (${spot.capacity.label})"
-        
+
         view.findViewById<TextView>(R.id.tvRatingDetail).text = String.format(
             Locale.CANADA, "★ %.1f / 5 (%d rating%s)", stats.averageOverall, stats.reviewCount,
             if (stats.reviewCount == 1) "" else "s"
@@ -264,9 +352,17 @@ class SpotDetailFragment : Fragment() {
         view.findViewById<TextView>(R.id.tvSpotName).text = "Study spot unavailable"
         view.findViewById<TextView>(R.id.tvDescription).text =
             "This study spot could not be found. Return to the list and choose another spot."
-        listOf(R.id.tvAvailability, R.id.tvOccupancyDetail, R.id.tvRatingDetail,
-            R.id.tvLocation, R.id.tvHours, R.id.tvAmenitiesDetail, R.id.btnEdit, R.id.btnReport,
-            R.id.btnTrackVisit)
-            .forEach { view.findViewById<View>(it).visibility = View.GONE }
+        listOf(
+            R.id.tvAvailability,
+            R.id.tvOccupancyDetail,
+            R.id.tvRatingDetail,
+            R.id.tvLocation,
+            R.id.tvHours,
+            R.id.tvAmenitiesDetail,
+            R.id.btnEdit,
+            R.id.btnReport,
+            R.id.btnCheckInToggle,
+            R.id.btnTrackVisit
+        ).forEach { view.findViewById<View>(it).visibility = View.GONE }
     }
 }

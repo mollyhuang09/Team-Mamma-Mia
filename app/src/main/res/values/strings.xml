@@ -19,6 +19,9 @@
     <string name="guest_user">Guest User</string>
     <string name="sign_in_to_sync">Sign in to sync your data</string>
     <string name="sign_in">Sign In</string>
+    <string name="display_name">Display name</string>
+    <string name="display_name_required">Display name is required</string>
+    <string name="profile_saved">Profile saved</string>
     <string name="my_location">My Location</string>
     <string name="location_permission_denied">Location permission denied</string>
     <string name="location_fetch_failed">Couldn\'t get your location</string>

@@ -10,10 +10,14 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.studypin.app.R
-import com.studypin.app.data.MockData
+import com.google.firebase.firestore.ListenerRegistration
+import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.ui.list.SpotListAdapter
+import android.widget.Toast
 
 class SpotGroupFragment : Fragment() {
+
+    private var spotsListener: ListenerRegistration? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -27,24 +31,41 @@ class SpotGroupFragment : Fragment() {
 
         val parentSpotId = arguments?.getString("parentSpotId") ?: return
 
-        val parent = MockData.studySpots.firstOrNull { it.id == parentSpotId } ?: return
-        val hiddenGems = MockData.hiddenGemsFor(parentSpotId)
-
-        // Parent spot shown first, followed by its hidden gems.
-        val groupList = listOf(parent) + hiddenGems
-
-        view.findViewById<TextView>(R.id.tvGroupHeader).text = parent.name
-
         val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerGroupSpots)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-        // Reusing SpotListAdapter since both rows look the same (no special labeling).
-        // Tapping any row here always goes straight to Detail — no further nesting.
-        recyclerView.adapter = SpotListAdapter(groupList, showHiddenGemBadge = false) { tappedSpot ->
+        val adapter = SpotListAdapter(emptyList(), showHiddenGemBadge = false) { tappedSpot ->
             val bundle = Bundle().apply {
                 putString("spotId", tappedSpot.id)
             }
             findNavController().navigate(R.id.action_spotGroup_to_spotDetail, bundle)
         }
+        recyclerView.adapter = adapter
+
+        spotsListener = StudySpotRepository.observeSpots(
+            onSuccess = { spots ->
+                if (!isAdded) return@observeSpots
+                val parent = spots.firstOrNull { it.id == parentSpotId }
+                if (parent == null) {
+                    Toast.makeText(requireContext(), "Study spot unavailable", Toast.LENGTH_SHORT).show()
+                    findNavController().navigateUp()
+                    return@observeSpots
+                }
+                val groupList = listOf(parent) + spots.filter { it.parentSpotId == parentSpotId }
+                view.findViewById<TextView>(R.id.tvGroupHeader).text = parent.name
+                adapter.updateList(groupList, spots)
+            },
+            onError = { error ->
+                if (isAdded) {
+                    Toast.makeText(requireContext(), "Could not load study spot: ${error.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        )
+    }
+
+    override fun onDestroyView() {
+        spotsListener?.remove()
+        spotsListener = null
+        super.onDestroyView()
     }
 }
