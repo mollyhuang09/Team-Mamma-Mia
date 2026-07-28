@@ -10,19 +10,30 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import com.studypin.app.R
-import com.google.firebase.firestore.ListenerRegistration
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.common.api.CommonStatusCodes
+import com.google.android.gms.location.GeofenceStatusCodes
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
+import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
-import com.studypin.app.data.StudySpotRepository
+import com.google.firebase.firestore.ListenerRegistration
+import com.studypin.app.R
 import com.studypin.app.data.OccupancyRepository
 import com.studypin.app.data.ReviewRepository
+import com.studypin.app.data.StudySpotRepository
+import com.studypin.app.location.LocationReminderManager
 import com.studypin.app.model.StudySpot
 import com.studypin.app.ui.review.StarRatingViews
+import com.studypin.app.utils.LocationUtils
 import java.util.Locale
 
 class SpotDetailFragment : Fragment() {
     private var spotListener: ListenerRegistration? = null
     private var checkInListener: ListenerRegistration? = null
+    private var currentSpot: StudySpot? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -34,13 +45,22 @@ class SpotDetailFragment : Fragment() {
 
         val spotId = arguments?.getString("spotId") ?: ""
         setupCheckInButton(view, spotId)
+        setupTrackVisitButton(view)
         spotListener = StudySpotRepository.observeSpot(
             spotId = spotId,
             onSuccess = { spot ->
                 if (!isAdded) return@observeSpot
-                if (spot == null) showMissingSpot(view) else bindSpot(view, spot)
+                currentSpot = spot
+                if (spot == null) {
+                    showMissingSpot(view)
+                } else {
+                    bindSpot(view, spot)
+                    updateTrackVisitButton(view.findViewById(R.id.btnTrackVisit), spot)
+                }
             },
-            onError = { if (isAdded) showMissingSpot(view) }
+            onError = {
+                if (isAdded) showMissingSpot(view)
+            }
         )
 
         view.findViewById<View>(R.id.btnBack).setOnClickListener {
@@ -77,7 +97,122 @@ class SpotDetailFragment : Fragment() {
         spotListener = null
         checkInListener?.remove()
         checkInListener = null
+        currentSpot = null
         super.onDestroyView()
+    }
+
+    private fun setupTrackVisitButton(view: View) {
+        view.findViewById<Button>(R.id.btnTrackVisit).setOnClickListener {
+            val spot = currentSpot
+            if (spot == null) {
+                showTrackingMessage("Study spot details are still loading")
+                return@setOnClickListener
+            }
+
+            val button = it as Button
+            if (LocationReminderManager.isTracking(requireContext(), spot.id)) {
+                LocationReminderManager.stopTracking(requireContext(), spot.id)
+                button.text = "I’m at this study spot"
+                showTrackingMessage("Location reminders stopped")
+            } else {
+                verifyUserIsAtSpotAndStartTracking(spot, button)
+            }
+        }
+    }
+
+    private fun updateTrackVisitButton(button: Button, spot: StudySpot) {
+        button.text = if (LocationReminderManager.isTracking(requireContext(), spot.id)) {
+            "Stop tracking this visit"
+        } else {
+            "I’m at this study spot"
+        }
+    }
+
+    private fun verifyUserIsAtSpotAndStartTracking(spot: StudySpot, button: Button) {
+        if (!LocationReminderManager.hasFineLocationPermission(requireContext()) ||
+            !LocationReminderManager.hasBackgroundLocationPermission(requireContext())
+        ) {
+            showTrackingMessage("Enable location permissions in Settings before tracking a visit")
+            return
+        }
+
+        val cancellationTokenSource = CancellationTokenSource()
+        LocationServices.getFusedLocationProviderClient(requireContext())
+            .getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancellationTokenSource.token)
+            .addOnSuccessListener { location ->
+                if (location == null) {
+                    showTrackingMessage("Couldn’t determine your current location")
+                    return@addOnSuccessListener
+                }
+
+                val distanceMeters = LocationUtils.distanceInMeters(
+                    location.latitude,
+                    location.longitude,
+                    spot.latitude,
+                    spot.longitude
+                )
+                if (distanceMeters > LocationReminderManager.GEOFENCE_RADIUS_METERS) {
+                    showTrackingMessage(
+                        "Hmm, it seems like you’re not at this study spot yet. " +
+                            "Move within ${LocationReminderManager.GEOFENCE_RADIUS_METERS.toInt()} m to start tracking."
+                    )
+                    return@addOnSuccessListener
+                }
+
+                startTrackingForSpot(spot, button)
+            }
+            .addOnFailureListener {
+                showTrackingMessage("Couldn’t determine your current location")
+            }
+    }
+
+    private fun startTrackingForSpot(spot: StudySpot, button: Button) {
+        LocationReminderManager.startTracking(
+            requireContext(),
+            spot,
+            onSuccess = {
+                button.text = "Stop tracking this visit"
+                showTrackingMessage("Visit tracked. You’ll be reminded after you leave")
+            },
+            onFailure = { exception ->
+                showTrackingMessage(locationReminderErrorMessage(exception))
+            }
+        )
+    }
+
+    private fun locationReminderErrorMessage(exception: Exception?): String {
+        if (exception is SecurityException) {
+            return "Allow background location for StudyPin in Settings, then try again"
+        }
+
+        val statusCode = (exception as? ApiException)?.statusCode
+        return when (statusCode) {
+            GeofenceStatusCodes.GEOFENCE_NOT_AVAILABLE ->
+                "Location services are unavailable. Turn on Location and try again"
+            GeofenceStatusCodes.GEOFENCE_TOO_MANY_GEOFENCES ->
+                "Too many location reminders are active. Stop another visit first"
+            GeofenceStatusCodes.GEOFENCE_TOO_MANY_PENDING_INTENTS ->
+                "Too many location reminders are active. Restart StudyPin and try again"
+            CommonStatusCodes.API_NOT_CONNECTED,
+            ConnectionResult.SERVICE_MISSING,
+            ConnectionResult.SERVICE_VERSION_UPDATE_REQUIRED ->
+                "This emulator needs Google Play services for location reminders"
+            else -> {
+                val code = statusCode?.let { " Error code: $it." } ?: ""
+                "Couldn’t start the location reminder.$code Use a Google Play emulator image and allow background location."
+            }
+        }
+    }
+
+    private fun showTrackingMessage(message: String) {
+        val root = view ?: return
+        val snackbar = Snackbar.make(root, message, Snackbar.LENGTH_LONG)
+        snackbar.view.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
+            ?.apply {
+                maxLines = 4
+                textSize = 16f
+            }
+        snackbar.show()
     }
 
     private fun setupClickableStars(view: View, spotId: String) {
@@ -93,9 +228,9 @@ class SpotDetailFragment : Fragment() {
             return
         }
         actionLayout.visibility = View.VISIBLE
-        
+
         val layout = view.findViewById<LinearLayout>(R.id.layoutClickableStars)
-        layout.removeAllViews() // Clear existing stars to avoid duplicates
+        layout.removeAllViews()
         val starRow = StarRatingViews.buildStarRow(requireContext(), 0, true, 36f) { rating ->
             val bundle = Bundle().apply {
                 putString("spotId", spotId)
@@ -158,7 +293,7 @@ class SpotDetailFragment : Fragment() {
         view.findViewById<TextView>(R.id.tvAvailability).text = spot.occupancyLabel()
         view.findViewById<TextView>(R.id.tvOccupancyDetail).text =
             "${spot.currentCheckIns} / ${spot.capacity.approxSeats} seats occupied (${spot.capacity.label})"
-        
+
         view.findViewById<TextView>(R.id.tvRatingDetail).text = String.format(
             Locale.CANADA, "★ %.1f / 5 (%d rating%s)", stats.averageOverall, stats.reviewCount,
             if (stats.reviewCount == 1) "" else "s"
@@ -217,9 +352,17 @@ class SpotDetailFragment : Fragment() {
         view.findViewById<TextView>(R.id.tvSpotName).text = "Study spot unavailable"
         view.findViewById<TextView>(R.id.tvDescription).text =
             "This study spot could not be found. Return to the list and choose another spot."
-        listOf(R.id.tvAvailability, R.id.tvOccupancyDetail, R.id.tvRatingDetail,
-            R.id.tvLocation, R.id.tvHours, R.id.tvAmenitiesDetail, R.id.btnEdit, R.id.btnReport,
-            R.id.btnCheckInToggle)
-            .forEach { view.findViewById<View>(it).visibility = View.GONE }
+        listOf(
+            R.id.tvAvailability,
+            R.id.tvOccupancyDetail,
+            R.id.tvRatingDetail,
+            R.id.tvLocation,
+            R.id.tvHours,
+            R.id.tvAmenitiesDetail,
+            R.id.btnEdit,
+            R.id.btnReport,
+            R.id.btnCheckInToggle,
+            R.id.btnTrackVisit
+        ).forEach { view.findViewById<View>(it).visibility = View.GONE }
     }
 }
