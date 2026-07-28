@@ -7,9 +7,12 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.studypin.app.R
+import com.studypin.app.MainActivity
+import com.studypin.app.data.CheckInManager
 import com.studypin.app.data.MockData
 import com.studypin.app.data.ReviewRepository
 import com.studypin.app.model.StudySpot
@@ -32,7 +35,9 @@ class SpotDetailFragment : Fragment() {
             showMissingSpot(view)
         } else {
             bindSpot(view, spot)
+            setupCheckInButton(view, spotId)
         }
+        // ... (rest of onViewCreated)
 
         view.findViewById<View>(R.id.btnBack).setOnClickListener {
             findNavController().navigateUp()
@@ -145,6 +150,44 @@ class SpotDetailFragment : Fragment() {
 
     private fun formatRating(value: Double): String {
         return if (value.isNaN()) "-" else String.format(Locale.CANADA, "%.1f / 5", value)
+    }
+
+    private fun setupCheckInButton(view: View, spotId: String) {
+        val btn = view.findViewById<Button>(R.id.btnCheckInToggle)
+        
+        fun updateButtonState() {
+            if (CheckInManager.isCheckedIn(spotId)) {
+                btn.text = "Check Out"
+                btn.setBackgroundColor(requireContext().getColor(android.R.color.darker_gray))
+            } else {
+                btn.text = "Check In"
+                btn.setBackgroundColor(requireContext().getColor(R.color.primary))
+            }
+        }
+
+        updateButtonState()
+
+        btn.setOnClickListener {
+            if (CheckInManager.isCheckedIn(spotId)) {
+                CheckInManager.checkOut()
+                // Navigate to review after check out
+                val bundle = Bundle().apply { putString("spotId", spotId) }
+                findNavController().navigate(R.id.action_spotDetail_to_addReview, bundle)
+            } else {
+                if (CheckInManager.currentSpotId != null) {
+                    val currentSpot = CheckInManager.getCurrentSpot()
+                    Toast.makeText(
+                        requireContext(),
+                        "Please check out of ${currentSpot?.name} first",
+                        Toast.LENGTH_LONG
+                    ).show()
+                } else {
+                    CheckInManager.checkIn(spotId)
+                }
+            }
+            updateButtonState()
+            (activity as? MainActivity)?.updateBannerVisibility()
+        }
     }
 
     private fun showMissingSpot(view: View) {

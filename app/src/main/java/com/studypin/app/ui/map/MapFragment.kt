@@ -23,6 +23,8 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.studypin.app.R
+import com.studypin.app.MainActivity
+import com.studypin.app.data.CheckInManager
 import com.studypin.app.data.MockData
 import com.studypin.app.databinding.FragmentMapBinding
 
