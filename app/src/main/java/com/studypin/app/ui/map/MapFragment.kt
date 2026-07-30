@@ -32,13 +32,14 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.studypin.app.R
-import com.studypin.app.data.MockData
+import com.google.firebase.firestore.ListenerRegistration
+import com.studypin.app.data.StudySpotRepository
+import com.studypin.app.model.StudySpot
 import com.studypin.app.databinding.FragmentMapBinding
 import com.studypin.app.ui.applyStatusBarInset
 import com.studypin.app.ui.filter.MapFilterBottomSheet
 import com.studypin.app.ui.search.SearchFragment
 import com.studypin.app.ui.toTagLabel
-import com.studypin.app.model.StudySpot
 import com.studypin.app.model.SpotStatus
 import com.studypin.app.model.isInactive
 import com.google.android.material.textfield.TextInputLayout
@@ -58,11 +59,12 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private val selectedMapAmenities = mutableSetOf<String>()
     private val selectedMapEnvironments = mutableSetOf<String>()
     private var selectedMapAvailableOnly = false
-    private val allMapSpots = MockData.topLevelSpots()
-        .filter { it.status != SpotStatus.REMOVED }
+    private var allMapSpots: List<StudySpot> = emptyList()
     private var mapSearchQuery = ""
     private var searchNavigationStarted = false
     private var selectedSpotId: String? = null
+    private var spotsListener: ListenerRegistration? = null
+    private var spots: List<StudySpot> = emptyList()
 
     companion object {
         // ICON 330, 330 Phillip Street, Waterloo.
@@ -159,6 +161,21 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
         val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
+
+        spotsListener = StudySpotRepository.observeSpots(
+            onSuccess = { loadedSpots ->
+                if (!isAdded) return@observeSpots
+                spots = loadedSpots
+                allMapSpots = loadedSpots
+                    .filter { it.parentSpotId == null && it.status != SpotStatus.REMOVED }
+                updateMapMarkers()
+            },
+            onError = { error ->
+                if (isAdded) {
+                    Toast.makeText(requireContext(), "Could not load study spots: ${error.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        )
 
         binding.fabMyLocation.setOnClickListener {
             if (checkLocationPermission()) {
@@ -487,9 +504,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         super.onDestroyView()
         locationCancellationTokenSource?.cancel()
         locationCancellationTokenSource = null
+        spotsListener?.remove()
+        spotsListener = null
         _binding = null
     }
-
     override fun onResume() {
         super.onResume()
         searchNavigationStarted = false

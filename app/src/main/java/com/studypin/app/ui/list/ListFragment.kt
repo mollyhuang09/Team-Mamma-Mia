@@ -16,12 +16,14 @@ import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.textfield.TextInputLayout
 import com.studypin.app.R
-import com.studypin.app.data.MockData
+import com.google.firebase.firestore.ListenerRegistration
+import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.model.StudySpot
 import com.studypin.app.ui.filter.FilterFragment
 import com.studypin.app.ui.search.SearchFragment
 import com.studypin.app.ui.applyStatusBarInset
 import com.studypin.app.ui.toTagLabel
+import android.widget.Toast
 
 
 class ListFragment : Fragment() {
@@ -45,7 +47,8 @@ class ListFragment : Fragment() {
 
     // Always sort/filter from the full original list, never from the
     // currently-displayed (already-filtered) list.
-    private val allSpots: List<StudySpot> = MockData.studySpots
+    private var allSpots: List<StudySpot> = emptyList()
+    private var spotsListener: ListenerRegistration? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -124,8 +127,8 @@ class ListFragment : Fragment() {
         val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerSpots)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-        adapter = SpotListAdapter(allSpots) { spot ->
-            val gemCount = MockData.hiddenGemCountFor(spot.id)
+        adapter = SpotListAdapter(emptyList()) { spot ->
+            val gemCount = allSpots.count { it.parentSpotId == spot.id }
             if (gemCount > 0) {
                 val bundle = Bundle().apply {
                     putString("parentSpotId", spot.id)
@@ -142,6 +145,19 @@ class ListFragment : Fragment() {
 
         setupSearchListener()
         applyFiltersAndSort()
+        spotsListener = StudySpotRepository.observeSpots(
+            onSuccess = { spots ->
+                if (!isAdded) return@observeSpots
+                allSpots = spots.filter { it.parentSpotId == null }
+                adapter.updateList(emptyList(), spots)
+                applyFiltersAndSort()
+            },
+            onError = { error ->
+                if (isAdded) {
+                    Toast.makeText(requireContext(), "Could not load study spots: ${error.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        )
     }
 
     private fun setupSearchListener() {
@@ -251,6 +267,12 @@ class ListFragment : Fragment() {
         } else {
             View.VISIBLE
         }
+    }
+
+    override fun onDestroyView() {
+        spotsListener?.remove()
+        spotsListener = null
+        super.onDestroyView()
     }
 
 }

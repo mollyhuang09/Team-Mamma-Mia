@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.textfield.TextInputLayout
 import com.studypin.app.R
+import com.google.firebase.auth.FirebaseAuth
 import com.studypin.app.data.ReportEditRepository
 import com.studypin.app.model.ReportEditSubmission
 import com.studypin.app.ui.applyStatusBarInset
@@ -78,14 +79,22 @@ class ReportFlagFragment : Fragment() {
             suggestedCorrection = "",
             details = details,
             timestamp = System.currentTimeMillis(),
-            status = "pending"
+            status = "pending",
+            submittedBy = FirebaseAuth.getInstance().currentUser?.uid ?: "anonymous"
         )
 
-        ReportEditRepository.submit(submission)
-
-        val bundle = Bundle().apply {
-            putString("spotId", spotId)
+        btnSubmit.isEnabled = false
+        ReportEditRepository.submit(submission) { error ->
+            if (!isAdded) return@submit
+            btnSubmit.isEnabled = true
+            if (error == null) {
+                val bundle = Bundle().apply {
+                    putString("spotId", spotId)
+                }
+                findNavController().navigate(R.id.action_reportFlag_to_reportSuccess, bundle)
+            } else {
+                Toast.makeText(requireContext(), "Could not submit report: ${error.message}", Toast.LENGTH_LONG).show()
+            }
         }
-        findNavController().navigate(R.id.action_reportFlag_to_reportSuccess, bundle)
     }
 }

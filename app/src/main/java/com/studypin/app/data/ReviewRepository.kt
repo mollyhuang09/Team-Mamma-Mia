@@ -1,20 +1,18 @@
 package com.studypin.app.data
 
-import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.ListenerRegistration
 import com.studypin.app.model.ReviewDisplayStats
 import com.studypin.app.model.StudySpot
 import com.studypin.app.model.StudySpotReview
 
-/**
- * In-memory review repository used by the prototype.
- *
- * The same review shape is mirrored in the Firebase seed JSON so the
- * sample data can be imported to Realtime Database later.
- */
+/** Firestore-backed ratings repository with a small in-memory UI cache. */
 object ReviewRepository {
 
-    private val database = FirebaseDatabase.getInstance("https://studypin-3f9fb-default-rtdb.firebaseio.com/").reference.child("reviews")
     private val helpfulVotesByCurrentUser = mutableSetOf<String>()
+    private val firestore = FirebaseFirestore.getInstance()
+    private val spots = firestore.collection("studySpots")
 
     private val reviews = mutableListOf(
         StudySpotReview(
@@ -144,19 +142,94 @@ object ReviewRepository {
     }
 
     fun hasUserReviewedSpot(userId: String, spotId: String): Boolean {
-        return reviews.any { it.reviewerName == userId && it.spotId == spotId }
+        return reviews.any {
+            it.spotId == spotId && (it.reviewerId == userId || it.reviewerName == userId)
+        }
     }
 
+    fun observeReviews(
+        spotId: String,
+        onSuccess: (List<StudySpotReview>) -> Unit,
+        onError: (Exception) -> Unit
+    ): ListenerRegistration = spots.document(spotId).collection("ratings")
+        .addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                onError(error)
+                return@addSnapshotListener
+            }
+            val loaded = snapshot?.documents.orEmpty().mapNotNull { document ->
+                document.toReview()
+            }
+            reviews.removeAll { it.spotId == spotId }
+            reviews.addAll(loaded)
+            onSuccess(loaded)
+        }
+
     fun addReview(review: StudySpotReview, onComplete: ((Boolean, String?) -> Unit)? = null) {
-        reviews.add(0, review)
-        // Push to Firebase Realtime Database
-        database.push().setValue(review)
-            .addOnSuccessListener {
-                onComplete?.invoke(true, null)
+        val spotRef = spots.document(review.spotId)
+        val reviewRef = spotRef.collection("ratings").document(review.id)
+
+        firestore.runTransaction { transaction ->
+            val spot = transaction.get(spotRef)
+            val existingReview = transaction.get(reviewRef)
+            if (!spot.exists()) throw IllegalStateException("Study spot does not exist")
+            if (!existingReview.exists()) {
+                val oldCount = (spot.getLong("totalRatings") ?: 0L).toInt()
+                val oldAverage = spot.getDouble("avgRating") ?: 0.0
+                val newCount = oldCount + 1
+                val newAverage = ((oldAverage * oldCount) + review.overallRating) / newCount
+                transaction.set(reviewRef, review.toFirestoreMap())
+                transaction.update(spotRef, mapOf(
+                    "totalRatings" to newCount,
+                    "avgRating" to newAverage
+                ))
             }
-            .addOnFailureListener { e ->
-                onComplete?.invoke(false, e.message)
-            }
+            null
+        }.addOnSuccessListener {
+            reviews.removeAll { it.id == review.id }
+            reviews.add(0, review)
+            onComplete?.invoke(true, null)
+        }.addOnFailureListener { e ->
+            onComplete?.invoke(false, e.message)
+        }
+    }
+
+    private fun StudySpotReview.toFirestoreMap(): Map<String, Any?> = mapOf(
+        "spotId" to spotId,
+        "reviewerId" to reviewerId,
+        "reviewerName" to reviewerName,
+        "overallRating" to overallRating,
+        "amenityRatings" to amenityRatings,
+        "reviewText" to reviewText,
+        "visitTimeOfDay" to visitTimeOfDay,
+        "crowdLevel" to crowdLevel,
+        "mediaCount" to mediaCount,
+        "submittedAtLabel" to submittedAtLabel,
+        "createdAt" to FieldValue.serverTimestamp()
+    )
+
+    private fun com.google.firebase.firestore.DocumentSnapshot.toReview(): StudySpotReview? {
+        return try {
+            StudySpotReview(
+                id = id,
+                spotId = getString("spotId").orEmpty(),
+                reviewerId = getString("reviewerId").orEmpty(),
+                reviewerName = getString("reviewerName") ?: "Anonymous",
+                overallRating = (getLong("overallRating") ?: 0L).toInt(),
+                amenityRatings = (get("amenityRatings") as? Map<*, *>).orEmpty().mapNotNull { (key, value) ->
+                    val amenity = key as? String ?: return@mapNotNull null
+                    val rating = (value as? Number)?.toInt() ?: return@mapNotNull null
+                    amenity to rating
+                }.toMap(),
+                reviewText = getString("reviewText").orEmpty(),
+                visitTimeOfDay = getString("visitTimeOfDay").orEmpty(),
+                crowdLevel = getString("crowdLevel").orEmpty(),
+                mediaCount = (getLong("mediaCount") ?: 0L).toInt(),
+                submittedAtLabel = getString("submittedAtLabel").orEmpty()
+            )
+        } catch (_: Exception) {
+            null
+        }
     }
 
     fun displayStatsForSpot(spot: StudySpot): ReviewDisplayStats {
@@ -183,4 +256,3 @@ object ReviewRepository {
         )
     }
 }
-

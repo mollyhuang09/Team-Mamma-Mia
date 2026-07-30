@@ -25,7 +25,7 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import com.studypin.app.R
-import com.studypin.app.data.MockData
+import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.model.Capacity
 import com.studypin.app.model.StudySpot
 import com.studypin.app.utils.LocationUtils
@@ -197,6 +197,11 @@ class AddSpotFragment : Fragment() {
     }
 
     private fun onSubmitClicked() {
+        if (com.google.firebase.auth.FirebaseAuth.getInstance().currentUser == null) {
+            Toast.makeText(requireContext(), "Sign in to add a study spot", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val name = etName.text.toString().trim()
         val address = etAddress.text.toString().trim()
 
@@ -213,28 +218,36 @@ class AddSpotFragment : Fragment() {
             return
         }
 
-        // New Logic: Check for unvalidated spots nearby to vouch
-        val unvalidatedNearby = findNearbyUnvalidatedSpot()
-        if (unvalidatedNearby != null) {
-            showVouchPrompt(unvalidatedNearby)
-            return
-        }
+        btnSubmit.isEnabled = false
+        StudySpotRepository.getSpots(
+            onSuccess = { spots ->
+                if (!isAdded) return@getSpots
+                val unvalidatedNearby = findNearbyUnvalidatedSpot(spots)
+                if (unvalidatedNearby != null) {
+                    showVouchPrompt(unvalidatedNearby)
+                    return@getSpots
+                }
 
-        // Parent/Orphan logic remains for nesting
-        val possibleParent = findNearbyTopLevelSpot()
-        if (possibleParent != null) {
-            showParentPrompt(possibleParent)
-            return
-        }
-
-        createSpot(parentId = null, isHiddenGem = false) {
-            Toast.makeText(requireContext(), "Spot added for validation!", Toast.LENGTH_SHORT).show()
-        }
+                val possibleParent = findNearbyTopLevelSpot(spots)
+                if (possibleParent != null) {
+                    showParentPrompt(possibleParent)
+                } else {
+                    createSpot(parentId = null, isHiddenGem = false) {
+                        Toast.makeText(requireContext(), "Spot added for validation!", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            },
+            onError = { error ->
+                if (isAdded) {
+                    btnSubmit.isEnabled = true
+                    Toast.makeText(requireContext(), "Could not check nearby spots: ${error.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        )
     }
 
-    private fun findNearbyUnvalidatedSpot(): StudySpot? {
-        // In a real app, this would query the DB for isValidated=false spots nearby
-        return MockData.topLevelSpots().firstOrNull { existing ->
+    private fun findNearbyUnvalidatedSpot(spots: List<StudySpot>): StudySpot? {
+        return spots.filter { it.parentSpotId == null }.firstOrNull { existing ->
             !existing.isValidated && LocationUtils.distanceInMeters(
                 simulatedLat, simulatedLng,
                 existing.latitude, existing.longitude
@@ -247,9 +260,21 @@ class AddSpotFragment : Fragment() {
             .setTitle(getString(R.string.vouch_prompt_title))
             .setMessage(getString(R.string.vouch_prompt_message, spot.name))
             .setPositiveButton(getString(R.string.vouch_yes)) { _, _ ->
-                // TODO: Update spot.requestCount and set isValidated=true if count >= 2
-                Toast.makeText(requireContext(), getString(R.string.spot_vouched), Toast.LENGTH_SHORT).show()
-                clearForm()
+                val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+                if (userId == null) {
+                    btnSubmit.isEnabled = true
+                    Toast.makeText(requireContext(), "Sign in to vouch for a spot", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+                StudySpotRepository.vouchSpot(spot.id, userId)
+                    .addOnSuccessListener {
+                        Toast.makeText(requireContext(), getString(R.string.spot_vouched), Toast.LENGTH_SHORT).show()
+                        clearForm()
+                    }
+                    .addOnFailureListener { error ->
+                        Toast.makeText(requireContext(), "Could not save your vouch: ${error.message}", Toast.LENGTH_LONG).show()
+                    }
+                    .addOnCompleteListener { btnSubmit.isEnabled = true }
             }
             .setNegativeButton(getString(R.string.vouch_no)) { _, _ ->
                 createSpot(parentId = null, isHiddenGem = false) {
@@ -259,8 +284,8 @@ class AddSpotFragment : Fragment() {
             .show()
     }
 
-    private fun findNearbyTopLevelSpot(): StudySpot? {
-        return MockData.topLevelSpots().firstOrNull { existing ->
+    private fun findNearbyTopLevelSpot(spots: List<StudySpot>): StudySpot? {
+        return spots.filter { it.parentSpotId == null }.firstOrNull { existing ->
             existing.isValidated && LocationUtils.distanceInMeters(
                 simulatedLat, simulatedLng,
                 existing.latitude, existing.longitude
@@ -307,7 +332,9 @@ class AddSpotFragment : Fragment() {
             longitude = simulatedLng,
             amenities = amenities,
             hours = etHours.text.toString().trim(),
-            createdBy = "device_local_user",
+            createdBy = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+                ?: "anonymous",
+            createdAt = System.currentTimeMillis(),
             avgRating = 0.0,
             totalRatings = 0,
             capacity = selectedCapacity,
@@ -319,8 +346,18 @@ class AddSpotFragment : Fragment() {
             requestCount = 1
         )
 
-        onComplete(newSpot)
-        clearForm()
+        btnSubmit.isEnabled = false
+        StudySpotRepository.addSpot(newSpot)
+            .addOnSuccessListener {
+                onComplete(newSpot)
+                clearForm()
+            }
+            .addOnFailureListener { error ->
+                Toast.makeText(requireContext(), "Could not save spot: ${error.message}", Toast.LENGTH_LONG).show()
+            }
+            .addOnCompleteListener {
+                btnSubmit.isEnabled = true
+            }
     }
 
     private fun clearForm() {

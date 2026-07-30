@@ -12,8 +12,10 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.studypin.app.R
-import com.studypin.app.data.MockData
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.ListenerRegistration
 import com.studypin.app.data.ReviewRepository
+import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.model.StudySpotReview
 import com.studypin.app.ui.applyStatusBarInset
 import java.util.Locale
@@ -22,6 +24,8 @@ class ReviewListFragment : Fragment() {
 
     private var spotId: String = ""
     private lateinit var adapter: ReviewAdapter
+    private var spotListener: ListenerRegistration? = null
+    private var reviewListener: ListenerRegistration? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -34,19 +38,9 @@ class ReviewListFragment : Fragment() {
         view.applyStatusBarInset()
 
         spotId = arguments?.getString("spotId") ?: ""
-        val spot = MockData.studySpots.firstOrNull { it.id == spotId }
-        val stats = ReviewRepository.displayStatsForSpot(spot ?: return)
-
-        view.findViewById<TextView>(R.id.tvReviewSpotName).text = spot.name
-        view.findViewById<TextView>(R.id.tvReviewAverage).text = String.format(Locale.CANADA, "%.1f", stats.averageOverall)
-        view.findViewById<TextView>(R.id.tvReviewCount).text = "${stats.reviewCount} reviews"
-
         val amenityLayout = view.findViewById<View>(R.id.layoutReviewAmenitySummary)
         val toggleBtn = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnToggleAmenities)
 
-        val hasAmenityDetails = stats.amenityAverages.isNotEmpty()
-        toggleBtn.visibility = if (hasAmenityDetails) View.VISIBLE else View.GONE
-        
         toggleBtn.setOnClickListener {
             if (amenityLayout.visibility == View.VISIBLE) {
                 amenityLayout.visibility = View.GONE
@@ -57,11 +51,9 @@ class ReviewListFragment : Fragment() {
             }
         }
 
-        setupAmenitySummary(view, stats.amenityAverages)
-
         val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerReviews)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        adapter = ReviewAdapter(ReviewRepository.reviewsForSpot(spotId))
+        adapter = ReviewAdapter(emptyList())
         recyclerView.adapter = adapter
 
         view.findViewById<View>(R.id.btnBack).setOnClickListener {
@@ -75,13 +67,53 @@ class ReviewListFragment : Fragment() {
             findNavController().navigate(R.id.action_reviewList_to_addReview, bundle)
         }
         
-        if (ReviewRepository.hasUserReviewedSpot("You", spotId)) {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+        if (currentUserId == null || ReviewRepository.hasUserReviewedSpot(currentUserId, spotId)) {
             view.findViewById<View>(R.id.btnWriteReview).visibility = View.GONE
         }
         
         if (adapter.itemCount == 0) {
             view.findViewById<View>(R.id.tvEmptyReviews).visibility = View.VISIBLE
         }
+
+        spotListener = StudySpotRepository.observeSpot(
+            spotId = spotId,
+            onSuccess = { spot ->
+                if (!isAdded) return@observeSpot
+                if (spot == null) {
+                    view.findViewById<TextView>(R.id.tvReviewSpotName).text = "Spot unavailable"
+                    return@observeSpot
+                }
+                val stats = ReviewRepository.displayStatsForSpot(spot)
+                view.findViewById<TextView>(R.id.tvReviewSpotName).text = spot.name
+                view.findViewById<TextView>(R.id.tvReviewAverage).text = String.format(Locale.CANADA, "%.1f", stats.averageOverall)
+                view.findViewById<TextView>(R.id.tvReviewCount).text = "${stats.reviewCount} reviews"
+                setupAmenitySummary(view, stats.amenityAverages)
+                toggleBtn.visibility = if (stats.amenityAverages.isNotEmpty()) View.VISIBLE else View.GONE
+                adapter.updateReviews(ReviewRepository.reviewsForSpot(spotId))
+                view.findViewById<View>(R.id.tvEmptyReviews).visibility =
+                    if (adapter.itemCount == 0) View.VISIBLE else View.GONE
+            },
+            onError = { if (isAdded) view.findViewById<TextView>(R.id.tvReviewSpotName).text = "Spot unavailable" }
+        )
+        reviewListener = ReviewRepository.observeReviews(
+            spotId = spotId,
+            onSuccess = { reviews ->
+                if (!isAdded) return@observeReviews
+                adapter.updateReviews(reviews)
+                view.findViewById<View>(R.id.tvEmptyReviews).visibility =
+                    if (reviews.isEmpty()) View.VISIBLE else View.GONE
+            },
+            onError = { /* The local cached list remains visible if the listener fails. */ }
+        )
+    }
+
+    override fun onDestroyView() {
+        spotListener?.remove()
+        spotListener = null
+        reviewListener?.remove()
+        reviewListener = null
+        super.onDestroyView()
     }
 
     private fun setupAmenitySummary(view: View, averages: Map<String, Double>) {
@@ -108,7 +140,7 @@ class ReviewListFragment : Fragment() {
     }
 }
 
-class ReviewAdapter(private val reviews: List<StudySpotReview>) : RecyclerView.Adapter<ReviewAdapter.ViewHolder>() {
+class ReviewAdapter(private var reviews: List<StudySpotReview>) : RecyclerView.Adapter<ReviewAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val avatar: TextView = view.findViewById(R.id.tvReviewerAvatar)
@@ -147,4 +179,9 @@ class ReviewAdapter(private val reviews: List<StudySpotReview>) : RecyclerView.A
     }
 
     override fun getItemCount() = reviews.size
+
+    fun updateReviews(newReviews: List<StudySpotReview>) {
+        reviews = newReviews
+        notifyDataSetChanged()
+    }
 }

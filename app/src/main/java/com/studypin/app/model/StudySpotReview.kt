@@ -10,6 +10,7 @@ package com.studypin.app.model
 data class StudySpotReview(
     val id: String = "",
     val spotId: String = "",
+    val reviewerId: String = "",
     val reviewerName: String = "Anonymous",
     val overallRating: Int = 0,
     val amenityRatings: Map<String, Int> = emptyMap(),
@@ -30,4 +31,3 @@ data class ReviewDisplayStats(
     val reviewCount: Int = 0,
     val amenityAverages: Map<String, Double> = emptyMap()
 )
-

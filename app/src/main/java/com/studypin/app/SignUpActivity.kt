@@ -12,6 +12,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
+import com.google.firebase.auth.UserProfileChangeRequest
+import com.studypin.app.data.UserProfileRepository
 import com.studypin.app.databinding.ActivitySignupBinding
 import com.studypin.app.ui.applyStatusBarInset
 
@@ -124,8 +126,33 @@ class SignUpActivity : AppCompatActivity() {
             .addOnCompleteListener(this) { task ->
                 setLoading(false)
                 if (task.isSuccessful) {
-                    startActivity(Intent(this, MainActivity::class.java))
-                    finish()
+                    val user = auth.currentUser
+                    val displayName = email.substringBefore('@').ifBlank { "StudyPin user" }
+                    val profileUpdates = UserProfileChangeRequest.Builder()
+                        .setDisplayName(displayName)
+                        .build()
+
+                    user?.updateProfile(profileUpdates)
+                        ?.addOnCompleteListener { profileTask ->
+                            if (profileTask.isSuccessful) {
+                                UserProfileRepository.saveProfile(
+                                    uid = user.uid,
+                                    displayName = displayName,
+                                    email = user.email.orEmpty()
+                                ) { profileError ->
+                                    setLoading(false)
+                                    if (profileError == null) {
+                                        startActivity(Intent(this, MainActivity::class.java))
+                                        finish()
+                                    } else {
+                                        Toast.makeText(this, "Account created, but profile sync failed: ${profileError.message}", Toast.LENGTH_LONG).show()
+                                    }
+                                }
+                            } else {
+                                setLoading(false)
+                                Toast.makeText(this, "Failed to update profile", Toast.LENGTH_SHORT).show()
+                            }
+                        }
                 } else {
                     showSignUpError(task.exception)
                 }
