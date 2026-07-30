@@ -53,7 +53,8 @@
                     android:background="@drawable/bg_detail_icon_button"
                     android:contentDescription="Edit spot"
                     android:padding="12dp"
-                    android:src="@drawable/ic_edit" />
+                    android:src="@drawable/ic_edit"
+                    android:visibility="gone"/>
 
                 <ImageButton
                     android:id="@+id/btnShare"
@@ -163,13 +164,30 @@
                         android:textSize="16sp" />
                 </LinearLayout>
 
-                <TextView
-                    android:id="@+id/tvOccupancyDetail"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:textColor="@color/surface_muted"
-                    android:textSize="13sp" />
+                    android:layout_marginTop="12dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:layout_marginStart="2dp"
+                        android:layout_marginEnd="8dp"
+                        android:contentDescription="@null"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_users" />
+
+                    <TextView
+                        android:id="@+id/tvOccupancyDetail"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textColor="@color/surface_muted"
+                        android:textSize="16sp" />
+                </LinearLayout>
 
                 <!-- Location -->
                 <LinearLayout
@@ -271,11 +289,45 @@
                         app:strokeWidth="1dp" />
                 </LinearLayout>
 
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCheckInToggle"
+                    style="@style/Widget.StudyPin.Button.Text"
+                    android:layout_width="match_parent"
+                    android:layout_marginTop="12dp"
+                    android:textStyle="bold"
+                    android:text="Check In" />
+
+                <Button
+                    android:id="@+id/btnTrackVisit"
+                    style="@style/Widget.StudyPin.Button.Outlined"
+                    android:layout_width="match_parent"
+                    android:layout_marginTop="8dp"
+                    android:visibility="gone"
+                    android:text="I'm at this study spot" />
+
                 <include
                     layout="@layout/view_spot_inactive_info"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:text="About this spot"
+                    android:textColor="@color/text_primary"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvDescription"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:lineSpacingExtra="3dp"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp" />
 
                 <!-- Images Section -->
                 <TextView
@@ -320,7 +372,7 @@
                     android:layout_marginTop="10dp"
                     android:text="@string/review_group_placeholder"
                     android:textColor="@color/brand_main"
-                    android:textSize="14sp"
+                    android:textSize="16sp"
                     android:visibility="gone" />
 
                 <LinearLayout
@@ -463,29 +515,6 @@
                     android:text="Add review" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
-
-        <Button
-            android:id="@+id/btnCheckInToggle"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="Check In" />
-
-        <Button
-            android:id="@+id/btnTrackVisit"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="I’m at this study spot" />
-
-        <TextView
-            android:id="@+id/tvDescription"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:lineSpacingExtra="3dp"
-            android:textSize="16sp" />
 
     </LinearLayout>
 </ScrollView>

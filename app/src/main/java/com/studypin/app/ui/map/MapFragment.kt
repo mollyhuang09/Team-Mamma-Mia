@@ -61,8 +61,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private var selectedMapAvailableOnly = false
     private var allMapSpots: List<StudySpot> = emptyList()
     private var mapSearchQuery = ""
+    private var shouldSelectSearchResult = false
     private var searchNavigationStarted = false
     private var selectedSpotId: String? = null
+    private var selectedSpotFromSearch = false
     private var spotsListener: ListenerRegistration? = null
     private var spots: List<StudySpot> = emptyList()
 
@@ -117,22 +119,11 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         ) { _, result ->
             val query = result.getString(SearchFragment.KEY_QUERY).orEmpty()
             mapSearchQuery = query.trim()
+            shouldSelectSearchResult = mapSearchQuery.isNotBlank()
             etSearch.setText(query)
             etSearch.setSelection(query.length)
             updateMapMarkers()
-
-            val matchingSpot = allMapSpots.firstOrNull { spot ->
-                spot.name.contains(mapSearchQuery, ignoreCase = true) ||
-                    spot.address.contains(mapSearchQuery, ignoreCase = true)
-            }
-            matchingSpot?.let { spot ->
-                googleMap?.animateCamera(
-                    CameraUpdateFactory.newLatLngZoom(
-                        LatLng(spot.latitude, spot.longitude),
-                        16f
-                    )
-                )
-            }
+            centerOnMapSearchResult()
         }
 
         view.findViewById<View>(R.id.btnHeaderFilters).setOnClickListener {
@@ -169,6 +160,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 allMapSpots = loadedSpots
                     .filter { it.parentSpotId == null && it.status != SpotStatus.REMOVED }
                 updateMapMarkers()
+                if (shouldSelectSearchResult) {
+                    centerOnMapSearchResult()
+                }
             },
             onError = { error ->
                 if (isAdded) {
@@ -210,11 +204,46 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
         updateMapMarkers()
 
-        if (checkLocationPermission()) {
-            enableMyLocation()
-            moveToCurrentLocation()
+        if (mapSearchQuery.isBlank()) {
+            if (checkLocationPermission()) {
+                enableMyLocation()
+                moveToCurrentLocation()
+            } else {
+                requestLocationPermission()
+            }
         } else {
-            requestLocationPermission()
+            if (shouldSelectSearchResult) {
+                centerOnMapSearchResult()
+            }
+        }
+    }
+
+    private fun centerOnMapSearchResult() {
+        val query = mapSearchQuery.trim()
+        val map = googleMap ?: return
+        if (query.isEmpty()) return
+
+        val matchingSpot = spots.firstOrNull { spot ->
+            spot.status != SpotStatus.REMOVED &&
+                spot.name.equals(query, ignoreCase = true)
+        } ?: spots.firstOrNull { spot ->
+            spot.status != SpotStatus.REMOVED &&
+                (spot.name.contains(query, ignoreCase = true) ||
+                    spot.address.contains(query, ignoreCase = true))
+        } ?: return
+
+        locationCancellationTokenSource?.cancel()
+        locationCancellationTokenSource = null
+        map.animateCamera(
+            CameraUpdateFactory.newLatLngZoom(
+                LatLng(matchingSpot.latitude, matchingSpot.longitude),
+                16f
+            )
+        )
+
+        if (shouldSelectSearchResult) {
+            shouldSelectSearchResult = false
+            showSpotPreview(matchingSpot, fromSearch = true)
         }
     }
 
@@ -237,8 +266,14 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 map.addMarker(options)?.tag = spot.id
             }
 
+        val selectedSpotIsVisible = allMapSpots.any {
+            it.id == selectedSpotId && matchesSelectedMapFilters(it)
+        }
+        val selectedSearchSpotStillExists = selectedSpotFromSearch &&
+            spots.any { it.id == selectedSpotId && it.status != SpotStatus.REMOVED }
         if (selectedSpotId != null &&
-            allMapSpots.none { it.id == selectedSpotId && matchesSelectedMapFilters(it) }
+            !selectedSpotIsVisible &&
+            !selectedSearchSpotStillExists
         ) {
             hideSpotPreview()
         }
@@ -257,8 +292,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
-    private fun showSpotPreview(spot: StudySpot) {
+    private fun showSpotPreview(spot: StudySpot, fromSearch: Boolean = false) {
         selectedSpotId = spot.id
+        selectedSpotFromSearch = fromSearch
         bindSpotPreview(spot)
         updateMapMarkers()
         spotPreviewSheet.visibility = View.VISIBLE
@@ -267,6 +303,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     private fun hideSpotPreview() {
         selectedSpotId = null
+        selectedSpotFromSearch = false
         if (::spotPreviewBehavior.isInitialized) {
             spotPreviewBehavior.state = BottomSheetBehavior.STATE_HIDDEN
         }
@@ -279,6 +316,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private fun openSelectedSpotDetail() {
         val spotId = selectedSpotId ?: return
         selectedSpotId = null
+        selectedSpotFromSearch = false
         spotPreviewSheet.visibility = View.GONE
         updateMapMarkers()
         findNavController().navigate(
@@ -301,6 +339,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         )
         spotPreviewSheet.findViewById<TextView>(R.id.tvPreviewAvailability).text =
             "• ${spot.occupancyLabel()}"
+        spotPreviewSheet.findViewById<TextView>(R.id.tvPreviewOccupancyDetail).text =
+            spot.occupancySummary()
         spotPreviewSheet.findViewById<TextView>(R.id.tvPreviewAddress).text = spot.address
 
         spotPreviewSheet.findViewById<View>(R.id.tvPreviewRatingStar).visibility =
@@ -308,6 +348,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         spotPreviewSheet.findViewById<View>(R.id.tvPreviewRating).visibility =
             if (inactive) View.GONE else View.VISIBLE
         spotPreviewSheet.findViewById<View>(R.id.tvPreviewAvailability).visibility =
+            if (inactive) View.GONE else View.VISIBLE
+        spotPreviewSheet.findViewById<View>(R.id.tvPreviewOccupancyDetail).visibility =
             if (inactive) View.GONE else View.VISIBLE
 
         val inactiveChip = spotPreviewSheet.findViewById<Chip>(R.id.chipPreviewInactive)

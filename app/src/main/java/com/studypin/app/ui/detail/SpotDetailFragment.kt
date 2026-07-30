@@ -2,6 +2,8 @@ package com.studypin.app.ui.detail
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -32,6 +34,7 @@ import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ListenerRegistration
+import com.studypin.app.LoginActivity
 import com.studypin.app.R
 import com.studypin.app.data.OccupancyRepository
 import com.studypin.app.data.ReviewRepository
@@ -53,6 +56,7 @@ class SpotDetailFragment : Fragment() {
     private var spotListener: ListenerRegistration? = null
     private var checkInListener: ListenerRegistration? = null
     private var currentSpot: StudySpot? = null
+    private var statusBarHeightPx: Int = 0
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -302,6 +306,7 @@ class SpotDetailFragment : Fragment() {
         val heroActions = view.findViewById<View>(R.id.heroActions)
 
         heroContainer.setOnApplyStatusBarInsetsListener { statusBarHeight ->
+            statusBarHeightPx = statusBarHeight
             val topMargin = statusBarHeight + dpToPx(4)
 
             backButton.updateLayoutParams<FrameLayout.LayoutParams> {
@@ -313,7 +318,7 @@ class SpotDetailFragment : Fragment() {
 
             if (heroImageIsHidden(heroContainer)) {
                 heroContainer.updateLayoutParams<LinearLayout.LayoutParams> {
-                    height = statusBarHeight + dpToPx(16 + 48 + 8)
+                    height = compactHeroHeightPx()
                 }
             }
 
@@ -322,6 +327,9 @@ class SpotDetailFragment : Fragment() {
 
     private fun dpToPx(dp: Int): Int =
         (dp * resources.displayMetrics.density).toInt()
+
+    private fun compactHeroHeightPx(): Int =
+        statusBarHeightPx + dpToPx(16 + 48 + 8)
 
     private fun heroImageIsHidden(heroContainer: View): Boolean =
         heroContainer.findViewById<ImageView>(R.id.ivSpotHero).visibility == View.GONE
@@ -365,14 +373,27 @@ class SpotDetailFragment : Fragment() {
     }
 
     private fun setupCheckInButton(view: View, spotId: String) {
-        val button = view.findViewById<Button>(R.id.btnCheckInToggle)
+        val button = view.findViewById<MaterialButton>(R.id.btnCheckInToggle)
         val userId = FirebaseAuth.getInstance().currentUser?.uid
-        if (userId == null || spotId.isBlank()) {
+
+        if (userId == null) {
+            styleSignedOutCheckInButton(button)
             button.text = "Sign in to check in"
+            button.isEnabled = true
+            button.setOnClickListener {
+                startActivity(Intent(requireContext(), LoginActivity::class.java))
+            }
+            return
+        }
+
+        if (spotId.isBlank()) {
+            styleUnavailableCheckInButton(button)
+            button.text = "Check-in unavailable"
             button.isEnabled = false
             return
         }
 
+        styleSignedInCheckInButton(button)
         button.isEnabled = false
         checkInListener = OccupancyRepository.observeCheckIn(
             spotId = spotId,
@@ -380,10 +401,12 @@ class SpotDetailFragment : Fragment() {
             onSuccess = { checkedIn ->
                 if (!isAdded) return@observeCheckIn
                 button.isEnabled = true
-                button.text = if (checkedIn) "Check Out" else "Check In"
+                button.isSelected = checkedIn
+                button.text = if (checkedIn) "Check Out" else "I'm at this study spot"
             },
             onError = {
                 if (isAdded) {
+                    styleUnavailableCheckInButton(button)
                     button.isEnabled = false
                     button.text = "Check-in unavailable"
                 }
@@ -392,7 +415,7 @@ class SpotDetailFragment : Fragment() {
 
         button.setOnClickListener {
             button.isEnabled = false
-            val checkedIn = button.text == "Check Out"
+            val checkedIn = button.isSelected
             val operation = if (checkedIn) {
                 OccupancyRepository.checkOut(spotId, userId)
             } else {
@@ -408,11 +431,40 @@ class SpotDetailFragment : Fragment() {
         }
     }
 
+    private fun styleSignedOutCheckInButton(button: MaterialButton) {
+        button.backgroundTintList = ColorStateList.valueOf(Color.TRANSPARENT)
+        button.strokeWidth = 0
+        button.cornerRadius = 0
+        button.elevation = 0f
+        button.setTextColor(ContextCompat.getColor(requireContext(), R.color.brand_main))
+    }
+
+    private fun styleSignedInCheckInButton(button: MaterialButton) {
+        button.backgroundTintList =
+            ContextCompat.getColorStateList(requireContext(), R.color.brand_main)
+        button.strokeWidth = 0
+        button.cornerRadius = dpToPx(10)
+        button.elevation = dpToPx(1).toFloat()
+        button.setTextColor(ContextCompat.getColor(requireContext(), R.color.surface_color))
+    }
+
+    private fun styleUnavailableCheckInButton(button: MaterialButton) {
+        button.backgroundTintList =
+            ContextCompat.getColorStateList(requireContext(), R.color.button_secondary)
+        button.strokeColor =
+            ContextCompat.getColorStateList(requireContext(), R.color.border_default)
+        button.strokeWidth = dpToPx(1)
+        button.cornerRadius = dpToPx(10)
+        button.elevation = 0f
+        button.rippleColor = ColorStateList.valueOf(Color.TRANSPARENT)
+        button.setTextColor(ContextCompat.getColor(requireContext(), R.color.surface_muted))
+    }
+
     private fun bindSpot(view: View, spot: StudySpot) {
         view.findViewById<TextView>(R.id.tvSpotName).text = spot.name
         view.findViewById<TextView>(R.id.tvAvailability).text = spot.occupancyLabel()
         view.findViewById<TextView>(R.id.tvOccupancyDetail).text =
-            "${spot.currentCheckIns} / ${spot.capacity.approxSeats} seats occupied (${spot.capacity.label})"
+            spot.occupancySummary()
 
         val stats = ReviewRepository.displayStatsForSpot(spot)
         view.findViewById<TextView>(R.id.tvRatingDetail).text = String.format(
@@ -484,9 +536,8 @@ class SpotDetailFragment : Fragment() {
             photoHeader.visibility = View.GONE
             photoGallery.visibility = View.GONE
 
-            val compactHeight = (80 * resources.displayMetrics.density).toInt()
-            heroContainer.layoutParams = heroContainer.layoutParams.apply {
-                height = compactHeight
+            heroContainer.updateLayoutParams<LinearLayout.LayoutParams> {
+                height = compactHeroHeightPx()
             }
             detailPanel.layoutParams = detailPanel.layoutParams.apply {
                 if (this is LinearLayout.LayoutParams) topMargin = 0

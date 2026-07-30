@@ -279,7 +279,7 @@ class MainActivity : AppCompatActivity() {
                 val bundle = Bundle().apply { putString("spotId", spotId) }
                 navController.navigate(R.id.addReviewFragment, bundle)
             }
-            .addOnFailureListener { error ->
+            .addOnFailureListener { error: Exception ->
                 findViewById<Button>(R.id.btnCheckOut).isEnabled = true
                 Toast.makeText(this, "Could not check out: ${error.message}", Toast.LENGTH_LONG).show()
             }

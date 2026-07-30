@@ -1,6 +1,7 @@
 package com.studypin.app.ui.search
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -17,9 +18,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.studypin.app.R
-import com.studypin.app.data.MockData
+import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.model.StudySpot
 import com.studypin.app.ui.toTagLabel
+import org.json.JSONArray
 
 class SearchFragment : Fragment() {
 
@@ -27,6 +29,9 @@ class SearchFragment : Fragment() {
         const val RESULT_KEY = "search_result"
         const val KEY_QUERY = "search_query"
         const val KEY_INITIAL_QUERY = "search_initial_query"
+        private const val SEARCH_PREFS = "search_preferences"
+        private const val KEY_RECENT_SEARCHES = "recent_searches"
+        private const val MAX_RECENT_SEARCHES = 10
     }
 
     private lateinit var searchInput: EditText
@@ -34,15 +39,11 @@ class SearchFragment : Fragment() {
     private lateinit var suggestionAdapter: SuggestionAdapter
     private lateinit var recentSection: View
     private lateinit var suggestedTitle: View
+    private lateinit var recentPreferences: SharedPreferences
+    private var spotsListener: com.google.firebase.firestore.ListenerRegistration? = null
 
-    private val recentSearches = mutableListOf(
-        "Dana Porter Library",
-        "SLC Study Lounge",
-        "Conrad Grebel Reading Room"
-    )
-
-    // Include nested hidden gems so the search result can show their badge.
-    private val suggestedSpots = MockData.studySpots
+    private val recentSearches = mutableListOf<String>()
+    private var suggestedSpots: List<StudySpot> = emptyList()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -56,6 +57,10 @@ class SearchFragment : Fragment() {
         searchInput = view.findViewById(R.id.etSearchScreen)
         recentSection = view.findViewById(R.id.layoutRecentSearches)
         suggestedTitle = view.findViewById(R.id.tvSuggestedTitle)
+        recentPreferences = requireContext()
+            .getSharedPreferences(SEARCH_PREFS, Context.MODE_PRIVATE)
+        recentSearches.clear()
+        recentSearches.addAll(loadRecentSearches())
 
         val initialQuery = arguments?.getString(KEY_INITIAL_QUERY).orEmpty()
         searchInput.setText(initialQuery)
@@ -75,12 +80,26 @@ class SearchFragment : Fragment() {
         suggestionRecycler.layoutManager = LinearLayoutManager(requireContext())
         suggestionRecycler.adapter = suggestionAdapter
 
+        spotsListener = StudySpotRepository.observeSpots(
+            onSuccess = { spots ->
+                if (!isAdded) return@observeSpots
+                suggestedSpots = spots
+                updateSuggestions(searchInput.text.toString())
+            },
+            onError = {
+                if (!isAdded) return@observeSpots
+                suggestedSpots = emptyList()
+                updateSuggestions(searchInput.text.toString())
+            }
+        )
+
         view.findViewById<View>(R.id.btnCancelSearch).setOnClickListener {
             findNavController().navigateUp()
         }
 
         view.findViewById<View>(R.id.btnClearRecentSearches).setOnClickListener {
             recentSearches.clear()
+            recentPreferences.edit().remove(KEY_RECENT_SEARCHES).apply()
             recentAdapter.updateItems(recentSearches)
             updateRecentVisibility()
         }
@@ -105,6 +124,12 @@ class SearchFragment : Fragment() {
                 .getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             inputMethodManager.showSoftInput(searchInput, InputMethodManager.SHOW_IMPLICIT)
         }
+    }
+
+    override fun onDestroyView() {
+        spotsListener?.remove()
+        spotsListener = null
+        super.onDestroyView()
     }
 
     private fun updateSuggestions(query: String) {
@@ -132,11 +157,42 @@ class SearchFragment : Fragment() {
     }
 
     private fun chooseSearch(query: String) {
+        saveRecentSearch(query)
         parentFragmentManager.setFragmentResult(
             RESULT_KEY,
             Bundle().apply { putString(KEY_QUERY, query) }
         )
         findNavController().navigateUp()
+    }
+
+    private fun loadRecentSearches(): List<String> {
+        val stored = recentPreferences.getString(KEY_RECENT_SEARCHES, null) ?: return emptyList()
+        return runCatching {
+            val json = JSONArray(stored)
+            buildList {
+                for (index in 0 until json.length()) {
+                    json.optString(index).trim().takeIf { it.isNotEmpty() }?.let(::add)
+                }
+            }
+        }.getOrDefault(emptyList())
+    }
+
+    private fun saveRecentSearch(query: String) {
+        val normalizedQuery = query.trim()
+        if (normalizedQuery.isEmpty()) return
+
+        recentSearches.removeAll { it.equals(normalizedQuery, ignoreCase = true) }
+        recentSearches.add(0, normalizedQuery)
+        if (recentSearches.size > MAX_RECENT_SEARCHES) {
+            recentSearches.subList(MAX_RECENT_SEARCHES, recentSearches.size).clear()
+        }
+
+        val json = JSONArray()
+        recentSearches.forEach(json::put)
+        recentPreferences.edit().putString(KEY_RECENT_SEARCHES, json.toString()).apply()
+        if (::recentAdapter.isInitialized) {
+            recentAdapter.updateItems(recentSearches)
+        }
     }
 
     private class RecentSearchAdapter(

@@ -88,4 +88,8 @@ data class StudySpot(
             else -> "Full"
         }
     }
+
+    fun occupancySummary(): String {
+        return "${currentCheckIns} / ${capacity.approxSeats} occupied \u00B7 ${capacity.label}"
+    }
 }
