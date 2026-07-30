@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
@@ -16,6 +17,7 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.studypin.app.data.ReviewRepository
 import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.model.StudySpotReview
+import com.studypin.app.ui.applyStatusBarInset
 import java.util.Locale
 
 class ReviewListFragment : Fragment() {
@@ -33,10 +35,12 @@ class ReviewListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        view.applyStatusBarInset()
+
         spotId = arguments?.getString("spotId") ?: ""
         val amenityLayout = view.findViewById<View>(R.id.layoutReviewAmenitySummary)
         val toggleBtn = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnToggleAmenities)
-        
+
         toggleBtn.setOnClickListener {
             if (amenityLayout.visibility == View.VISIBLE) {
                 amenityLayout.visibility = View.GONE
@@ -85,6 +89,7 @@ class ReviewListFragment : Fragment() {
                 view.findViewById<TextView>(R.id.tvReviewAverage).text = String.format(Locale.CANADA, "%.1f", stats.averageOverall)
                 view.findViewById<TextView>(R.id.tvReviewCount).text = "${stats.reviewCount} reviews"
                 setupAmenitySummary(view, stats.amenityAverages)
+                toggleBtn.visibility = if (stats.amenityAverages.isNotEmpty()) View.VISIBLE else View.GONE
                 adapter.updateReviews(ReviewRepository.reviewsForSpot(spotId))
                 view.findViewById<View>(R.id.tvEmptyReviews).visibility =
                     if (adapter.itemCount == 0) View.VISIBLE else View.GONE
@@ -138,11 +143,14 @@ class ReviewListFragment : Fragment() {
 class ReviewAdapter(private var reviews: List<StudySpotReview>) : RecyclerView.Adapter<ReviewAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val avatar: TextView = view.findViewById(R.id.tvReviewerAvatar)
         val name: TextView = view.findViewById(R.id.tvReviewerName)
         val date: TextView = view.findViewById(R.id.tvReviewSubmittedAt)
         val text: TextView = view.findViewById(R.id.tvReviewText)
         val meta: TextView = view.findViewById(R.id.tvReviewMeta)
         val stars: LinearLayout = view.findViewById(R.id.llReviewStars)
+        val helpfulButton: ImageButton = view.findViewById(R.id.btnHelpful)
+        val helpfulCount: TextView = view.findViewById(R.id.tvHelpfulCount)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -152,9 +160,11 @@ class ReviewAdapter(private var reviews: List<StudySpotReview>) : RecyclerView.A
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val review = reviews[position]
+        holder.avatar.text = review.reviewerName.firstOrNull()?.uppercase() ?: "?"
         holder.name.text = review.reviewerName
         holder.date.text = review.submittedAtLabel
         holder.text.text = review.reviewText
+        holder.text.visibility = if (review.reviewText.isBlank()) View.GONE else View.VISIBLE
         
         val metaInfo = mutableListOf<String>()
         if (review.visitTimeOfDay.isNotEmpty()) metaInfo.add("Visited in ${review.visitTimeOfDay}")
@@ -164,6 +174,8 @@ class ReviewAdapter(private var reviews: List<StudySpotReview>) : RecyclerView.A
 
         holder.stars.removeAllViews()
         holder.stars.addView(StarRatingViews.buildStarRow(holder.itemView.context, review.overallRating, false, 16f))
+
+        ReviewHelpfulBinder.bind(holder.helpfulButton, holder.helpfulCount, review)
     }
 
     override fun getItemCount() = reviews.size

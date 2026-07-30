@@ -59,7 +59,17 @@ object LocationReminderManager {
         onSuccess: () -> Unit,
         onFailure: (Exception?) -> Unit
     ) {
-        if (!hasFineLocationPermission(context) || !hasBackgroundLocationPermission(context)) {
+        val hasFineLocationPermission = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        val hasBackgroundLocationPermission = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ||
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+        if (!hasFineLocationPermission || !hasBackgroundLocationPermission) {
             onFailure(SecurityException("Location permission is required for geofence reminders"))
             return
         }
@@ -79,17 +89,21 @@ object LocationReminderManager {
             .addGeofence(geofence)
             .build()
 
-        LocationServices.getGeofencingClient(context)
-            .addGeofences(request, geofencePendingIntent(context))
-            .addOnSuccessListener {
-                context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                    .edit()
-                    .putString("name_${spot.id}", spot.name)
-                    .putBoolean(KEY_TRACKING_PREFIX + spot.id, true)
-                    .apply()
-                onSuccess()
-            }
-            .addOnFailureListener { exception -> onFailure(exception) }
+        try {
+            LocationServices.getGeofencingClient(context)
+                .addGeofences(request, geofencePendingIntent(context))
+                .addOnSuccessListener {
+                    context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                        .edit()
+                        .putString("name_${spot.id}", spot.name)
+                        .putBoolean(KEY_TRACKING_PREFIX + spot.id, true)
+                        .apply()
+                    onSuccess()
+                }
+                .addOnFailureListener { exception -> onFailure(exception) }
+        } catch (securityException: SecurityException) {
+            onFailure(securityException)
+        }
     }
 
     fun stopTracking(context: Context, spotId: String) {

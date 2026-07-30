@@ -13,6 +13,7 @@ import com.studypin.app.R
 import com.google.firebase.firestore.ListenerRegistration
 import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.ui.list.SpotListAdapter
+import com.studypin.app.ui.applyStatusBarInset
 import android.widget.Toast
 
 class SpotGroupFragment : Fragment() {
@@ -28,6 +29,11 @@ class SpotGroupFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        view.applyStatusBarInset(extraTopDp = 4)
+        view.findViewById<View>(R.id.btnBack).setOnClickListener {
+            findNavController().navigateUp()
+        }
 
         val parentSpotId = arguments?.getString("parentSpotId") ?: return
 
@@ -62,6 +68,7 @@ class SpotGroupFragment : Fragment() {
             }
         )
     }
+
 
     override fun onDestroyView() {
         spotsListener?.remove()

@@ -3,259 +3,518 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/surface_color"
     android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:paddingBottom="24dp">
 
-        <ImageButton
-            android:id="@+id/btnBack"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/back"
-            android:src="@drawable/ic_arrow_back"
-            android:layout_marginStart="-8dp" />
-
-        <TextView
-            android:id="@+id/tvSpotName"
+        <FrameLayout
+            android:id="@+id/heroContainer"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textSize="28sp"
-            android:textStyle="bold" />
+            android:layout_height="300dp">
 
-        <TextView
-            android:id="@+id/tvHiddenGem"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="Hidden gem"
-            android:textColor="#185FA5"
-            android:textStyle="bold"
-            android:visibility="gone" />
+            <ImageView
+                android:id="@+id/ivSpotHero"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="Spot photo"
+                android:scaleType="centerCrop"
+                android:src="@drawable/photo_placeholder" />
+
+            <ImageButton
+                android:id="@+id/btnBack"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="top|start"
+                android:layout_marginStart="12dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_detail_icon_button"
+                android:contentDescription="@string/back"
+                android:padding="12dp"
+                android:src="@drawable/ic_arrow_back" />
+
+            <LinearLayout
+                android:id="@+id/heroActions"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top|end"
+                android:layout_marginTop="12dp"
+                android:layout_marginEnd="12dp"
+                android:orientation="horizontal">
+
+                <ImageButton
+                    android:id="@+id/btnEdit"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_detail_icon_button"
+                    android:contentDescription="Edit spot"
+                    android:padding="12dp"
+                    android:src="@drawable/ic_edit"
+                    android:visibility="gone"/>
+
+                <ImageButton
+                    android:id="@+id/btnShare"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_detail_icon_button"
+                    android:contentDescription="Share spot"
+                    android:padding="12dp"
+                    android:src="@drawable/ic_share" />
+
+                <ImageButton
+                    android:id="@+id/btnReport"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_detail_icon_button"
+                    android:contentDescription="Report spot"
+                    android:padding="12dp"
+                    android:src="@drawable/ic_flag" />
+            </LinearLayout>
+        </FrameLayout>
 
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/detailPanel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            app:cardCornerRadius="12dp"
+            android:layout_marginTop="-18dp"
+            app:cardBackgroundColor="@color/white"
+            app:cardCornerRadius="18dp"
             app:cardElevation="0dp"
-            app:strokeColor="#D8E5D8"
-            app:strokeWidth="1dp">
+            app:strokeWidth="0dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:paddingStart="16dp"
+                android:paddingTop="16dp"
+                android:paddingEnd="16dp">
 
-                <TextView
-                    android:text="AVAILABILITY"
-                    android:layout_width="wrap_content"
+                <!-- Title -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
+                    android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/tvAvailability"
-                    android:layout_width="wrap_content"
+                    <TextView
+                        android:id="@+id/tvSpotName"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textColor="@color/text_primary"
+                        android:textSize="30sp" />
+
+                    <TextView
+                        android:id="@+id/tvHiddenGem"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="0dp"
+                        android:text="💎"
+                        android:textColor="@color/surface_muted"
+                        android:textSize="30sp"
+                        android:visibility="gone" />
+                </LinearLayout>
+
+                <!-- Rating & Availability -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:textSize="22sp"
-                    android:textStyle="bold" />
+                    android:layout_marginTop="10dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/tvOccupancyDetail"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:textSize="14sp" />
+                    <TextView
+                        android:id="@+id/tvRatingStar"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="&#9733;"
+                        android:textColor="@color/star_default"
+                        android:textSize="18dp" />
 
-                <Button
-                    android:id="@+id/btnCheckInToggle"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    <TextView
+                        android:id="@+id/tvRatingDetail"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:textColor="@color/brand_main"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginEnd="10dp"
+                        android:text="&#8226;"
+                        android:textColor="@color/surface_muted"
+                        android:textSize="18sp" />
+
+                    <TextView
+                        android:id="@+id/tvAvailability"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/brand_main"
+                        android:textSize="16sp" />
+                </LinearLayout>
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:layout_marginStart="2dp"
+                        android:layout_marginEnd="8dp"
+                        android:contentDescription="@null"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_users" />
+
+                    <TextView
+                        android:id="@+id/tvOccupancyDetail"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textColor="@color/surface_muted"
+                        android:textSize="16sp" />
+                </LinearLayout>
+
+                <!-- Location -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginRight="8dp"
+                        android:contentDescription="Location"
+                        android:src="@drawable/ic_location" />
+
+                    <TextView
+                        android:id="@+id/tvLocation"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Example location"
+                        android:textColor="@color/surface_muted"
+                        android:textSize="16sp" />
+
+                </LinearLayout>
+
+                <!-- Tags -->
+                <include
+                    layout="@layout/view_spot_tag_group"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp" />
+
+                <!-- Action Items -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnDirection"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="76dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:text="Direction"
+                        android:textAllCaps="false"
+                        android:textColor="@color/brand_main"
+                        android:textSize="14sp"
+                        app:cornerRadius="12dp"
+                        app:icon="@drawable/ic_navigation"
+                        app:iconGravity="textTop"
+                        app:iconPadding="2dp"
+                        app:iconTint="@color/brand_main"
+                        app:strokeColor="@color/brand_main"
+                        app:strokeWidth="1dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSave"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="76dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:contentDescription="Save spot"
+                        android:text="Save"
+                        android:textAllCaps="false"
+                        android:textColor="@color/brand_main"
+                        android:textSize="14sp"
+                        app:cornerRadius="12dp"
+                        app:backgroundTint="@color/surface_color"
+                        app:icon="@drawable/ic_bookmark"
+                        app:iconGravity="textTop"
+                        app:iconPadding="2dp"
+                        app:iconTint="@color/brand_main"
+                        app:strokeColor="@color/brand_main"
+                        app:strokeWidth="1dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnAddPhoto"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="76dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:text="Add photo"
+                        android:textAllCaps="false"
+                        android:textColor="@color/brand_main"
+                        android:textSize="14sp"
+                        app:cornerRadius="12dp"
+                        app:icon="@drawable/ic_camera"
+                        app:iconGravity="textTop"
+                        app:iconPadding="2dp"
+                        app:iconTint="@color/brand_main"
+                        app:strokeColor="@color/brand_main"
+                        app:strokeWidth="1dp" />
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCheckInToggle"
+                    style="@style/Widget.StudyPin.Button.Text"
+                    android:layout_width="match_parent"
+                    android:layout_marginTop="12dp"
+                    android:textStyle="bold"
                     android:text="Check In" />
+
+                <Button
+                    android:id="@+id/btnTrackVisit"
+                    style="@style/Widget.StudyPin.Button.Outlined"
+                    android:layout_width="match_parent"
+                    android:layout_marginTop="8dp"
+                    android:visibility="gone"
+                    android:text="I'm at this study spot" />
+
+                <include
+                    layout="@layout/view_spot_inactive_info"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:text="About this spot"
+                    android:textColor="@color/text_primary"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvDescription"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:lineSpacingExtra="3dp"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp" />
+
+                <!-- Images Section -->
+                <TextView
+                    android:id="@+id/tvPhotosHeader"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:text="Photos"
+                    android:textColor="@color/text_primary"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <HorizontalScrollView
+                    android:id="@+id/photoGallery"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:scrollbars="none">
+
+                    <LinearLayout
+                        android:id="@+id/photoGalleryContainer"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                    </LinearLayout>
+                </HorizontalScrollView>
+
+                <TextView
+                    android:id="@+id/tvReviewsHeader"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:text="Reviews"
+                    android:textColor="@color/text_primary"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvEmptyReviews"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="@string/review_group_placeholder"
+                    android:textColor="@color/brand_main"
+                    android:textSize="16sp"
+                    android:visibility="gone" />
+
+                <LinearLayout
+                    android:id="@+id/layoutReviewSummary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:layout_weight="1"
+                        android:paddingHorizontal="8dp"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical" >
+
+                            <TextView
+                                android:id="@+id/tvReviewAverage"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginRight="8dp"
+                                android:textColor="@color/text_primary"
+                                android:text="4.8"
+                                android:textSize="42sp" />
+
+                            <TextView
+                                android:id="@+id/tvReviewStarLarge"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="&#9733;"
+                                android:textColor="@color/star_default"
+                                android:textSize="36sp" />
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/tvReviewCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Based on 5 reviews"
+                            android:textColor="@color/brand_main"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/layoutRatingBreakdown"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1.35"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical">
+                            <TextView android:layout_width="12dp" android:layout_height="wrap_content" android:text="5" android:textSize="16sp" />
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="&#9733;" android:textColor="@color/surface_soft_3" android:textSize="14sp" android:layout_marginEnd="8dp" />
+                            <ProgressBar android:id="@+id/progressRating5" style="?android:attr/progressBarStyleHorizontal" android:layout_width="0dp" android:layout_height="8dp" android:layout_weight="1" android:max="100" android:progressTint="@color/brand_main" android:progressBackgroundTint="@color/border_default" />
+                            <TextView android:id="@+id/tvRatingCount5" android:layout_width="28dp" android:layout_height="wrap_content" android:gravity="end" android:textSize="14sp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical">
+                            <TextView android:layout_width="12dp" android:layout_height="wrap_content" android:text="4" android:textSize="16sp" />
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="&#9733;" android:textColor="@color/surface_soft_3" android:textSize="14sp" android:layout_marginEnd="8dp" />
+                            <ProgressBar android:id="@+id/progressRating4" style="?android:attr/progressBarStyleHorizontal" android:layout_width="0dp" android:layout_height="8dp" android:layout_weight="1" android:max="100" android:progressTint="@color/brand_main" android:progressBackgroundTint="@color/border_default" />
+                            <TextView android:id="@+id/tvRatingCount4" android:layout_width="28dp" android:layout_height="wrap_content" android:gravity="end" android:textSize="14sp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical">
+                            <TextView android:layout_width="12dp" android:layout_height="wrap_content" android:text="3" android:textSize="16sp" />
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="&#9733;" android:textColor="@color/surface_soft_3" android:textSize="14sp" android:layout_marginEnd="8dp" />
+                            <ProgressBar android:id="@+id/progressRating3" style="?android:attr/progressBarStyleHorizontal" android:layout_width="0dp" android:layout_height="8dp" android:layout_weight="1" android:max="100" android:progressTint="@color/brand_main" android:progressBackgroundTint="@color/border_default" />
+                            <TextView android:id="@+id/tvRatingCount3" android:layout_width="28dp" android:layout_height="wrap_content" android:gravity="end" android:textSize="14sp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical">
+                            <TextView android:layout_width="12dp" android:layout_height="wrap_content" android:text="2" android:textSize="16sp" />
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="&#9733;" android:textColor="@color/surface_soft_3" android:textSize="14sp" android:layout_marginEnd="8dp" />
+                            <ProgressBar android:id="@+id/progressRating2" style="?android:attr/progressBarStyleHorizontal" android:layout_width="0dp" android:layout_height="8dp" android:layout_weight="1" android:max="100" android:progressTint="@color/brand_main" android:progressBackgroundTint="@color/border_default" />
+                            <TextView android:id="@+id/tvRatingCount2" android:layout_width="28dp" android:layout_height="wrap_content" android:gravity="end" android:textSize="14sp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical">
+                            <TextView android:layout_width="12dp" android:layout_height="wrap_content" android:text="1" android:textSize="16sp" />
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="&#9733;" android:textColor="@color/surface_soft_3" android:textSize="14sp" android:layout_marginEnd="8dp" />
+                            <ProgressBar android:id="@+id/progressRating1" style="?android:attr/progressBarStyleHorizontal" android:layout_width="0dp" android:layout_height="8dp" android:layout_weight="1" android:max="100" android:progressTint="@color/brand_main" android:progressBackgroundTint="@color/border_default" />
+                            <TextView android:id="@+id/tvRatingCount1" android:layout_width="28dp" android:layout_height="wrap_content" android:gravity="end" android:textSize="14sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/layoutReviewCards"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:orientation="vertical" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnViewMoreReviews"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="2dp"
+                    android:minHeight="48dp"
+                    android:text="View More Reviews"
+                    android:textAllCaps="false"
+                    android:textColor="@color/brand_main"
+                    android:textSize="18sp"
+                    android:visibility="gone"
+                    app:backgroundTint="@android:color/transparent"
+                    app:strokeWidth="0dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAddReview"
+                    android:layout_width="match_parent"
+                    style="@style/Widget.StudyPin.Button.Primary"
+                    android:layout_marginTop="8dp"
+                    android:text="Add review" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <Button
-            android:id="@+id/btnTrackVisit"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="I’m at this study spot" />
-
-        <LinearLayout
-            android:id="@+id/layoutUserRatingAction"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:orientation="vertical"
-            android:gravity="center_horizontal">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Rate this spot"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-
-            <LinearLayout
-                android:id="@+id/layoutClickableStars"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:orientation="horizontal" />
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/tvRatingsHeader"
-            android:text="@string/ratings"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:clickable="true"
-            android:focusable="true"
-            android:background="?attr/selectableItemBackground" />
-
-        <TextView
-            android:id="@+id/tvRatingDetail"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:textSize="17sp"
-            android:textStyle="bold" />
-
-        <LinearLayout
-            android:id="@+id/layoutCategoryRatings"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:orientation="vertical"
-            android:padding="16dp"
-            android:background="@drawable/bg_subtle_box"
-            android:visibility="gone">
-
-            <TextView
-                android:id="@+id/tvNoiseRating"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/noise_level"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                android:textSize="14sp" />
-
-            <TextView
-                android:id="@+id/tvWifiRating"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="@string/wifi_strength"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                android:textSize="14sp" />
-
-            <TextView
-                android:id="@+id/tvSeatingRating"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="@string/seating_comfort"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                android:textSize="14sp" />
-
-            <TextView
-                android:id="@+id/tvOutletsRating"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="@string/outlet_availability"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                android:textSize="14sp" />
-
-        </LinearLayout>
-
-        <TextView
-            android:text="About this spot"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/tvDescription"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:lineSpacingExtra="3dp"
-            android:textSize="16sp" />
-
-        <TextView
-            android:text="Location"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/tvLocation"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:textSize="16sp" />
-
-        <TextView
-            android:text="Hours"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/tvHours"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:textSize="16sp" />
-
-        <TextView
-            android:text="Amenities"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/tvAmenitiesDetail"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:textSize="16sp" />
-
-        <Button
-            android:id="@+id/btnEdit"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="28dp"
-            android:text="Edit spot" />
-
-        <Button
-            android:id="@+id/btnReport"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:layout_marginBottom="24dp"
-            android:text="Report or flag this spot" />
     </LinearLayout>
 </ScrollView>

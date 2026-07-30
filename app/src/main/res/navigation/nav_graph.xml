@@ -11,6 +11,9 @@
         <action
             android:id="@+id/action_map_to_spotDetail"
             app:destination="@id/spotDetailFragment"/>
+        <action
+            android:id="@+id/action_map_to_search"
+            app:destination="@id/searchFragment"/>
     </fragment>
 
     <fragment
@@ -23,7 +26,23 @@
         <action
             android:id="@+id/action_list_to_spotGroup"
             app:destination="@id/spotGroupFragment"/>
+        <action
+            android:id="@+id/action_list_to_filter"
+            app:destination="@id/filterFragment"/>
+        <action
+            android:id="@+id/action_list_to_search"
+            app:destination="@id/searchFragment"/>
     </fragment>
+
+    <fragment
+        android:id="@+id/filterFragment"
+        android:name="com.studypin.app.ui.filter.FilterFragment"
+        android:label="Filters" />
+
+    <fragment
+        android:id="@+id/searchFragment"
+        android:name="com.studypin.app.ui.search.SearchFragment"
+        android:label="Search" />
 
     <fragment
         android:id="@+id/spotGroupFragment"
@@ -102,6 +121,28 @@
     <fragment
         android:id="@+id/reportFlagFragment"
         android:name="com.studypin.app.ui.report.ReportFlagFragment"
-        android:label="Report a Problem"/>
+        android:label="Report a Problem">
+        <argument
+            android:name="spotId"
+            app:argType="string"
+            android:defaultValue="" />
+        <argument
+            android:name="spotName"
+            app:argType="string"
+            android:defaultValue="" />
+        <action
+            android:id="@+id/action_reportFlag_to_reportSuccess"
+            app:destination="@id/reportSuccessFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/reportSuccessFragment"
+        android:name="com.studypin.app.ui.report.ReportSuccessFragment"
+        android:label="Report Submitted">
+        <argument
+            android:name="spotId"
+            app:argType="string"
+            android:defaultValue="" />
+    </fragment>
 
 </navigation>

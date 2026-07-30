@@ -77,6 +77,18 @@ class MainActivity : AppCompatActivity() {
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
 
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            bottomNav.menu.findItem(destination.id)?.isChecked = true
+
+            bottomNav.visibility = if (destination.id == R.id.reportFlagFragment ||
+                destination.id == R.id.reportSuccessFragment
+            ) {
+                View.GONE
+            } else {
+                View.VISIBLE
+            }
+        }
+
         openSpotFromReminder(intent)
         requestInitialPermissionsIfNeeded()
 
@@ -93,6 +105,7 @@ class MainActivity : AppCompatActivity() {
             checkOutCurrentSpot()
         }
     }
+
 
     override fun onStart() {
         super.onStart()
@@ -266,7 +279,7 @@ class MainActivity : AppCompatActivity() {
                 val bundle = Bundle().apply { putString("spotId", spotId) }
                 navController.navigate(R.id.addReviewFragment, bundle)
             }
-            .addOnFailureListener { error ->
+            .addOnFailureListener { error: Exception ->
                 findViewById<Button>(R.id.btnCheckOut).isEnabled = true
                 Toast.makeText(this, "Could not check out: ${error.message}", Toast.LENGTH_LONG).show()
             }

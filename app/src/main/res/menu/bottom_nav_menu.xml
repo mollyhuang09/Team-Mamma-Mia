@@ -3,22 +3,22 @@
 
     <item
         android:id="@+id/mapFragment"
-        android:icon="@android:drawable/ic_dialog_map"
+        android:icon="@drawable/ic_map"
         android:title="Map"/>
 
     <item
         android:id="@+id/listFragment"
-        android:icon="@android:drawable/ic_menu_agenda"
+        android:icon="@drawable/ic_list"
         android:title="List"/>
 
     <item
         android:id="@+id/addSpotFragment"
-        android:icon="@android:drawable/ic_input_add"
+        android:icon="@drawable/ic_map_pin_plus"
         android:title="Add"/>
 
     <item
         android:id="@+id/profileFragment"
-        android:icon="@android:drawable/ic_menu_myplaces"
-        android:title="Profile"/>
+        android:icon="@drawable/ic_settings"
+        android:title="Settings"/>
 
 </menu>

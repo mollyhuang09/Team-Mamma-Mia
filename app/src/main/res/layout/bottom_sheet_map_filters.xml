@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_filter_bottom_sheet"
+    android:orientation="vertical"
+    android:paddingStart="16dp"
+    android:paddingTop="12dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="12dp">
+
+    <View
+        android:layout_width="64dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/bg_filter_sheet_handle" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:minHeight="48dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Filters"
+            android:textColor="@color/text_primary"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/btnClearMapFilters"
+            android:layout_width="wrap_content"
+            style="@style/Widget.StudyPin.Button.Text"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:text="Clear all" />
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Amenities"
+        android:textColor="@color/brand_main"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/chipGroupMapAmenities"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        app:chipSpacingHorizontal="8dp"
+        app:chipSpacingVertical="0dp"
+        app:singleSelection="false">
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipMapWifi"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Wifi"
+            android:textColor="@color/filter_chip_text"
+            app:checkedIconVisible="false"
+            app:chipBackgroundColor="@color/filter_chip_background"
+            app:chipStrokeWidth="0dp" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipMapOutlets"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Outlets"
+            android:textColor="@color/filter_chip_text"
+            app:checkedIconVisible="false"
+            app:chipBackgroundColor="@color/filter_chip_background"
+            app:chipStrokeWidth="0dp" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipMapQuiet"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Quiet"
+            android:textColor="@color/filter_chip_text"
+            app:checkedIconVisible="false"
+            app:chipBackgroundColor="@color/filter_chip_background"
+            app:chipStrokeWidth="0dp" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipMapWashroom"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Washroom"
+            android:textColor="@color/filter_chip_text"
+            app:checkedIconVisible="false"
+            app:chipBackgroundColor="@color/filter_chip_background"
+            app:chipStrokeWidth="0dp" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipMapFood"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Food"
+            android:textColor="@color/filter_chip_text"
+            app:checkedIconVisible="false"
+            app:chipBackgroundColor="@color/filter_chip_background"
+            app:chipStrokeWidth="0dp" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipMapParking"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Parking"
+            android:textColor="@color/filter_chip_text"
+            app:checkedIconVisible="false"
+            app:chipBackgroundColor="@color/filter_chip_background"
+            app:chipStrokeWidth="0dp" />
+
+    </com.google.android.material.chip.ChipGroup>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:text="Environment"
+        android:textColor="@color/brand_main"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/chipGroupMapEnvironment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        app:chipSpacingHorizontal="8dp"
+        app:chipSpacingVertical="4dp"
+        app:singleSelection="false">
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipMapIndoor"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Indoor"
+            android:textColor="@color/filter_chip_text"
+            app:checkedIconVisible="false"
+            app:chipBackgroundColor="@color/filter_chip_background"
+            app:chipStrokeWidth="0dp" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipMapOutdoor"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Outdoor"
+            android:textColor="@color/filter_chip_text"
+            app:checkedIconVisible="false"
+            app:chipBackgroundColor="@color/filter_chip_background"
+            app:chipStrokeWidth="0dp" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipMapGroupFriendly"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Group Friendly"
+            android:textColor="@color/filter_chip_text"
+            app:checkedIconVisible="false"
+            app:chipBackgroundColor="@color/filter_chip_background"
+            app:chipStrokeWidth="0dp" />
+
+    </com.google.android.material.chip.ChipGroup>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:text="Availability"
+        android:textColor="@color/brand_main"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <com.google.android.material.chip.Chip
+        android:id="@+id/chipMapAvailableOnly"
+        style="@style/Widget.Material3.Chip.Filter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="Only Display Open Spots"
+        android:textColor="@color/filter_chip_text"
+        app:checkedIconVisible="false"
+        app:chipBackgroundColor="@color/filter_chip_background"
+        app:chipStrokeWidth="0dp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnApplyMapFilters"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="12dp"
+        android:text="Apply Filters"
+        android:textAllCaps="false"
+        android:textColor="@color/surface_color"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:enabled="false"
+        app:backgroundTint="@color/button_disabled"
+        app:cornerRadius="10dp" />
+
+    <TextView
+        android:id="@+id/btnCancelMapFilters"
+        android:layout_width="match_parent"
+        style="@style/Widget.StudyPin.Button.Text"
+        android:layout_marginTop="2dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:text="Cancel" />
+
+</LinearLayout>

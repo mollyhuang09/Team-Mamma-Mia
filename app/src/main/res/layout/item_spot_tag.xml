@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.chip.Chip
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="@style/Widget.Material3.Chip.Filter"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:textSize="12sp"
+    android:textStyle="normal"
+    android:textColor="@color/brand_main"
+    android:layout_margin="0dp"
+    app:chipMinHeight="24dp"
+    app:checkedIconVisible="false"
+    app:closeIconVisible="false"
+    app:ensureMinTouchTargetSize="false"
+    app:chipBackgroundColor="@color/surface_light_tint"
+    app:chipStrokeWidth="0dp"
+    app:chipStartPadding="1dp"
+    app:chipEndPadding="2dp"
+    app:chipCornerRadius="6dp"
+    android:text="Spot name" />

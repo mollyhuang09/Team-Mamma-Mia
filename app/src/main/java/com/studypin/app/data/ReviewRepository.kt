@@ -10,6 +10,7 @@ import com.studypin.app.model.StudySpotReview
 /** Firestore-backed ratings repository with a small in-memory UI cache. */
 object ReviewRepository {
 
+    private val helpfulVotesByCurrentUser = mutableSetOf<String>()
     private val firestore = FirebaseFirestore.getInstance()
     private val spots = firestore.collection("studySpots")
 
@@ -24,6 +25,7 @@ object ReviewRepository {
             visitTimeOfDay = "Morning",
             crowdLevel = "Quiet",
             mediaCount = 2,
+            helpfulCount = 12,
             submittedAtLabel = "Today"
         ),
         StudySpotReview(
@@ -36,6 +38,7 @@ object ReviewRepository {
             visitTimeOfDay = "Afternoon",
             crowdLevel = "Busy",
             mediaCount = 1,
+            helpfulCount = 12,
             submittedAtLabel = "Yesterday"
         ),
         StudySpotReview(
@@ -48,6 +51,7 @@ object ReviewRepository {
             visitTimeOfDay = "Evening",
             crowdLevel = "Moderate",
             mediaCount = 0,
+            helpfulCount = 8,
             submittedAtLabel = "3 days ago"
         ),
         StudySpotReview(
@@ -114,6 +118,28 @@ object ReviewRepository {
 
     fun reviewsForSpot(spotId: String): List<StudySpotReview> =
         reviews.filter { it.spotId == spotId }
+
+    fun helpfulCountFor(reviewId: String): Int =
+        reviews.firstOrNull { it.id == reviewId }?.helpfulCount ?: 0
+
+    fun isHelpfulByCurrentUser(reviewId: String): Boolean =
+        helpfulVotesByCurrentUser.contains(reviewId)
+
+    /** Toggles the current user's local helpful vote and returns the new selected state. */
+    fun toggleHelpful(reviewId: String): Boolean {
+        val index = reviews.indexOfFirst { it.id == reviewId }
+        if (index == -1) return false
+
+        val review = reviews[index]
+        return if (helpfulVotesByCurrentUser.add(reviewId)) {
+            reviews[index] = review.copy(helpfulCount = review.helpfulCount + 1)
+            true
+        } else {
+            helpfulVotesByCurrentUser.remove(reviewId)
+            reviews[index] = review.copy(helpfulCount = (review.helpfulCount - 1).coerceAtLeast(0))
+            false
+        }
+    }
 
     fun hasUserReviewedSpot(userId: String, spotId: String): Boolean {
         return reviews.any {
@@ -216,10 +242,14 @@ object ReviewRepository {
             )
         }
 
+        val rateableAmenities = (listOf("noise", "seating") + spot.amenities)
+            .distinct()
+            .filterNot { it.equals("printing", ignoreCase = true) }
+
         return ReviewDisplayStats(
             averageOverall = spotReviews.map { it.overallRating }.average(),
             reviewCount = spotReviews.size,
-            amenityAverages = (listOf("noise", "seating") + spot.amenities).distinct().associateWith { amenity ->
+            amenityAverages = rateableAmenities.associateWith { amenity ->
                 spotReviews.mapNotNull { it.amenityRatings[amenity] }.takeIf { it.isNotEmpty() }?.average()
                     ?: Double.NaN
             }.filterValues { !it.isNaN() }

@@ -6,4 +6,23 @@
     <color name="primary">#6200EE</color>
     <color name="primary_variant">#3700B3</color>
     <color name="secondary">#03DAC6</color>
+
+    <color name="surface_color">#FFFFFF</color>
+    <color name="surface_light_tint">#EAF7F9</color>
+    <color name="surface_muted">#8CB8B7</color>
+    <color name="surface_soft_3">#ADADAA</color>
+    <color name="brand_main">#1D4F58</color>
+    <color name="button_secondary">#DDE2E8</color>
+    <color name="button_disabled">#B0B0B0</color>
+    <color name="border_default">#DDE2E8</color>
+    <color name="pin_active_fill">#B4DDE6</color>
+    <color name="pin_unavailable_border">#AAC1C7</color>
+    <color name="pin_unavailable_fill">#DDE2E8</color>
+    <color name="dropdown_selected_background">#F1F5F6</color>
+    <color name="star_default">#FBBC05</color>
+    <color name="diamond_default">#185FA5</color>
+    <color name="text_primary">#101918</color>
+    <color name="report_red">#C51B1B</color>
+    <color name="report_icon_bg">#F6D4D4</color>
+    <color name="report_border">#A9C8CE</color>
 </resources>

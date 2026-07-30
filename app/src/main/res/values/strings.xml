@@ -6,6 +6,7 @@
     <string name="wifi_strength">WiFi Strength</string>
     <string name="seating_comfort">Seating Comfort</string>
     <string name="outlet_availability">Outlet Availability</string>
+    <string name="star">&#9733;</string>
 
     <!-- Profile Screen -->
     <string name="profile">Profile</string>
@@ -33,9 +34,55 @@
     <string name="name_required">Name is required</string>
     <string name="address_required">Address is required</string>
     <string name="photo_is_required">Please add a photo</string>
+    <string name="mark_review_helpful">Mark review as helpful</string>
+    <string name="remove_review_helpful">Remove helpful vote</string>
     <string name="spot_vouched">You vouched for this spot!</string>
     <string name="vouch_prompt_title">Vouch for this spot?</string>
     <string name="vouch_prompt_message">Someone else suggested a spot nearby named \"%1$s\". Would you like to vouch for it instead of creating a new one?</string>
     <string name="vouch_yes">Yes, vouch for it</string>
     <string name="vouch_no">No, create new</string>
+    <!-- Report -->
+    <string name="report">Report</string>
+    <string name="close_report">Close Report</string>
+    <string name="report_title">Report this study spot</string>
+    <string name="report_subtitle">What’s wrong?</string>
+    <string name="incorrect_location">Incorrect location</string>
+    <string name="duplicate_spot">Duplicate spot</string>
+    <string name="inaccurate_details">Inaccurate details</string>
+    <string name="inappropriate_photo">Inappropriate photo</string>
+    <string name="spam_or_fake_content">Spam or fake content</string>
+    <string name="other">Other</string>
+    <string name="additional_details_optional">Additional details (optional)</string>
+    <string name="submit_report_button">Submit report</string>
+    <string name="report_note">Your report is anonymous. We’ll review it and take\naction if it violates our guidelines.</string>
+    <string name="close_confirmation">Close confirmation</string>
+    <string name="report_submitted">Report submitted</string>
+    <string name="report_success_title">Thanks for your report</string>
+    <string name="report_success_subtitle">We’ll review this study spot and take action if needed.</string>
+    <string name="report_success_note">Your report helps keep StudyPin accurate and\nhelpful for everyone.</string>
+    <string name="back_to_spot">Back to Spot</string>
+    <string name="return_to_map">Return to Map</string>
+
+    <!-- Review -->
+    <string name="reviews">Reviews</string>
+    <string name="average_rating">Average rating</string>
+    <string name="rating_star">Rating star</string>
+    <string name="view_details">View details</string>
+    <string name="write_a_review">Write a review</string>
+    <string name="review_group_subtitle">What people are saying</string>
+    <string name="review_group_placeholder">No reviews yet. Be the first to share your experience.</string>
+    <string name="add_review_title">How was your study session?</string>
+    <string name="review_details_hint">Tell others about your experience (optional)</string>
+
+    <!-- Map inactive spot preview -->
+    <string name="preview_currently_inactive">Currently inactive</string>
+    <string name="preview_inactive_reason_title">Why is this spot inactive?</string>
+    <string name="preview_inactive_reason">This location may be closed, under renovation, or no longer available for study.</string>
+    <string name="preview_inactive_reason_info">Information about why this spot is inactive</string>
+    <string name="preview_temporarily_closed">Temporarily closed</string>
+    <string name="preview_closed_reason_title">Why is this spot temporarily closed?</string>
+    <string name="preview_closed_reason">The spot may be closed for maintenance or outside its normal operating hours.</string>
+    <string name="preview_learn_more">Learn more</string>
+    <string name="preview_last_verified">Last verified</string>
+    <string name="preview_last_verified_unknown">Not available</string>
 </resources>

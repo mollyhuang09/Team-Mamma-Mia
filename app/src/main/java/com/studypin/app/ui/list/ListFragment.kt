@@ -6,19 +6,23 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.CheckBox
 import android.widget.EditText
-import android.widget.Spinner
-import android.widget.ArrayAdapter
-import android.widget.AdapterView
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.navigation.fragment.findNavController
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
+import com.google.android.material.textfield.TextInputLayout
 import com.studypin.app.R
 import com.google.firebase.firestore.ListenerRegistration
 import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.model.StudySpot
+import com.studypin.app.ui.filter.FilterFragment
+import com.studypin.app.ui.search.SearchFragment
+import com.studypin.app.ui.applyStatusBarInset
+import com.studypin.app.ui.toTagLabel
 import android.widget.Toast
 
 
@@ -26,10 +30,20 @@ class ListFragment : Fragment() {
 
     private lateinit var adapter: SpotListAdapter
     private lateinit var etSearch: EditText
-    private lateinit var cbWifi: CheckBox
-    private lateinit var cbOutlets: CheckBox
-    private lateinit var cbAvailableOnly: CheckBox
-    private lateinit var sortSpinner: Spinner
+    private lateinit var chipGroupTags: ChipGroup
+    private lateinit var tvSpotCount: TextView
+    private lateinit var tvSortSummary: TextView
+    private var searchNavigationStarted = false
+    private var selectedAmenities: Set<String> = emptySet()
+    private var selectedEnvironments: Set<String> = emptySet()
+    private var selectedAvailableOnly = false
+    private var selectedSortPosition = 0
+
+    private val sortSummaryLabels = listOf(
+        "Rating",
+        "Most reviews",
+        "Recently added"
+    )
 
     // Always sort/filter from the full original list, never from the
     // currently-displayed (already-filtered) list.
@@ -46,11 +60,69 @@ class ListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        etSearch = view.findViewById(R.id.etSearch)
-        cbWifi = view.findViewById(R.id.cbWifi)
-        cbOutlets = view.findViewById(R.id.cbOutlets)
-        cbAvailableOnly = view.findViewById(R.id.cbAvailableOnly)
-        sortSpinner = view.findViewById(R.id.sortSpinner)
+        etSearch = view.findViewById(R.id.etHeaderSearch)
+        chipGroupTags = view.findViewById(R.id.chipGroupTags)
+        tvSpotCount = view.findViewById(R.id.tvSpotCount)
+        tvSortSummary = view.findViewById(R.id.tvSortSummary)
+
+        // set up header
+        view.findViewById<View>(R.id.headerContent)
+            .applyStatusBarInset(extraTopDp = 0)
+        view.findViewById<TextView>(R.id.tvHeaderTitle).text = "List"
+        view.findViewById<TextView>(R.id.tvHeaderSubtitle).text = "Find and pin the best study spot"
+        view.findViewById<TextInputLayout>(R.id.layoutHeaderSearch).hint = "Search for location..."
+
+        val headerSearch = view.findViewById<TextInputLayout>(R.id.layoutHeaderSearch)
+        headerSearch.setOnClickListener { openSearchScreen() }
+        etSearch.setOnClickListener { openSearchScreen() }
+        etSearch.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                openSearchScreen()
+            }
+        }
+
+        parentFragmentManager.setFragmentResultListener(
+            SearchFragment.RESULT_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            val query = result.getString(SearchFragment.KEY_QUERY).orEmpty()
+            etSearch.setText(query)
+            etSearch.setSelection(query.length)
+            applyFiltersAndSort()
+        }
+
+        view.findViewById<View>(R.id.btnHeaderFilters).setOnClickListener {
+            val arguments = Bundle().apply {
+                putStringArrayList(
+                    FilterFragment.KEY_AMENITIES,
+                    ArrayList(selectedAmenities)
+                )
+                putStringArrayList(
+                    FilterFragment.KEY_ENVIRONMENTS,
+                    ArrayList(selectedEnvironments)
+                )
+                putBoolean(FilterFragment.KEY_AVAILABLE_ONLY, selectedAvailableOnly)
+                putInt(FilterFragment.KEY_SORT_POSITION, selectedSortPosition)
+            }
+            findNavController().navigate(R.id.action_list_to_filter, arguments)
+        }
+
+        parentFragmentManager.setFragmentResultListener(
+            FilterFragment.RESULT_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            selectedAmenities = result
+                .getStringArrayList(FilterFragment.KEY_AMENITIES)
+                ?.toSet()
+                .orEmpty()
+            selectedEnvironments = result
+                .getStringArrayList(FilterFragment.KEY_ENVIRONMENTS)
+                ?.toSet()
+                .orEmpty()
+            selectedAvailableOnly = result.getBoolean(FilterFragment.KEY_AVAILABLE_ONLY)
+            selectedSortPosition = result.getInt(FilterFragment.KEY_SORT_POSITION, 0)
+            applyFiltersAndSort()
+        }
 
         val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerSpots)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
@@ -71,10 +143,7 @@ class ListFragment : Fragment() {
         }
         recyclerView.adapter = adapter
 
-        setupSortSpinner()
         setupSearchListener()
-        setupFilterListeners()
-
         applyFiltersAndSort()
         spotsListener = StudySpotRepository.observeSpots(
             onSuccess = { spots ->
@@ -91,21 +160,6 @@ class ListFragment : Fragment() {
         )
     }
 
-    private fun setupSortSpinner() {
-        val options = listOf("Sort: Rating (high to low)", "Sort: Occupancy (available first)")
-        sortSpinner.adapter = ArrayAdapter(
-            requireContext(),
-            android.R.layout.simple_spinner_dropdown_item,
-            options
-        )
-        sortSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(p: AdapterView<*>?, v: View?, pos: Int, id: Long) {
-                applyFiltersAndSort()
-            }
-            override fun onNothingSelected(p: AdapterView<*>?) {}
-        }
-    }
-
     private fun setupSearchListener() {
         etSearch.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
@@ -116,10 +170,20 @@ class ListFragment : Fragment() {
         })
     }
 
-    private fun setupFilterListeners() {
-        cbWifi.setOnClickListener { applyFiltersAndSort() }
-        cbOutlets.setOnClickListener { applyFiltersAndSort() }
-        cbAvailableOnly.setOnClickListener { applyFiltersAndSort() }
+    private fun openSearchScreen() {
+        if (searchNavigationStarted) return
+        searchNavigationStarted = true
+        etSearch.clearFocus()
+
+        val arguments = Bundle().apply {
+            putString(SearchFragment.KEY_INITIAL_QUERY, etSearch.text.toString())
+        }
+        findNavController().navigate(R.id.action_list_to_search, arguments)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        searchNavigationStarted = false
     }
 
     /**
@@ -136,27 +200,73 @@ class ListFragment : Fragment() {
             result = result.filter { it.name.contains(query, ignoreCase = true) }
         }
 
-        // Filter by amenities
-        if (cbWifi.isChecked) {
-            result = result.filter { it.amenities.contains("wifi") }
-        }
-        if (cbOutlets.isChecked) {
-            result = result.filter { it.amenities.contains("outlets") }
+        // Filter by every selected amenity.
+        if (selectedAmenities.isNotEmpty()) {
+            result = result.filter { spot ->
+                selectedAmenities.all { amenity -> spot.amenities.contains(amenity) }
+            }
         }
 
         // Filter by occupancy
-        if (cbAvailableOnly.isChecked) {
+        if (selectedAvailableOnly) {
             result = result.filter { it.occupancyLabel() in listOf("Empty", "Available") }
         }
 
         // Sort
-        result = when (sortSpinner.selectedItemPosition) {
+        result = when (selectedSortPosition) {
             0 -> result.sortedByDescending { it.avgRating }
-            1 -> result.sortedByDescending { it.capacity.approxSeats - it.currentCheckIns }
+            1 -> result.sortedByDescending { it.totalRatings }
+            2 -> result // Recently added needs a createdAt field
             else -> result
         }
 
-        adapter.updateList(result, allSpots)
+        adapter.updateList(result)
+        updateListSummary(result.size)
+        updateSelectedTagChips()
+    }
+
+    private fun updateListSummary(resultCount: Int) {
+        val spotLabel = if (resultCount == 1) "Spot" else "Spots"
+        tvSpotCount.text = "$resultCount $spotLabel Found"
+
+        val sortLabel = sortSummaryLabels
+            .getOrNull(selectedSortPosition)
+            ?: sortSummaryLabels.first()
+        tvSortSummary.text = "Sort: $sortLabel"
+    }
+
+    private fun updateSelectedTagChips() {
+        chipGroupTags.removeAllViews()
+
+        val selectedKeys = buildList {
+            addAll(selectedAmenities)
+            addAll(selectedEnvironments)
+            if (selectedAvailableOnly) add("available_only")
+        }
+
+        selectedKeys.forEach { key ->
+            val label = if (key == "available_only") {
+                "Open"
+            } else {
+                key.toTagLabel()
+            }
+
+            val chip = layoutInflater.inflate(
+                R.layout.item_spot_tag,
+                chipGroupTags,
+                false
+            ) as Chip
+            chip.text = label
+            chip.isClickable = false
+            chip.isFocusable = false
+            chipGroupTags.addView(chip)
+        }
+
+        chipGroupTags.visibility = if (selectedKeys.isEmpty()) {
+            View.GONE
+        } else {
+            View.VISIBLE
+        }
     }
 
     override fun onDestroyView() {

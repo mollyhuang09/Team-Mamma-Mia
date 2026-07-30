@@ -3,49 +3,59 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:paddingHorizontal="12dp"
+    android:paddingBottom="12dp">
 
-    <EditText
-        android:id="@+id/etSearch"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Search by name..."
-        android:layout_marginBottom="8dp"/>
+        android:background="@drawable/bg_map_header"
+        android:elevation="0dp">
+
+        <include
+            layout="@layout/view_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </FrameLayout>
 
     <LinearLayout
+        android:id="@+id/layoutListSummary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="8dp">
+        android:layout_marginTop="0dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginHorizontal="8dp"
+        android:paddingHorizontal="0dp"
+        android:gravity="center_vertical"
+        android:minHeight="32dp"
+        android:orientation="horizontal">
 
-        <CheckBox
-            android:id="@+id/cbWifi"
+        <TextView
+            android:id="@+id/tvSpotCount"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Wi-Fi"/>
+            android:text="0 Spots Found"
+            android:textColor="@color/brand_main"
+            android:textSize="14sp" />
 
-        <CheckBox
-            android:id="@+id/cbOutlets"
-            android:layout_width="0dp"
+        <TextView
+            android:id="@+id/tvSortSummary"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Outlets"/>
+            android:text="Sort: Rating"
+            android:textColor="@color/brand_main"
+            android:textSize="14sp" />
 
-        <CheckBox
-            android:id="@+id/cbAvailableOnly"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Available"/>
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_marginStart="2dp"
+            android:contentDescription="Sort order"
+            android:src="@drawable/ic_move_down" />
 
     </LinearLayout>
-
-    <Spinner
-        android:id="@+id/sortSpinner"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerSpots"
