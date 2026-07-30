@@ -1,11 +1,14 @@
 package com.studypin.app.ui.detail
 
+import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -214,15 +217,25 @@ class SpotDetailFragment : Fragment() {
     }
 
     private fun verifyUserIsAtSpotAndStartTracking(spot: StudySpot, button: Button) {
-        if (!LocationReminderManager.hasFineLocationPermission(requireContext()) ||
-            !LocationReminderManager.hasBackgroundLocationPermission(requireContext())
-        ) {
+        val context = requireContext()
+        val hasFineLocationPermission = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        val hasBackgroundLocationPermission = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ||
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+        if (!hasFineLocationPermission || !hasBackgroundLocationPermission) {
             showTrackingMessage("Enable location permissions in Settings before tracking a visit")
             return
         }
 
         val cancellationTokenSource = CancellationTokenSource()
-        LocationServices.getFusedLocationProviderClient(requireContext())
+        try {
+            LocationServices.getFusedLocationProviderClient(context)
             .getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancellationTokenSource.token)
             .addOnSuccessListener { location ->
                 if (location == null) {
@@ -249,6 +262,9 @@ class SpotDetailFragment : Fragment() {
             .addOnFailureListener {
                 showTrackingMessage("Couldn’t determine your current location")
             }
+        } catch (_: SecurityException) {
+            showTrackingMessage("Enable location permissions in Settings before tracking a visit")
+        }
     }
 
     private fun startTrackingForSpot(spot: StudySpot, button: Button) {
