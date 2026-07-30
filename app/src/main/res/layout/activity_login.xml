@@ -89,12 +89,11 @@
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etPassword"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
+            android:layout_height="match_parent"
             android:hint="Enter"
             android:inputType="textPassword"
             android:paddingStart="12dp"
             android:paddingEnd="12dp"
-            android:textSize="12sp"
             android:textColor="@color/text_primary"
             android:textColorHint="@color/search_hint" />
     </com.google.android.material.textfield.TextInputLayout>
