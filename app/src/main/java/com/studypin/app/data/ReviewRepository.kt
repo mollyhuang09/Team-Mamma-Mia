@@ -165,6 +165,49 @@ object ReviewRepository {
             onSuccess(loaded)
         }
 
+    /**
+     * Cross-spot query: reviews live in per-spot "ratings" subcollections, so this needs a
+     * Firestore collection group query, which requires a matching index to be created in the
+     * Firebase console (collection group "ratings", field reviewerId) before it will succeed.
+     */
+    fun reviewsByUser(
+        userId: String,
+        onSuccess: (List<StudySpotReview>) -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        firestore.collectionGroup("ratings").whereEqualTo("reviewerId", userId).get()
+            .addOnSuccessListener { snapshot -> onSuccess(snapshot.documents.mapNotNull { it.toReview() }) }
+            .addOnFailureListener { onError(it) }
+    }
+
+    fun deleteReview(spotId: String, reviewId: String, onComplete: ((Boolean, String?) -> Unit)? = null) {
+        val spotRef = spots.document(spotId)
+        val reviewRef = spotRef.collection("ratings").document(reviewId)
+        firestore.runTransaction { transaction ->
+            val spot = transaction.get(spotRef)
+            val review = transaction.get(reviewRef)
+            if (!spot.exists() || !review.exists()) throw IllegalStateException("Review or spot does not exist")
+
+            val oldCount = (spot.getLong("totalRatings") ?: 0L).toInt()
+            val removedRating = (review.getLong("overallRating") ?: 0L).toInt()
+            val newCount = (oldCount - 1).coerceAtLeast(0)
+            val newAverage = if (newCount == 0) {
+                0.0
+            } else {
+                (((spot.getDouble("avgRating") ?: 0.0) * oldCount) - removedRating) / newCount
+            }
+
+            transaction.delete(reviewRef)
+            transaction.update(spotRef, mapOf("totalRatings" to newCount, "avgRating" to newAverage))
+            null
+        }.addOnSuccessListener {
+            reviews.removeAll { it.id == reviewId }
+            onComplete?.invoke(true, null)
+        }.addOnFailureListener { e ->
+            onComplete?.invoke(false, e.message)
+        }
+    }
+
     fun addReview(review: StudySpotReview, onComplete: ((Boolean, String?) -> Unit)? = null) {
         val spotRef = spots.document(review.spotId)
         val reviewRef = spotRef.collection("ratings").document(review.id)

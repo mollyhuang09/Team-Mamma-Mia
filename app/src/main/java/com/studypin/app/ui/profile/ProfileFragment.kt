@@ -8,11 +8,16 @@ import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.studypin.app.LandingActivity
 import com.studypin.app.R
+import com.studypin.app.data.ReviewRepository
+import com.studypin.app.data.SavedSpotRepository
+import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.data.UserProfileRepository
 import com.studypin.app.databinding.FragmentProfileBinding
 
@@ -21,6 +26,7 @@ class ProfileFragment : Fragment() {
     private var _binding: FragmentProfileBinding? = null
     private val binding get() = _binding!!
     private lateinit var auth: FirebaseAuth
+    private var savedSpotsListener: ListenerRegistration? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -37,6 +43,7 @@ class ProfileFragment : Fragment() {
         
         displayUserInfo()
         setupClickListeners()
+        loadCounts()
     }
 
     private fun displayUserInfo() {
@@ -66,12 +73,14 @@ class ProfileFragment : Fragment() {
             showEditProfileDialog()
         }
 
-        binding.layoutMyReviews.setOnClickListener {
-            Toast.makeText(requireContext(), "My Reviews clicked", Toast.LENGTH_SHORT).show()
+        binding.cardMyPins.setOnClickListener {
+            findNavController().navigate(R.id.action_profile_to_manageMyPins)
         }
-
-        binding.layoutSettings.setOnClickListener {
-            Toast.makeText(requireContext(), "Settings clicked", Toast.LENGTH_SHORT).show()
+        binding.cardSavedSpots.setOnClickListener {
+            findNavController().navigate(R.id.action_profile_to_manageSavedSpots)
+        }
+        binding.cardMyReviews.setOnClickListener {
+            findNavController().navigate(R.id.action_profile_to_manageMyReviews)
         }
 
         binding.btnLogout.setOnClickListener {
@@ -81,6 +90,28 @@ class ProfileFragment : Fragment() {
                 goToLanding()
             }
         }
+    }
+
+    private fun loadCounts() {
+        val uid = auth.currentUser?.uid ?: return
+
+        StudySpotRepository.spotsForUser(
+            userId = uid,
+            onSuccess = { spots -> if (isAdded) binding.tvPinsCount.text = spots.size.toString() },
+            onError = {}
+        )
+
+        savedSpotsListener = SavedSpotRepository.observeSavedSpotIds(
+            userId = uid,
+            onSuccess = { ids -> if (isAdded) binding.tvSavedCount.text = ids.size.toString() },
+            onError = {}
+        )
+
+        ReviewRepository.reviewsByUser(
+            userId = uid,
+            onSuccess = { reviews -> if (isAdded) binding.tvReviewsCount.text = reviews.size.toString() },
+            onError = {}
+        )
     }
 
     private fun logout() {
@@ -137,6 +168,8 @@ class ProfileFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        savedSpotsListener?.remove()
+        savedSpotsListener = null
         _binding = null
     }
 }

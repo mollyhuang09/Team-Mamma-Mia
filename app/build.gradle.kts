@@ -59,5 +59,5 @@ dependencies {
     implementation("com.google.android.gms:play-services-maps:19.0.0")
     implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation("com.google.mlkit:face-detection:16.1.7")
-    implementation("com.google.firebase:firebase-storage")
+    implementation("io.coil-kt:coil:2.5.0")
 }

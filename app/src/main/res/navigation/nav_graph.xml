@@ -59,12 +59,58 @@
     <fragment
         android:id="@+id/addSpotFragment"
         android:name="com.studypin.app.ui.add.AddSpotFragment"
-        android:label="Add Spot"/>
+        android:label="Add Spot">
+        <action
+            android:id="@+id/action_addSpot_to_locationPicker"
+            app:destination="@id/locationPickerFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/locationPickerFragment"
+        android:name="com.studypin.app.ui.add.LocationPickerFragment"
+        android:label="Pick Location" />
 
     <fragment
         android:id="@+id/profileFragment"
         android:name="com.studypin.app.ui.profile.ProfileFragment"
-        android:label="Profile"/>
+        android:label="Profile">
+        <action
+            android:id="@+id/action_profile_to_manageMyPins"
+            app:destination="@id/manageMyPinsFragment"/>
+        <action
+            android:id="@+id/action_profile_to_manageSavedSpots"
+            app:destination="@id/manageSavedSpotsFragment"/>
+        <action
+            android:id="@+id/action_profile_to_manageMyReviews"
+            app:destination="@id/manageMyReviewsFragment"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/manageMyPinsFragment"
+        android:name="com.studypin.app.ui.settings.ManageMyPinsFragment"
+        android:label="My Pins">
+        <action
+            android:id="@+id/action_manageMyPins_to_spotDetail"
+            app:destination="@id/spotDetailFragment"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/manageSavedSpotsFragment"
+        android:name="com.studypin.app.ui.settings.ManageSavedSpotsFragment"
+        android:label="Saved Spots">
+        <action
+            android:id="@+id/action_manageSavedSpots_to_spotDetail"
+            app:destination="@id/spotDetailFragment"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/manageMyReviewsFragment"
+        android:name="com.studypin.app.ui.settings.ManageMyReviewsFragment"
+        android:label="My Reviews">
+        <action
+            android:id="@+id/action_manageMyReviews_to_spotDetail"
+            app:destination="@id/spotDetailFragment"/>
+    </fragment>
 
     <fragment
         android:id="@+id/spotDetailFragment"

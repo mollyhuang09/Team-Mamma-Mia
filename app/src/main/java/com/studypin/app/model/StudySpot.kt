@@ -61,6 +61,7 @@ data class StudySpot(
     val imageUrls: List<String> = emptyList(),
     val isValidated: Boolean = false,
     val requestCount: Int = 0,
+    val vouchedBy: List<String> = emptyList(),
 
     // --- Lifecycle/moderation status ---
     val status: SpotStatus = SpotStatus.ACTIVE,
@@ -71,7 +72,8 @@ data class StudySpot(
 
     // --- Hidden gem nesting ---
     val parentSpotId: String? = null,
-    val isHiddenGem: Boolean = false
+    val isHiddenGem: Boolean = false,
+    val category: String = ""
 ) {
     /**
      * Computes a human-readable occupancy label from the ratio of

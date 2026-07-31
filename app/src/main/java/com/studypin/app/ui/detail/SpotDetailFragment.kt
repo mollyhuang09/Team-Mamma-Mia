@@ -24,6 +24,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.core.view.updateLayoutParams
+import coil.load
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
@@ -41,6 +42,7 @@ import com.studypin.app.LoginActivity
 import com.studypin.app.R
 import com.studypin.app.data.OccupancyRepository
 import com.studypin.app.data.ReviewRepository
+import com.studypin.app.data.SavedSpotRepository
 import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.location.LocationReminderManager
 import com.studypin.app.model.StudySpot
@@ -51,6 +53,7 @@ import com.studypin.app.ui.review.ReviewHelpfulBinder
 import com.studypin.app.ui.review.StarRatingViews
 import com.studypin.app.ui.setOnApplyStatusBarInsetsListener
 import com.studypin.app.ui.showPhotoUploadPlaceholder
+import com.studypin.app.utils.ImageUtils
 import com.studypin.app.ui.toTagLabel
 import com.studypin.app.utils.LocationUtils
 import java.util.Locale
@@ -96,6 +99,7 @@ class SpotDetailFragment : Fragment() {
     private fun bindLoadedSpot(view: View, spotId: String, spot: StudySpot) {
         bindSpot(view, spot)
         bindInactiveSpotState(view, spot)
+        bindVerificationStatus(view, spot)
 
         view.findViewById<View>(R.id.btnBack).setOnClickListener {
             findNavController().navigateUp()
@@ -114,23 +118,38 @@ class SpotDetailFragment : Fragment() {
         view.findViewById<View>(R.id.btnDirection).setOnClickListener {
             openDirections(spot)
         }
-        view.findViewById<View>(R.id.btnSave).setOnClickListener { button ->
-            val saveButton = button as MaterialButton
-            val isSaved = !saveButton.isSelected
-            saveButton.isSelected = isSaved
-            saveButton.text = if (isSaved) "Saved" else "Save"
-            saveButton.setIconResource(
-                if (isSaved) R.drawable.ic_bookmark_filled else R.drawable.ic_bookmark
-            )
-            saveButton.setIconTintResource(R.color.brand_main)
-            saveButton.backgroundTintList = ContextCompat.getColorStateList(
-                requireContext(),
-                if (isSaved) R.color.surface_light_tint else R.color.surface_color
-            )
-            saveButton.contentDescription = if (isSaved) {
-                "Remove spot from saved places"
+        val saveButton = view.findViewById<MaterialButton>(R.id.btnSave)
+        val savedUid = FirebaseAuth.getInstance().currentUser?.uid
+        if (savedUid != null) {
+            SavedSpotRepository.isSpotSaved(savedUid, spotId) { saved ->
+                if (isAdded) updateSaveButtonUi(saveButton, saved)
+            }
+        }
+        saveButton.setOnClickListener { button ->
+            val uid = FirebaseAuth.getInstance().currentUser?.uid
+            if (uid == null) {
+                Toast.makeText(requireContext(), "Sign in to save spots", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            val goingToSaved = !(button as MaterialButton).isSelected
+            if (goingToSaved) {
+                SavedSpotRepository.saveSpot(uid, spotId) { success, error ->
+                    if (!isAdded) return@saveSpot
+                    if (success) {
+                        updateSaveButtonUi(button, true)
+                    } else {
+                        Toast.makeText(requireContext(), error ?: "Could not save spot", Toast.LENGTH_LONG).show()
+                    }
+                }
             } else {
-                "Save spot"
+                SavedSpotRepository.unsaveSpot(uid, spotId) { success, error ->
+                    if (!isAdded) return@unsaveSpot
+                    if (success) {
+                        updateSaveButtonUi(button, false)
+                    } else {
+                        Toast.makeText(requireContext(), error ?: "Could not remove spot", Toast.LENGTH_LONG).show()
+                    }
+                }
             }
         }
         view.findViewById<View>(R.id.btnAddPhoto).setOnClickListener {
@@ -388,6 +407,64 @@ class SpotDetailFragment : Fragment() {
             }
     }
 
+    private fun updateSaveButtonUi(saveButton: MaterialButton, isSaved: Boolean) {
+        saveButton.isSelected = isSaved
+        saveButton.text = if (isSaved) "Saved" else "Save"
+        saveButton.setIconResource(
+            if (isSaved) R.drawable.ic_bookmark_filled else R.drawable.ic_bookmark
+        )
+        saveButton.setIconTintResource(R.color.brand_main)
+        saveButton.backgroundTintList = ContextCompat.getColorStateList(
+            requireContext(),
+            if (isSaved) R.color.surface_light_tint else R.color.surface_color
+        )
+        saveButton.contentDescription = if (isSaved) {
+            "Remove spot from saved places"
+        } else {
+            "Save spot"
+        }
+    }
+
+    private fun bindVerificationStatus(view: View, spot: StudySpot) {
+        val tvStatus = view.findViewById<TextView>(R.id.tvVerificationStatus)
+        val btnVerify = view.findViewById<MaterialButton>(R.id.btnVerify)
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+
+        if (spot.isValidated) {
+            tvStatus.text = getString(R.string.spot_detail_verified_line)
+            tvStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.verified_green))
+            btnVerify.visibility = View.GONE
+        } else {
+            val remaining = (2 - spot.requestCount).coerceAtLeast(1)
+            tvStatus.text = getString(R.string.spot_detail_needs_confirmation, remaining)
+            tvStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.pending_amber))
+
+            val canVerify = currentUserId != null &&
+                spot.createdBy != currentUserId &&
+                !spot.vouchedBy.contains(currentUserId)
+            btnVerify.visibility = if (canVerify) View.VISIBLE else View.GONE
+        }
+
+        btnVerify.setOnClickListener {
+            val userId = FirebaseAuth.getInstance().currentUser?.uid
+            if (userId == null) {
+                Toast.makeText(requireContext(), "Sign in to verify this spot", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            btnVerify.isEnabled = false
+            StudySpotRepository.vouchSpot(spot.id, userId)
+                .addOnSuccessListener {
+                    if (isAdded) Toast.makeText(requireContext(), getString(R.string.spot_vouched), Toast.LENGTH_SHORT).show()
+                }
+                .addOnFailureListener { error ->
+                    if (isAdded) {
+                        btnVerify.isEnabled = true
+                        Toast.makeText(requireContext(), error.message ?: "Could not verify this spot", Toast.LENGTH_LONG).show()
+                    }
+                }
+        }
+    }
+
     private fun setupCheckInButton(view: View, spotId: String) {
         val button = view.findViewById<MaterialButton>(R.id.btnCheckInToggle)
         val userId = FirebaseAuth.getInstance().currentUser?.uid
@@ -543,7 +620,6 @@ class SpotDetailFragment : Fragment() {
         }
             .filter { it.isNotBlank() && it != "placeholder_uri" }
             .distinct()
-            .map(Uri::parse)
 
         photoGalleryContainer.removeAllViews()
 
@@ -563,7 +639,10 @@ class SpotDetailFragment : Fragment() {
 
         val firstImageUri = imageUris.first()
         heroImage.visibility = View.VISIBLE
-        heroImage.setImageURI(firstImageUri)
+        heroImage.load(ImageUtils.toLoadableModel(firstImageUri)) {
+            placeholder(R.drawable.photo_placeholder)
+            crossfade(true)
+        }
 
         photoHeader.visibility = View.VISIBLE
         photoGallery.visibility = View.VISIBLE
@@ -579,7 +658,10 @@ class SpotDetailFragment : Fragment() {
                 }
                 contentDescription = "Spot photo ${index + 1}"
                 scaleType = ImageView.ScaleType.CENTER_CROP
-                setImageURI(uri)
+                load(ImageUtils.toLoadableModel(uri)) {
+                    placeholder(R.drawable.photo_placeholder)
+                    crossfade(true)
+                }
             }
             photoGalleryContainer.addView(imageView)
         }

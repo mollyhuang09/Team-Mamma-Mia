@@ -8,8 +8,10 @@ import android.widget.TextView
 import android.widget.ImageView
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.RecyclerView
+import coil.load
 import com.studypin.app.R
 import com.studypin.app.model.StudySpot
+import com.studypin.app.utils.ImageUtils
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 
@@ -27,6 +29,7 @@ class SpotListAdapter(
         val tvRating: TextView = view.findViewById(R.id.tvRating)
         val tvHiddenGemBadge: TextView = view.findViewById(R.id.tvHiddenGemBadge)
         val tvHiddenGemBlock: LinearLayout = view.findViewById(R.id.tvHiddenGemBlock)
+        val tvVerifiedBadge: TextView = view.findViewById(R.id.tvVerifiedBadge)
         val chipGroupTags: ChipGroup = view.findViewById(R.id.chipGroupTags)
         val tvSpotAddress: TextView = view.findViewById(R.id.tvSpotAddress)
         val ivSpotImage: ImageView = view.findViewById(R.id.ivSpotImage)
@@ -52,9 +55,11 @@ class SpotListAdapter(
         val imageUri = (spot.imageUrls.firstOrNull() ?: spot.imageUrl)
             ?.takeUnless { it.isBlank() || it == "placeholder_uri" }
         if (imageUri != null) {
-            holder.ivSpotImage.setImageURI(Uri.parse(imageUri))
+            holder.ivSpotImage.load(ImageUtils.toLoadableModel(imageUri)) {
+                placeholder(R.drawable.photo_placeholder)
+                crossfade(true)
+            }
         } else {
-            // placeholder - TBC
             holder.ivSpotImage.setImageResource(R.drawable.photo_placeholder)
         }
 
@@ -66,6 +71,16 @@ class SpotListAdapter(
             holder.tvHiddenGemBlock.visibility = View.VISIBLE
         } else {
             holder.tvHiddenGemBlock.visibility = View.GONE
+        }
+
+        val context = holder.itemView.context
+        if (spot.isValidated) {
+            holder.tvVerifiedBadge.text = context.getString(R.string.spot_verified_badge)
+            holder.tvVerifiedBadge.setTextColor(context.getColor(R.color.verified_green))
+        } else {
+            val remaining = (2 - spot.requestCount).coerceAtLeast(1)
+            holder.tvVerifiedBadge.text = context.getString(R.string.spot_needs_vouch_badge, remaining)
+            holder.tvVerifiedBadge.setTextColor(context.getColor(R.color.pending_amber))
         }
 
         holder.chipGroupTags.removeAllViews()
