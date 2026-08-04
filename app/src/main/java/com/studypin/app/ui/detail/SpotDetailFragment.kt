@@ -503,18 +503,45 @@ class SpotDetailFragment : Fragment() {
         button.setOnClickListener {
             button.isEnabled = false
             val checkedIn = button.isSelected
-            val operation = if (checkedIn) {
-                OccupancyRepository.checkOut(spotId, userId)
+            if (checkedIn) {
+                LocationReminderManager.endVisit(requireContext(), spotId, userId)
+                    ?.addOnFailureListener { error ->
+                        if (isAdded) {
+                            button.isEnabled = true
+                            Toast.makeText(requireContext(), "Could not update check-in: ${error.message}", Toast.LENGTH_LONG).show()
+                        }
+                    }
             } else {
                 OccupancyRepository.checkIn(spotId, userId)
-            }
-            operation
-                .addOnFailureListener { error ->
-                    if (isAdded) {
-                        button.isEnabled = true
-                        Toast.makeText(requireContext(), "Could not update check-in: ${error.message}", Toast.LENGTH_LONG).show()
+                    .addOnSuccessListener { previousSpotId ->
+                        if (previousSpotId != null) {
+                            LocationReminderManager.stopTracking(requireContext(), previousSpotId)
+                            if (isAdded) {
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Checked out of your previous spot and checked into this one",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                        currentSpot?.let { spot ->
+                            if (!LocationReminderManager.isTracking(requireContext(), spot.id)) {
+                                LocationReminderManager.startTracking(
+                                    requireContext(),
+                                    spot,
+                                    onSuccess = {},
+                                    onFailure = {}
+                                )
+                            }
+                        }
                     }
-                }
+                    .addOnFailureListener { error ->
+                        if (isAdded) {
+                            button.isEnabled = true
+                            Toast.makeText(requireContext(), "Could not update check-in: ${error.message}", Toast.LENGTH_LONG).show()
+                        }
+                    }
+            }
         }
     }
 

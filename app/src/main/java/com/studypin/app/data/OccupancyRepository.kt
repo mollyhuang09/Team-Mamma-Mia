@@ -39,14 +39,41 @@ object OccupancyRepository {
             onSuccess(spotId)
         }
 
+    /** Checks the user into [spotId], auto-checking them out of any other spot first.
+     *  Resolves to the id of the spot they were displaced from, or null if none. */
     fun checkIn(spotId: String, userId: String) = firestore.runTransaction { transaction ->
         val spotRef = spots.document(spotId)
         val checkInRef = activeCheckIn(spotId, userId)
         val historyRef = spotRef.collection("occupancyUpdates").document()
+        val userCheckInRef = userCheckIn(userId)
+
         val spot = transaction.get(spotRef)
         val currentCheckIn = transaction.get(checkInRef)
+        val userCheckInSnapshot = transaction.get(userCheckInRef)
+        val previousSpotId = userCheckInSnapshot.getString("spotId")
+            ?.takeIf { it != spotId }
+
+        val previousSpotRef = previousSpotId?.let { spots.document(it) }
+        val previousCheckInRef = previousSpotId?.let { activeCheckIn(it, userId) }
+        val previousHistoryRef = previousSpotRef?.collection("occupancyUpdates")?.document()
+        val previousSpot = previousSpotRef?.let { transaction.get(it) }
 
         if (!spot.exists()) throw IllegalStateException("Study spot does not exist")
+
+        if (previousSpotId != null && previousSpot != null && previousSpot.exists() &&
+            previousCheckInRef != null && previousHistoryRef != null
+        ) {
+            val previousCount = (previousSpot.getLong("currentCheckIns") ?: 0L).toInt()
+            transaction.delete(previousCheckInRef)
+            transaction.update(previousSpotRef, "currentCheckIns", (previousCount - 1).coerceAtLeast(0))
+            transaction.set(previousHistoryRef, mapOf(
+                "spotId" to previousSpotId,
+                "userId" to userId,
+                "status" to "out",
+                "timestamp" to FieldValue.serverTimestamp()
+            ))
+        }
+
         if (!currentCheckIn.exists()) {
             val currentCount = (spot.getLong("currentCheckIns") ?: 0L).toInt()
             transaction.set(checkInRef, mapOf(
@@ -62,15 +89,23 @@ object OccupancyRepository {
                 "timestamp" to FieldValue.serverTimestamp()
             ))
         }
-        null
+
+        transaction.set(userCheckInRef, mapOf(
+            "spotId" to spotId,
+            "checkedInAt" to FieldValue.serverTimestamp()
+        ))
+
+        previousSpotId
     }
 
     fun checkOut(spotId: String, userId: String) = firestore.runTransaction { transaction ->
         val spotRef = spots.document(spotId)
         val checkInRef = activeCheckIn(spotId, userId)
         val historyRef = spotRef.collection("occupancyUpdates").document()
+        val userCheckInRef = userCheckIn(userId)
         val spot = transaction.get(spotRef)
         val currentCheckIn = transaction.get(checkInRef)
+        val userCheckInSnapshot = transaction.get(userCheckInRef)
 
         if (!spot.exists()) throw IllegalStateException("Study spot does not exist")
         if (currentCheckIn.exists()) {
@@ -84,9 +119,15 @@ object OccupancyRepository {
                 "timestamp" to FieldValue.serverTimestamp()
             ))
         }
+        if (userCheckInSnapshot.getString("spotId") == spotId) {
+            transaction.delete(userCheckInRef)
+        }
         null
     }
 
     private fun activeCheckIn(spotId: String, userId: String) =
         spots.document(spotId).collection("activeCheckIns").document(userId)
+
+    private fun userCheckIn(userId: String) =
+        firestore.collection("userCheckIns").document(userId)
 }

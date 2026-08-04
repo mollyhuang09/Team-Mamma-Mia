@@ -6,6 +6,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
+import com.google.firebase.auth.FirebaseAuth
 import com.studypin.app.location.LocationReminderManager
 
 /** Shown directly from the leave notification so the prompt is not dependent on MainActivity timing. */
@@ -26,8 +27,9 @@ class LeaveSpotPromptActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.dialogTitle).text = "Done studying at $spotName?"
 
         findViewById<MaterialButton>(R.id.btnLeft).setOnClickListener {
+            val userId = FirebaseAuth.getInstance().currentUser?.uid
             LocationReminderManager.clearPendingReminder(this, spotId)
-            LocationReminderManager.stopTracking(this, spotId)
+            LocationReminderManager.endVisit(this, spotId, userId)
             Toast.makeText(this, "Thanks for updating the study spot", Toast.LENGTH_SHORT).show()
             openSpotDetails(spotId)
         }

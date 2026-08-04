@@ -9,8 +9,9 @@ object LocationUtils {
 
     /**
      * Returns the distance between two coordinates in meters,
-     * using the Haversine formula. Good enough for our ~75m
-     * radius checks; doesn't need to be more precise than that.
+     * using the Haversine formula. Good enough for our ~10m
+     * radius checks (see LocationReminderManager.GEOFENCE_RADIUS_METERS);
+     * doesn't need to be more precise than that.
      */
     fun distanceInMeters(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Double {
         val earthRadius = 6371000.0 // meters

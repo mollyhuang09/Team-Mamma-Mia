@@ -1,12 +1,10 @@
 package com.studypin.app
 
 import android.Manifest
-import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
@@ -31,7 +29,6 @@ class MainActivity : AppCompatActivity() {
 
     private var pendingLeaveSpotId: String? = null
     private var pendingLeaveSpotName: String? = null
-    private var leavePromptVisible = false
 
     private val initialPermissionPreferences by lazy {
         getSharedPreferences("initial_permissions", MODE_PRIVATE)
@@ -147,7 +144,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showPendingLeaveSpotPromptIfReady() {
-        if (leavePromptVisible) return
         if (pendingLeaveSpotId == null) {
             val pendingReminder = LocationReminderManager.pendingReminder(this)
             pendingLeaveSpotId = pendingReminder?.first
@@ -160,40 +156,11 @@ class MainActivity : AppCompatActivity() {
         val spotName = pendingLeaveSpotName ?: "this study spot"
         pendingLeaveSpotId = null
         pendingLeaveSpotName = null
-        leavePromptVisible = true
-        showLeaveSpotPrompt(spotId, spotName)
-    }
-
-    private fun showLeaveSpotPrompt(spotId: String, spotName: String) {
-        val dialogView = LayoutInflater.from(this)
-            .inflate(R.layout.dialog_leave_spot, null)
-        val dialog = AlertDialog.Builder(this)
-            .setView(dialogView)
-            .create()
-
-        dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnLeft)
-            .setOnClickListener {
-                LocationReminderManager.clearPendingReminder(this, spotId)
-                LocationReminderManager.stopTracking(this, spotId)
-                Toast.makeText(this, "Thanks for updating the study spot", Toast.LENGTH_SHORT).show()
-                dialog.dismiss()
-            }
-        dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnStillHere)
-            .setOnClickListener {
-                LocationReminderManager.clearPendingReminder(this, spotId)
-                LocationReminderManager.cancelReminder(this, spotId)
-                LocationReminderManager.setEntered(this, spotId, true)
-                Toast.makeText(this, "Okay, we’ll keep tracking your visit", Toast.LENGTH_SHORT).show()
-                dialog.dismiss()
-            }
-
-        dialog.setOnShowListener {
-            dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        }
-        dialog.setOnDismissListener {
-            leavePromptVisible = false
-        }
-        dialog.show()
+        startActivity(
+            Intent(this, LeaveSpotPromptActivity::class.java)
+                .putExtra(LocationReminderManager.EXTRA_SPOT_ID, spotId)
+                .putExtra(LocationReminderManager.EXTRA_SPOT_NAME, spotName)
+        )
     }
 
     private fun requestInitialPermissionsIfNeeded() {
@@ -273,13 +240,13 @@ class MainActivity : AppCompatActivity() {
         if (userId == null || spotId == null) return
 
         findViewById<Button>(R.id.btnCheckOut).isEnabled = false
-        OccupancyRepository.checkOut(spotId, userId)
-            .addOnSuccessListener {
+        LocationReminderManager.endVisit(this, spotId, userId)
+            ?.addOnSuccessListener {
                 Toast.makeText(this, "Checked out", Toast.LENGTH_SHORT).show()
                 val bundle = Bundle().apply { putString("spotId", spotId) }
                 navController.navigate(R.id.addReviewFragment, bundle)
             }
-            .addOnFailureListener { error: Exception ->
+            ?.addOnFailureListener { error: Exception ->
                 findViewById<Button>(R.id.btnCheckOut).isEnabled = true
                 Toast.makeText(this, "Could not check out: ${error.message}", Toast.LENGTH_LONG).show()
             }

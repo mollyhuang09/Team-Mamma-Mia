@@ -13,6 +13,8 @@ import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.location.LocationServices
+import com.studypin.app.BuildConfig
+import com.studypin.app.data.OccupancyRepository
 import com.studypin.app.model.StudySpot
 
 /** Registers an exit geofence for a spot and schedules its reminder. */
@@ -24,9 +26,8 @@ object LocationReminderManager {
     const val EXTRA_SHOW_PROMPT = "show_leave_prompt"
 
     // The project proposal calls for reminding users after they have been away for about 5 minutes.
-    const val REMINDER_DELAY_MILLIS = 5 * 60 * 1000L
-    // for testing purposes
-//    const val REMINDER_DELAY_MILLIS = 10 * 1000L
+    // Debug builds use a much shorter delay so testers don't have to wait 5 minutes per iteration.
+    val REMINDER_DELAY_MILLIS: Long = if (BuildConfig.DEBUG) 10 * 1000L else 5 * 60 * 1000L
 
     const val GEOFENCE_RADIUS_METERS = 10f
 
@@ -117,6 +118,13 @@ object LocationReminderManager {
             .remove("name_$spotId")
             .apply()
     }
+
+    /** Ends a visit: removes the geofence/reminder AND checks the user out of Firestore, if signed in. */
+    fun endVisit(context: Context, spotId: String, userId: String?) =
+        run {
+            stopTracking(context, spotId)
+            userId?.let { OccupancyRepository.checkOut(spotId, it) }
+        }
 
     fun geofencePendingIntent(context: Context): PendingIntent {
         val intent = Intent(context, GeofenceBroadcastReceiver::class.java)
