@@ -50,8 +50,9 @@ import com.studypin.app.model.isInactive
 import com.studypin.app.ui.review.ReviewHelpfulBinder
 import com.studypin.app.ui.review.StarRatingViews
 import com.studypin.app.ui.setOnApplyStatusBarInsetsListener
-import com.studypin.app.ui.showPhotoUploadPlaceholder
+import com.studypin.app.utils.ImageCaptureHelper
 import com.studypin.app.utils.ImageUtils
+import com.studypin.app.utils.PhotoPickerLauncher
 import com.studypin.app.ui.toTagLabel
 import com.studypin.app.utils.LocationUtils
 import com.studypin.app.ui.showMessage
@@ -60,8 +61,11 @@ import java.util.Locale
 class SpotDetailFragment : Fragment() {
     private var spotListener: ListenerRegistration? = null
     private var checkInListener: ListenerRegistration? = null
+    private var reviewListener: ListenerRegistration? = null
     private var currentSpot: StudySpot? = null
     private var statusBarHeightPx: Int = 0
+
+    private val photoPickerLauncher = PhotoPickerLauncher(this) { uri -> processDetailPhoto(uri) }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -93,6 +97,25 @@ class SpotDetailFragment : Fragment() {
                 if (isAdded) showMissingSpot(view)
             }
         )
+
+        reviewListener = ReviewRepository.observeReviews(
+            spotId = spotId,
+            onSuccess = {
+                if (!isAdded) return@observeReviews
+                currentSpot?.let { spot -> bindSpot(view, spot) }
+            },
+            onError = { /* The local cached list remains visible if the listener fails. */ }
+        )
+    }
+
+    override fun onDestroyView() {
+        spotListener?.remove()
+        spotListener = null
+        checkInListener?.remove()
+        checkInListener = null
+        reviewListener?.remove()
+        reviewListener = null
+        super.onDestroyView()
     }
 
     private fun bindLoadedSpot(view: View, spotId: String, spot: StudySpot) {
@@ -152,7 +175,7 @@ class SpotDetailFragment : Fragment() {
             }
         }
         view.findViewById<View>(R.id.btnAddPhoto).setOnClickListener {
-            requireContext().showPhotoUploadPlaceholder()
+            photoPickerLauncher.showChooser()
         }
 
         view.findViewById<View>(R.id.btnAddReview).setOnClickListener {
@@ -172,6 +195,38 @@ class SpotDetailFragment : Fragment() {
         ) {
             view.findViewById<View>(R.id.btnAddReview).visibility = View.GONE
         }
+    }
+
+    private fun processDetailPhoto(uri: Uri) {
+        val spotId = currentSpot?.id ?: return
+        ImageCaptureHelper.processPickedImage(
+            context = requireContext(),
+            uri = uri,
+            onProcessed = { bitmap, facesBlurred ->
+                if (facesBlurred) showMessage("Faces blurred for privacy")
+                showMessage("Uploading photo...")
+                StudySpotRepository.uploadSpotImage(
+                    spotId = spotId,
+                    bitmap = bitmap,
+                    onSuccess = { downloadUrl ->
+                        StudySpotRepository.addImageToSpot(
+                            spotId = spotId,
+                            imageDataUri = downloadUrl,
+                            onSuccess = { if (isAdded) showMessage("Photo added!") },
+                            onError = { error ->
+                                if (isAdded) showMessage("Could not save photo: ${error.message}", long = true)
+                            }
+                        )
+                    },
+                    onError = { error ->
+                        if (isAdded) showMessage("Photo upload failed: ${error.message}", long = true)
+                    }
+                )
+            },
+            onFailure = {
+                showMessage("Could not load photo")
+            }
+        )
     }
 
     private fun navigateToReport(spotId: String, spotName: String) {
@@ -503,7 +558,7 @@ class SpotDetailFragment : Fragment() {
                     ?.addOnFailureListener { error ->
                         if (isAdded) {
                             button.isEnabled = true
-                            showMessage("Could not update check-in: ${error.message}", long = true)
+                            showMessage(checkInErrorMessage(error), long = true)
                         }
                     }
             } else {
@@ -520,7 +575,9 @@ class SpotDetailFragment : Fragment() {
                                 LocationReminderManager.startTracking(
                                     requireContext(),
                                     spot,
-                                    onSuccess = {},
+                                    onSuccess = {
+                                        LocationReminderManager.setEntered(requireContext(), spot.id, true)
+                                    },
                                     onFailure = {}
                                 )
                             }
@@ -529,10 +586,20 @@ class SpotDetailFragment : Fragment() {
                     .addOnFailureListener { error ->
                         if (isAdded) {
                             button.isEnabled = true
-                            showMessage("Could not update check-in: ${error.message}", long = true)
+                            showMessage(checkInErrorMessage(error), long = true)
                         }
                     }
             }
+        }
+    }
+
+    private fun checkInErrorMessage(error: Exception): String {
+        val isNetworkError = generateSequence(error as Throwable) { it.cause }
+            .any { it is java.net.UnknownHostException || it is java.io.IOException }
+        return if (isNetworkError) {
+            "No internet connection. Please try again."
+        } else {
+            "Could not update check-in: ${error.message}"
         }
     }
 
@@ -584,17 +651,10 @@ class SpotDetailFragment : Fragment() {
         view.findViewById<TextView>(R.id.tvHiddenGem).visibility =
             if (hasGemConnection) View.VISIBLE else View.GONE
 
-        val ratingText = String.format(
-            Locale.CANADA,
-            "%.1f (%d Reviews)",
-            spot.avgRating,
-            spot.totalRatings
-        )
-        view.findViewById<TextView>(R.id.tvRatingDetail).text = ratingText
         view.findViewById<TextView>(R.id.tvReviewAverage).text =
-            String.format(Locale.CANADA, "%.1f", spot.avgRating)
+            String.format(Locale.CANADA, "%.1f", stats.averageOverall)
         view.findViewById<TextView>(R.id.tvReviewCount).text =
-            "Based on ${spot.totalRatings} reviews"
+            "Based on ${stats.reviewCount} reviews"
 
         bindTags(view, spot)
         bindImages(view, spot)

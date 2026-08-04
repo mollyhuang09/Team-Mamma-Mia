@@ -110,7 +110,12 @@ class ProfileFragment : Fragment() {
         ReviewRepository.reviewsByUser(
             userId = uid,
             onSuccess = { reviews -> if (isAdded) binding.tvReviewsCount.text = reviews.size.toString() },
-            onError = {}
+            onError = { error ->
+                if (isAdded) {
+                    binding.tvReviewsCount.text = "--"
+                    showMessage("Could not load review count: ${error.message}", long = true)
+                }
+            }
         )
     }
 

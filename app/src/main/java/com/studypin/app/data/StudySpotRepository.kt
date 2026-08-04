@@ -41,6 +41,18 @@ object StudySpotRepository {
         }
     }
 
+    fun addImageToSpot(
+        spotId: String,
+        imageDataUri: String,
+        onSuccess: () -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        spots.document(spotId)
+            .update("imageUrls", FieldValue.arrayUnion(imageDataUri))
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { onError(it) }
+    }
+
     private fun Bitmap.toDataUri(): String {
         val scale = MAX_IMAGE_DIMENSION_PX.toFloat() / maxOf(width, height)
         val resized = if (scale < 1f) {

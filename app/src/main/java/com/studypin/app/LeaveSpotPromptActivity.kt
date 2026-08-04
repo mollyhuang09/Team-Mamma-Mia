@@ -36,7 +36,6 @@ class LeaveSpotPromptActivity : AppCompatActivity() {
 
         findViewById<MaterialButton>(R.id.btnStillHere).setOnClickListener {
             LocationReminderManager.clearPendingReminder(this, spotId)
-            LocationReminderManager.cancelReminder(this, spotId)
             LocationReminderManager.setEntered(this, spotId, true)
             showMessage("Okay, we’ll keep tracking your visit")
             openSpotDetails(spotId)

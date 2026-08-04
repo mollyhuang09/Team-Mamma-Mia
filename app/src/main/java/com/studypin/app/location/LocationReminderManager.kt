@@ -1,33 +1,25 @@
 package com.studypin.app.location
 
 import android.Manifest
-import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
-import android.os.SystemClock
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.location.LocationServices
-import com.studypin.app.BuildConfig
 import com.studypin.app.data.OccupancyRepository
 import com.studypin.app.model.StudySpot
 
-/** Registers an exit geofence for a spot and schedules its reminder. */
+/** Registers an exit geofence for a spot and shows its "left spot" notification immediately on exit. */
 object LocationReminderManager {
     const val ACTION_GEOFENCE_EVENT = "com.studypin.app.location.GEOFENCE_EVENT"
-    const val ACTION_REMINDER = "com.studypin.app.location.REMINDER"
     const val EXTRA_SPOT_ID = "spot_id"
     const val EXTRA_SPOT_NAME = "spot_name"
     const val EXTRA_SHOW_PROMPT = "show_leave_prompt"
-
-    // The project proposal calls for reminding users after they have been away for about 5 minutes.
-    // Debug builds use a much shorter delay so testers don't have to wait 5 minutes per iteration.
-    val REMINDER_DELAY_MILLIS: Long = if (BuildConfig.DEBUG) 10 * 1000L else 5 * 60 * 1000L
 
     const val GEOFENCE_RADIUS_METERS = 10f
 
@@ -110,7 +102,6 @@ object LocationReminderManager {
     fun stopTracking(context: Context, spotId: String) {
         val geofencingClient: GeofencingClient = LocationServices.getGeofencingClient(context)
         geofencingClient.removeGeofences(listOf(geofenceId(spotId)))
-        cancelReminder(context, spotId)
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
             .remove(KEY_ENTERED_PREFIX + spotId)
@@ -141,43 +132,6 @@ object LocationReminderManager {
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or mutabilityFlag
         )
-    }
-
-    fun scheduleReminder(context: Context, spotId: String, spotName: String) {
-        val intent = Intent(context, GeofenceBroadcastReceiver::class.java)
-            .setAction(ACTION_REMINDER)
-            .setData(android.net.Uri.parse("studypin://reminder/$spotId"))
-            .putExtra(EXTRA_SPOT_ID, spotId)
-            .putExtra(EXTRA_SPOT_NAME, spotName)
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            requestCodeFor(spotId),
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val alarmManager = context.getSystemService(AlarmManager::class.java)
-        alarmManager.setAndAllowWhileIdle(
-            AlarmManager.ELAPSED_REALTIME_WAKEUP,
-            SystemClock.elapsedRealtime() + REMINDER_DELAY_MILLIS,
-            pendingIntent
-        )
-    }
-
-    fun cancelReminder(context: Context, spotId: String) {
-        val intent = Intent(context, GeofenceBroadcastReceiver::class.java)
-            .setAction(ACTION_REMINDER)
-            .setData(android.net.Uri.parse("studypin://reminder/$spotId"))
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            requestCodeFor(spotId),
-            intent,
-            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
-        )
-        pendingIntent?.let {
-            context.getSystemService(AlarmManager::class.java).cancel(it)
-            it.cancel()
-        }
     }
 
     fun setEntered(context: Context, spotId: String, entered: Boolean) {
@@ -222,7 +176,4 @@ object LocationReminderManager {
     }
 
     fun notificationChannelId(): String = NOTIFICATION_CHANNEL_ID
-
-    private fun requestCodeFor(spotId: String): Int =
-        spotId.hashCode() and 0x7fffffff
 }

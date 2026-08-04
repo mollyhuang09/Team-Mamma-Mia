@@ -20,7 +20,6 @@ import com.studypin.app.R
 class GeofenceBroadcastReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
-            LocationReminderManager.ACTION_REMINDER -> showReminder(context, intent)
             LocationReminderManager.ACTION_GEOFENCE_EVENT -> handleGeofenceEvent(context, intent)
         }
     }
@@ -38,27 +37,19 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
             when (event.geofenceTransition) {
                 Geofence.GEOFENCE_TRANSITION_ENTER -> {
                     LocationReminderManager.setEntered(context, spotId, true)
-                    LocationReminderManager.cancelReminder(context, spotId)
                 }
 
                 Geofence.GEOFENCE_TRANSITION_EXIT -> {
                     if (LocationReminderManager.hasEntered(context, spotId)) {
                         LocationReminderManager.setEntered(context, spotId, false)
-                        LocationReminderManager.scheduleReminder(context, spotId, spotName)
+                        showLeftSpotNotification(context, spotId, spotName)
                     }
                 }
             }
         }
     }
 
-    private fun showReminder(context: Context, intent: Intent) {
-        val spotId = intent.getStringExtra(LocationReminderManager.EXTRA_SPOT_ID) ?: return
-        val spotName = intent.getStringExtra(LocationReminderManager.EXTRA_SPOT_NAME)
-            ?: "your study spot"
-
-        // If the user came back before the alarm fired, do not show a stale reminder.
-        if (LocationReminderManager.hasEntered(context, spotId)) return
-
+    private fun showLeftSpotNotification(context: Context, spotId: String, spotName: String) {
         LocationReminderManager.markReminderPending(context, spotId, spotName)
         createNotificationChannel(context)
         val openSpotIntent = Intent(context, com.studypin.app.LeaveSpotPromptActivity::class.java)
@@ -83,7 +74,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
             .setContentText("You left $spotName. Is its availability different now?")
             .setStyle(
                 NotificationCompat.BigTextStyle()
-                    .bigText("You left $spotName about 10 minutes ago. Open StudyPin to update its availability.")
+                    .bigText("You just left $spotName. Open StudyPin to update its availability.")
             )
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)

@@ -11,7 +11,6 @@ import android.widget.AutoCompleteTextView
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
@@ -27,6 +26,7 @@ import com.studypin.app.model.Capacity
 import com.studypin.app.model.StudySpot
 import com.studypin.app.utils.ImageCaptureHelper
 import com.studypin.app.utils.LocationUtils
+import com.studypin.app.utils.PhotoPickerLauncher
 import com.studypin.app.ui.showMessage
 import java.util.Locale
 
@@ -53,11 +53,7 @@ class AddSpotFragment : Fragment() {
 
     private var selectedImageBitmap: Bitmap? = null
 
-    private val pickImageLauncher = registerForActivityResult(
-        ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let { processImage(it) }
-    }
+    private val photoPickerLauncher = PhotoPickerLauncher(this) { uri -> processImage(uri) }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -87,7 +83,7 @@ class AddSpotFragment : Fragment() {
         setupLocationPicker()
 
         btnAddPhoto.setOnClickListener {
-            pickImageLauncher.launch("image/*")
+            photoPickerLauncher.showChooser()
         }
 
         btnSubmit.setOnClickListener { onSubmitClicked() }

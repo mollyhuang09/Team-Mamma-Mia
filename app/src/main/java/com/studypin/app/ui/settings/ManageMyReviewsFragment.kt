@@ -80,8 +80,8 @@ class ManageMyReviewsFragment : Fragment() {
                     }
                 )
             },
-            onError = {
-                if (isAdded) showEmpty(view, "Could not load your reviews")
+            onError = { error ->
+                if (isAdded) showEmpty(view, "Could not load your reviews: ${error.message}")
             }
         )
     }
