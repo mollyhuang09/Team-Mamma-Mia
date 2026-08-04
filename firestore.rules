@@ -59,6 +59,13 @@ service cloud.firestore {
       }
     }
 
+    // Collection-group rule: nested `match /studySpots/{spotId}/ratings/{ratingId}`
+    // above only covers direct subcollection access, not `collectionGroup("ratings")`
+    // queries (e.g. "my reviews" across all spots) — those need this recursive-wildcard rule.
+    match /{path=**}/ratings/{ratingId} {
+      allow read: if true;
+    }
+
     match /userCheckIns/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;
       allow create, update: if request.auth != null
