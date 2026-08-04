@@ -82,6 +82,8 @@ class AddSpotFragment : Fragment() {
         setupTimePickers()
         setupLocationPicker()
 
+        selectedImageBitmap?.let { showPhotoPreview(it) }
+
         btnAddPhoto.setOnClickListener {
             photoPickerLauncher.showChooser()
         }
@@ -157,9 +159,7 @@ class AddSpotFragment : Fragment() {
             uri = uri,
             onProcessed = { bitmap, facesBlurred ->
                 selectedImageBitmap = bitmap
-                ivSpotPhoto.setImageBitmap(bitmap)
-                ivSpotPhoto.visibility = View.VISIBLE
-                layoutPhotoPlaceholder.visibility = View.GONE
+                showPhotoPreview(bitmap)
                 if (facesBlurred) {
                     showMessage("Faces blurred for privacy")
                 }
@@ -168,6 +168,12 @@ class AddSpotFragment : Fragment() {
                 showMessage("Could not load photo")
             }
         )
+    }
+
+    private fun showPhotoPreview(bitmap: Bitmap) {
+        ivSpotPhoto.setImageBitmap(bitmap)
+        ivSpotPhoto.visibility = View.VISIBLE
+        layoutPhotoPlaceholder.visibility = View.GONE
     }
 
     private fun onSubmitClicked() {
