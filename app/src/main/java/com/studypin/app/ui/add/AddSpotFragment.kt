@@ -243,6 +243,7 @@ class AddSpotFragment : Fragment() {
             .setTitle(getString(R.string.vouch_prompt_title))
             .setMessage(getString(R.string.vouch_prompt_message, spot.name))
             .setPositiveButton(getString(R.string.vouch_yes)) { _, _ -> vouchFor(spot) }
+            .setNeutralButton("Hidden gem inside \"${spot.name}\"") { _, _ -> createAsHiddenGem(spot) }
             .setNegativeButton(getString(R.string.vouch_no)) { _, _ ->
                 createSpot(parentId = null, isHiddenGem = false) {
                     showMessage("New spot added!")

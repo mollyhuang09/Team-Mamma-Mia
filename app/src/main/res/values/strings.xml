@@ -40,7 +40,7 @@
     <string name="remove_review_helpful">Remove helpful vote</string>
     <string name="spot_vouched">You vouched for this spot!</string>
     <string name="vouch_prompt_title">Vouch for this spot?</string>
-    <string name="vouch_prompt_message">Someone else suggested a spot nearby named \"%1$s\". Would you like to vouch for it instead of creating a new one?</string>
+    <string name="vouch_prompt_message">Someone else suggested a spot nearby named \"%1$s\". Would you like to vouch for it, add your spot as a hidden gem inside it, or create it as a new separate spot?</string>
     <string name="vouch_yes">Yes, vouch for it</string>
     <string name="vouch_no">No, create new</string>
     <string name="spot_verified_badge">✅ Verified</string>
