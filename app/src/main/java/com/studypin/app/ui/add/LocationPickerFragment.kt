@@ -25,6 +25,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.studypin.app.R
 import com.studypin.app.ui.setOnApplyStatusBarInsetsListener
+import com.studypin.app.ui.showMessage
 import com.google.android.material.button.MaterialButton
 import java.util.Locale
 
@@ -37,6 +38,9 @@ class LocationPickerFragment : Fragment(), OnMapReadyCallback {
         const val KEY_ADDRESS = "address"
 
         private val DEFAULT_LOCATION = LatLng(43.4723, -80.5449) // Waterloo Campus
+
+        /** Minimum camera zoom required to confirm a location, so the pin is precise rather than approximate. */
+        private const val MIN_CONFIRM_ZOOM = 18f
     }
 
     private var googleMap: GoogleMap? = null
@@ -69,6 +73,11 @@ class LocationPickerFragment : Fragment(), OnMapReadyCallback {
 
         view.findViewById<MaterialButton>(R.id.btnConfirmLocation).setOnClickListener {
             val center = googleMap?.cameraPosition?.target
+            val zoom = googleMap?.cameraPosition?.zoom ?: 0f
+            if (zoom < MIN_CONFIRM_ZOOM) {
+                showMessage("Zoom in further to pinpoint the exact location")
+                return@setOnClickListener
+            }
             if (center != null) {
                 var addressText = ""
                 try {

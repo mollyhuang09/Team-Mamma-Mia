@@ -303,17 +303,26 @@ class AddSpotFragment : Fragment() {
     }
 
     private fun showCombinedPrompt(unvalidated: StudySpot, validated: StudySpot) {
+        val options = arrayOf(
+            "Vouch for \"${unvalidated.name}\"",
+            "Hidden gem inside \"${unvalidated.name}\"",
+            "Hidden gem inside \"${validated.name}\"",
+            "No, this is a separate spot"
+        )
         MaterialAlertDialogBuilder(requireContext())
             .setTitle("Nearby spots found")
             .setMessage(
                 "We found \"${unvalidated.name}\" (not yet verified) and " +
                     "\"${validated.name}\" (verified) nearby. What would you like to do?"
             )
-            .setPositiveButton("Vouch for \"${unvalidated.name}\"") { _, _ -> vouchFor(unvalidated) }
-            .setNeutralButton("Hidden gem inside \"${validated.name}\"") { _, _ -> createAsHiddenGem(validated) }
-            .setNegativeButton("No, it's separate") { _, _ ->
-                createSpot(parentId = null, isHiddenGem = false) {
-                    showMessage("Spot added!")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> vouchFor(unvalidated)
+                    1 -> createAsHiddenGem(unvalidated)
+                    2 -> createAsHiddenGem(validated)
+                    else -> createSpot(parentId = null, isHiddenGem = false) {
+                        showMessage("Spot added!")
+                    }
                 }
             }
             .show()
