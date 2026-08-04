@@ -27,6 +27,7 @@ service cloud.firestore {
             request.resource.data.diff(resource.data).affectedKeys().hasOnly(['requestCount', 'isValidated', 'vouchedBy'])
             && request.auth.uid in request.resource.data.vouchedBy
           )
+          || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalRatings', 'avgRating'])
         );
       allow delete: if request.auth != null && resource.data.createdBy == request.auth.uid;
 
