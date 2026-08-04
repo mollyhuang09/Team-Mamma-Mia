@@ -35,8 +35,8 @@ class AddSpotFragment : Fragment() {
     private var pickedLat = 43.4723
     private var pickedLng = -80.5449
     private var locationExplicitlySet = false
+    /** Shared radius for both the vouch and hidden-gem nearby checks, so there's no gap between them. */
     private val radiusCheckMeters = 75.0
-    private val validationRadiusMeters = 30.0
 
     private lateinit var etName: EditText
     private lateinit var etDescription: EditText
@@ -200,16 +200,14 @@ class AddSpotFragment : Fragment() {
             onSuccess = { spots ->
                 if (!isAdded) return@getSpots
                 val unvalidatedNearby = findNearbyUnvalidatedSpot(spots)
-                if (unvalidatedNearby != null) {
-                    showVouchPrompt(unvalidatedNearby)
-                    return@getSpots
-                }
+                val validatedNearby = findNearbyTopLevelSpot(spots)
 
-                val possibleParent = findNearbyTopLevelSpot(spots)
-                if (possibleParent != null) {
-                    showParentPrompt(possibleParent)
-                } else {
-                    createSpot(parentId = null, isHiddenGem = false) {
+                when {
+                    unvalidatedNearby != null && validatedNearby != null ->
+                        showCombinedPrompt(unvalidatedNearby, validatedNearby)
+                    unvalidatedNearby != null -> showVouchPrompt(unvalidatedNearby)
+                    validatedNearby != null -> showParentPrompt(validatedNearby)
+                    else -> createSpot(parentId = null, isHiddenGem = false) {
                         showMessage("Spot added for validation!")
                     }
                 }
@@ -223,37 +221,28 @@ class AddSpotFragment : Fragment() {
         )
     }
 
-    private fun findNearbyUnvalidatedSpot(spots: List<StudySpot>): StudySpot? {
-        return spots.asSequence().filter { it.parentSpotId == null }.firstOrNull { existing ->
-            !existing.isValidated && LocationUtils.distanceInMeters(
-                pickedLat, pickedLng,
-                existing.latitude, existing.longitude
-            ) <= validationRadiusMeters
-        }
+    /** Nearest spot (top-level or hidden gem) within [radiusMeters] matching [predicate], or null. */
+    private fun findNearestSpot(
+        spots: List<StudySpot>,
+        radiusMeters: Double,
+        predicate: (StudySpot) -> Boolean
+    ): StudySpot? {
+        return spots.asSequence()
+            .filter(predicate)
+            .map { it to LocationUtils.distanceInMeters(pickedLat, pickedLng, it.latitude, it.longitude) }
+            .filter { (_, distance) -> distance <= radiusMeters }
+            .minByOrNull { (_, distance) -> distance }
+            ?.first
     }
+
+    private fun findNearbyUnvalidatedSpot(spots: List<StudySpot>): StudySpot? =
+        findNearestSpot(spots, radiusCheckMeters) { !it.isValidated }
 
     private fun showVouchPrompt(spot: StudySpot) {
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(getString(R.string.vouch_prompt_title))
             .setMessage(getString(R.string.vouch_prompt_message, spot.name))
-            .setPositiveButton(getString(R.string.vouch_yes)) { _, _ ->
-                val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
-                if (userId == null) {
-                    btnSubmit.isEnabled = true
-                    showMessage("Sign in to vouch for a spot")
-                    return@setPositiveButton
-                }
-                StudySpotRepository.vouchSpot(spot.id, userId).let { task ->
-                    task.addOnSuccessListener {
-                        showMessage(getString(R.string.spot_vouched))
-                        clearForm()
-                    }
-                    task.addOnFailureListener { error ->
-                        showMessage(error.message ?: "Could not save your vouch", long = true)
-                    }
-                    task.addOnCompleteListener { btnSubmit.isEnabled = true }
-                }
-            }
+            .setPositiveButton(getString(R.string.vouch_yes)) { _, _ -> vouchFor(spot) }
             .setNegativeButton(getString(R.string.vouch_no)) { _, _ ->
                 createSpot(parentId = null, isHiddenGem = false) {
                     showMessage("New spot added!")
@@ -262,24 +251,59 @@ class AddSpotFragment : Fragment() {
             .show()
     }
 
-    private fun findNearbyTopLevelSpot(spots: List<StudySpot>): StudySpot? {
-        return spots.asSequence().filter { it.parentSpotId == null }.firstOrNull { existing ->
-            existing.isValidated && LocationUtils.distanceInMeters(
-                pickedLat, pickedLng,
-                existing.latitude, existing.longitude
-            ) <= radiusCheckMeters
+    private fun vouchFor(spot: StudySpot) {
+        val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+        if (userId == null) {
+            btnSubmit.isEnabled = true
+            showMessage("Sign in to vouch for a spot")
+            return
+        }
+        StudySpotRepository.vouchSpot(spot.id, userId).let { task ->
+            task.addOnSuccessListener {
+                showMessage(getString(R.string.spot_vouched))
+                clearForm()
+            }
+            task.addOnFailureListener { error ->
+                showMessage(error.message ?: "Could not save your vouch", long = true)
+            }
+            task.addOnCompleteListener { btnSubmit.isEnabled = true }
         }
     }
+
+    private fun findNearbyTopLevelSpot(spots: List<StudySpot>): StudySpot? =
+        findNearestSpot(spots, radiusCheckMeters) { it.isValidated }
 
     private fun showParentPrompt(parent: StudySpot) {
         MaterialAlertDialogBuilder(requireContext())
             .setTitle("Hidden gem detected")
             .setMessage("This looks like it's inside \"${parent.name}\". Is this a hidden spot within that location?")
-            .setPositiveButton("Yes, it's a hidden gem") { _, _ ->
-                createSpot(parentId = parent.id, isHiddenGem = true) {
-                    showMessage("Added as a hidden gem inside ${parent.name}!")
+            .setPositiveButton("Yes, it's a hidden gem") { _, _ -> createAsHiddenGem(parent) }
+            .setNegativeButton("No, it's separate") { _, _ ->
+                createSpot(parentId = null, isHiddenGem = false) {
+                    showMessage("Spot added!")
                 }
             }
+            .show()
+    }
+
+    private fun createAsHiddenGem(parent: StudySpot) {
+        // Attach under the existing top-level location even if `parent` is itself a hidden
+        // gem, so we never create more than one level of nesting.
+        val topLevelParentId = parent.parentSpotId ?: parent.id
+        createSpot(parentId = topLevelParentId, isHiddenGem = true) {
+            showMessage("Added as a hidden gem inside ${parent.name}!")
+        }
+    }
+
+    private fun showCombinedPrompt(unvalidated: StudySpot, validated: StudySpot) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Nearby spots found")
+            .setMessage(
+                "We found \"${unvalidated.name}\" (not yet verified) and " +
+                    "\"${validated.name}\" (verified) nearby. What would you like to do?"
+            )
+            .setPositiveButton("Vouch for \"${unvalidated.name}\"") { _, _ -> vouchFor(unvalidated) }
+            .setNeutralButton("Hidden gem inside \"${validated.name}\"") { _, _ -> createAsHiddenGem(validated) }
             .setNegativeButton("No, it's separate") { _, _ ->
                 createSpot(parentId = null, isHiddenGem = false) {
                     showMessage("Spot added!")
