@@ -14,7 +14,7 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.ui.list.SpotListAdapter
 import com.studypin.app.ui.applyStatusBarInset
-import android.widget.Toast
+import com.studypin.app.ui.showMessage
 
 class SpotGroupFragment : Fragment() {
 
@@ -53,7 +53,7 @@ class SpotGroupFragment : Fragment() {
                 if (!isAdded) return@observeSpots
                 val parent = spots.firstOrNull { it.id == parentSpotId }
                 if (parent == null) {
-                    Toast.makeText(requireContext(), "Study spot unavailable", Toast.LENGTH_SHORT).show()
+                    showMessage("Study spot unavailable")
                     findNavController().navigateUp()
                     return@observeSpots
                 }
@@ -63,7 +63,7 @@ class SpotGroupFragment : Fragment() {
             },
             onError = { error ->
                 if (isAdded) {
-                    Toast.makeText(requireContext(), "Could not load study spot: ${error.message}", Toast.LENGTH_LONG).show()
+                    showMessage("Could not load study spot: ${error.message}", long = true)
                 }
             }
         )

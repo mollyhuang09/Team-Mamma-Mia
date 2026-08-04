@@ -10,7 +10,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -42,6 +41,7 @@ import com.studypin.app.ui.search.SearchFragment
 import com.studypin.app.ui.toTagLabel
 import com.studypin.app.model.SpotStatus
 import com.studypin.app.model.isInactive
+import com.studypin.app.ui.showMessage
 import com.google.android.material.textfield.TextInputLayout
 import java.util.Locale
 
@@ -81,7 +81,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         ) {
             enableMyLocation()
         } else {
-            Toast.makeText(requireContext(), getString(R.string.location_permission_denied), Toast.LENGTH_SHORT).show()
+            showMessage(getString(R.string.location_permission_denied))
         }
     }
 
@@ -166,7 +166,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             },
             onError = { error ->
                 if (isAdded) {
-                    Toast.makeText(requireContext(), "Could not load study spots: ${error.message}", Toast.LENGTH_LONG).show()
+                    showMessage("Could not load study spots: ${error.message}", long = true)
                 }
             }
         )
@@ -532,10 +532,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     val target = LatLng(location.latitude, location.longitude)
                     googleMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(target, 15f))
                 } else {
-                    Toast.makeText(requireContext(), getString(R.string.location_fetch_failed), Toast.LENGTH_SHORT).show()
+                    showMessage(getString(R.string.location_fetch_failed))
                 }
             }.addOnFailureListener {
-                Toast.makeText(requireContext(), getString(R.string.location_fetch_failed), Toast.LENGTH_SHORT).show()
+                showMessage(getString(R.string.location_fetch_failed))
             }
         } catch (e: SecurityException) {
             e.printStackTrace()

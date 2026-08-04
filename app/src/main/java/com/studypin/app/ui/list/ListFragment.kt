@@ -23,7 +23,7 @@ import com.studypin.app.ui.filter.FilterFragment
 import com.studypin.app.ui.search.SearchFragment
 import com.studypin.app.ui.applyStatusBarInset
 import com.studypin.app.ui.toTagLabel
-import android.widget.Toast
+import com.studypin.app.ui.showMessage
 
 
 class ListFragment : Fragment() {
@@ -154,7 +154,7 @@ class ListFragment : Fragment() {
             },
             onError = { error ->
                 if (isAdded) {
-                    Toast.makeText(requireContext(), "Could not load study spots: ${error.message}", Toast.LENGTH_LONG).show()
+                    showMessage("Could not load study spots: ${error.message}", long = true)
                 }
             }
         )

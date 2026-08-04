@@ -19,7 +19,6 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.Button
 import android.widget.TextView
-import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
@@ -35,7 +34,6 @@ import com.google.android.gms.location.GeofenceStatusCodes
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
-import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ListenerRegistration
 import com.studypin.app.LoginActivity
@@ -56,6 +54,7 @@ import com.studypin.app.ui.showPhotoUploadPlaceholder
 import com.studypin.app.utils.ImageUtils
 import com.studypin.app.ui.toTagLabel
 import com.studypin.app.utils.LocationUtils
+import com.studypin.app.ui.showMessage
 import java.util.Locale
 
 class SpotDetailFragment : Fragment() {
@@ -110,7 +109,7 @@ class SpotDetailFragment : Fragment() {
         }
 
         view.findViewById<View>(R.id.btnShare).setOnClickListener {
-            Toast.makeText(requireContext(), "Sharing will be connected later", Toast.LENGTH_SHORT).show()
+            showMessage("Sharing will be connected later")
         }
         view.findViewById<View>(R.id.btnEdit).setOnClickListener {
             findNavController().navigate(R.id.action_spotDetail_to_editSpot)
@@ -128,7 +127,7 @@ class SpotDetailFragment : Fragment() {
         saveButton.setOnClickListener { button ->
             val uid = FirebaseAuth.getInstance().currentUser?.uid
             if (uid == null) {
-                Toast.makeText(requireContext(), "Sign in to save spots", Toast.LENGTH_SHORT).show()
+                showMessage("Sign in to save spots")
                 return@setOnClickListener
             }
             val goingToSaved = !(button as MaterialButton).isSelected
@@ -138,7 +137,7 @@ class SpotDetailFragment : Fragment() {
                     if (success) {
                         updateSaveButtonUi(button, true)
                     } else {
-                        Toast.makeText(requireContext(), error ?: "Could not save spot", Toast.LENGTH_LONG).show()
+                        showMessage(error ?: "Could not save spot", long = true)
                     }
                 }
             } else {
@@ -147,7 +146,7 @@ class SpotDetailFragment : Fragment() {
                     if (success) {
                         updateSaveButtonUi(button, false)
                     } else {
-                        Toast.makeText(requireContext(), error ?: "Could not remove spot", Toast.LENGTH_LONG).show()
+                        showMessage(error ?: "Could not remove spot", long = true)
                     }
                 }
             }
@@ -199,11 +198,7 @@ class SpotDetailFragment : Fragment() {
             try {
                 startActivity(Intent(Intent.ACTION_VIEW, browserUri))
             } catch (_: ActivityNotFoundException) {
-                Toast.makeText(
-                    requireContext(),
-                    "No maps app is available",
-                    Toast.LENGTH_SHORT
-                ).show()
+                showMessage("No maps app is available")
             }
         }
     }
@@ -325,14 +320,7 @@ class SpotDetailFragment : Fragment() {
     }
 
     private fun showTrackingMessage(message: String) {
-        val root = view ?: return
-        val snackbar = Snackbar.make(root, message, Snackbar.LENGTH_LONG)
-        snackbar.view.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
-            ?.apply {
-                maxLines = 4
-                textSize = 16f
-            }
-        snackbar.show()
+        if (isAdded) showMessage(message, long = true)
     }
 
     private fun applyStatusBarInsets(view: View) {
@@ -448,7 +436,7 @@ class SpotDetailFragment : Fragment() {
         btnVerify.setOnClickListener {
             val userId = FirebaseAuth.getInstance().currentUser?.uid
             if (userId == null) {
-                Toast.makeText(requireContext(), "Sign in to verify this spot", Toast.LENGTH_SHORT).show()
+                showMessage("Sign in to verify this spot")
                 return@setOnClickListener
             }
             val bundle = Bundle().apply {
@@ -505,10 +493,17 @@ class SpotDetailFragment : Fragment() {
             val checkedIn = button.isSelected
             if (checkedIn) {
                 LocationReminderManager.endVisit(requireContext(), spotId, userId)
+                    ?.addOnSuccessListener {
+                        if (isAdded) {
+                            showMessage("Checked out")
+                            val bundle = Bundle().apply { putString("spotId", spotId) }
+                            findNavController().navigate(R.id.action_spotDetail_to_addReview, bundle)
+                        }
+                    }
                     ?.addOnFailureListener { error ->
                         if (isAdded) {
                             button.isEnabled = true
-                            Toast.makeText(requireContext(), "Could not update check-in: ${error.message}", Toast.LENGTH_LONG).show()
+                            showMessage("Could not update check-in: ${error.message}", long = true)
                         }
                     }
             } else {
@@ -517,11 +512,7 @@ class SpotDetailFragment : Fragment() {
                         if (previousSpotId != null) {
                             LocationReminderManager.stopTracking(requireContext(), previousSpotId)
                             if (isAdded) {
-                                Toast.makeText(
-                                    requireContext(),
-                                    "Checked out of your previous spot and checked into this one",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                showMessage("Checked out of your previous spot and checked into this one")
                             }
                         }
                         currentSpot?.let { spot ->
@@ -538,7 +529,7 @@ class SpotDetailFragment : Fragment() {
                     .addOnFailureListener { error ->
                         if (isAdded) {
                             button.isEnabled = true
-                            Toast.makeText(requireContext(), "Could not update check-in: ${error.message}", Toast.LENGTH_LONG).show()
+                            showMessage("Could not update check-in: ${error.message}", long = true)
                         }
                     }
             }

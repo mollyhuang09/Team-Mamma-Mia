@@ -77,7 +77,8 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
             context,
             LocationReminderManager.notificationChannelId()
         )
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_location)
+            .setColor(ContextCompat.getColor(context, R.color.brand_main))
             .setContentTitle("Update availability")
             .setContentText("You left $spotName. Is its availability different now?")
             .setStyle(

@@ -6,13 +6,13 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.util.Patterns
 import android.view.View
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.studypin.app.databinding.ActivityLoginBinding
 import com.studypin.app.ui.applyStatusBarInset
+import com.studypin.app.ui.showMessage
 
 class LoginActivity : AppCompatActivity() {
 
@@ -116,11 +116,7 @@ class LoginActivity : AppCompatActivity() {
                 binding.layoutPassword.error = "Password does not match"
             }
             else -> {
-                Toast.makeText(
-                    this,
-                    "Unable to log in. Please try again.",
-                    Toast.LENGTH_SHORT
-                ).show()
+                showMessage("Unable to log in. Please try again.")
             }
         }
     }

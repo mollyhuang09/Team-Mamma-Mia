@@ -7,7 +7,6 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -20,6 +19,7 @@ import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.model.StudySpot
 import com.studypin.app.model.SpotStatus
 import com.studypin.app.utils.ImageUtils
+import com.studypin.app.ui.showMessage
 
 class ManageMyPinsFragment : Fragment() {
 
@@ -81,7 +81,7 @@ class ManageMyPinsFragment : Fragment() {
                         adapter.removeSpot(spot.id)
                         if (adapter.itemCount == 0) showEmpty(view, "You haven't added any pins yet")
                     } else {
-                        Toast.makeText(requireContext(), error ?: "Could not delete pin", Toast.LENGTH_LONG).show()
+                        showMessage(error ?: "Could not delete pin", long = true)
                     }
                 }
             }

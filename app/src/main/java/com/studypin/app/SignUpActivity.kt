@@ -6,7 +6,6 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.util.Patterns
 import android.view.View
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
@@ -16,6 +15,7 @@ import com.google.firebase.auth.UserProfileChangeRequest
 import com.studypin.app.data.UserProfileRepository
 import com.studypin.app.databinding.ActivitySignupBinding
 import com.studypin.app.ui.applyStatusBarInset
+import com.studypin.app.ui.showMessage
 
 class SignUpActivity : AppCompatActivity() {
 
@@ -145,12 +145,12 @@ class SignUpActivity : AppCompatActivity() {
                                         startActivity(Intent(this, MainActivity::class.java))
                                         finish()
                                     } else {
-                                        Toast.makeText(this, "Account created, but profile sync failed: ${profileError.message}", Toast.LENGTH_LONG).show()
+                                        showMessage("Account created, but profile sync failed: ${profileError.message}", long = true)
                                     }
                                 }
                             } else {
                                 setLoading(false)
-                                Toast.makeText(this, "Failed to update profile", Toast.LENGTH_SHORT).show()
+                                showMessage("Failed to update profile")
                             }
                         }
                 } else {
@@ -171,11 +171,7 @@ class SignUpActivity : AppCompatActivity() {
                 binding.layoutEmail.error = "Enter a valid email"
             }
             else -> {
-                Toast.makeText(
-                    this,
-                    "Unable to create account. Please try again.",
-                    Toast.LENGTH_SHORT
-                ).show()
+                showMessage("Unable to create account. Please try again.")
             }
         }
     }

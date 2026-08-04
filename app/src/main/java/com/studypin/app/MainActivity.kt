@@ -6,26 +6,17 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.view.View
-import android.widget.Button
-import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.ListenerRegistration
-import com.studypin.app.data.OccupancyRepository
-import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.location.LocationReminderManager
+import com.studypin.app.ui.showMessage
 
 class MainActivity : AppCompatActivity() {
     private lateinit var navController: NavController
-    private var currentCheckInListener: ListenerRegistration? = null
-    private var currentSpotListener: ListenerRegistration? = null
-    private var currentSpotId: String? = null
 
     private var pendingLeaveSpotId: String? = null
     private var pendingLeaveSpotName: String? = null
@@ -97,24 +88,6 @@ class MainActivity : AppCompatActivity() {
             navController.navigate(item.itemId)
             true
         }
-
-        findViewById<Button>(R.id.btnCheckOut).setOnClickListener {
-            checkOutCurrentSpot()
-        }
-    }
-
-
-    override fun onStart() {
-        super.onStart()
-        observeCurrentCheckIn()
-    }
-
-    override fun onStop() {
-        currentCheckInListener?.remove()
-        currentCheckInListener = null
-        currentSpotListener?.remove()
-        currentSpotListener = null
-        super.onStop()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -204,66 +177,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun finishInitialPermissionFlow(message: String?) {
         initialPermissionPreferences.edit().putBoolean("prompted", true).apply()
-        message?.let { Toast.makeText(this, it, Toast.LENGTH_LONG).show() }
-    }
-
-    private fun observeCurrentCheckIn() {
-        val userId = FirebaseAuth.getInstance().currentUser?.uid
-        if (userId == null) {
-            updateCheckInBanner(null, null)
-            return
-        }
-
-        currentCheckInListener = OccupancyRepository.observeCurrentCheckIn(
-            userId = userId,
-            onSuccess = { spotId ->
-                currentSpotId = spotId
-                currentSpotListener?.remove()
-                currentSpotListener = if (spotId == null) {
-                    updateCheckInBanner(null, null)
-                    null
-                } else {
-                    StudySpotRepository.observeSpot(
-                        spotId = spotId,
-                        onSuccess = { spot -> updateCheckInBanner(spotId, spot?.name) },
-                        onError = { updateCheckInBanner(spotId, null) }
-                    )
-                }
-            },
-            onError = { updateCheckInBanner(null, null) }
-        )
-    }
-
-    private fun checkOutCurrentSpot() {
-        val userId = FirebaseAuth.getInstance().currentUser?.uid
-        val spotId = currentSpotId
-        if (userId == null || spotId == null) return
-
-        findViewById<Button>(R.id.btnCheckOut).isEnabled = false
-        LocationReminderManager.endVisit(this, spotId, userId)
-            ?.addOnSuccessListener {
-                Toast.makeText(this, "Checked out", Toast.LENGTH_SHORT).show()
-                val bundle = Bundle().apply { putString("spotId", spotId) }
-                navController.navigate(R.id.addReviewFragment, bundle)
-            }
-            ?.addOnFailureListener { error: Exception ->
-                findViewById<Button>(R.id.btnCheckOut).isEnabled = true
-                Toast.makeText(this, "Could not check out: ${error.message}", Toast.LENGTH_LONG).show()
-            }
-    }
-
-    private fun updateCheckInBanner(spotId: String?, spotName: String?) {
-        val banner = findViewById<View>(R.id.layoutCheckInBanner)
-        val checkOutButton = findViewById<Button>(R.id.btnCheckOut)
-        currentSpotId = spotId
-        if (spotId == null) {
-            banner.visibility = View.GONE
-            checkOutButton.isEnabled = true
-        } else {
-            banner.visibility = View.VISIBLE
-            banner.findViewById<TextView>(R.id.tvCheckInStatus).text =
-                "Checked into ${spotName ?: "study spot"}"
-            checkOutButton.isEnabled = true
-        }
+        message?.let { showMessage(it, long = true) }
     }
 }

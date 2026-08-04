@@ -8,7 +8,6 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.RadioButton
 import android.widget.RadioGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.textfield.TextInputLayout
@@ -17,6 +16,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.studypin.app.data.ReportEditRepository
 import com.studypin.app.model.ReportEditSubmission
 import com.studypin.app.ui.applyStatusBarInset
+import com.studypin.app.ui.showMessage
 
 class ReportFlagFragment : Fragment() {
     private val defaultSpotId = "spot_mock_report"
@@ -65,7 +65,7 @@ class ReportFlagFragment : Fragment() {
 
         val checkedId = categoryGroup.checkedRadioButtonId
         if (checkedId == -1) {
-            Toast.makeText(requireContext(), "Choose a report category", Toast.LENGTH_SHORT).show()
+            showMessage("Choose a report category")
             return
         }
 
@@ -93,7 +93,7 @@ class ReportFlagFragment : Fragment() {
                 }
                 findNavController().navigate(R.id.action_reportFlag_to_reportSuccess, bundle)
             } else {
-                Toast.makeText(requireContext(), "Could not submit report: ${error.message}", Toast.LENGTH_LONG).show()
+                showMessage("Could not submit report: ${error.message}", long = true)
             }
         }
     }

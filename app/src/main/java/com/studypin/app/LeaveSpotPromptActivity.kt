@@ -3,11 +3,11 @@ package com.studypin.app
 import android.content.Intent
 import android.os.Bundle
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
 import com.studypin.app.location.LocationReminderManager
+import com.studypin.app.ui.showMessage
 
 /** Shown directly from the leave notification so the prompt is not dependent on MainActivity timing. */
 class LeaveSpotPromptActivity : AppCompatActivity() {
@@ -30,7 +30,7 @@ class LeaveSpotPromptActivity : AppCompatActivity() {
             val userId = FirebaseAuth.getInstance().currentUser?.uid
             LocationReminderManager.clearPendingReminder(this, spotId)
             LocationReminderManager.endVisit(this, spotId, userId)
-            Toast.makeText(this, "Thanks for updating the study spot", Toast.LENGTH_SHORT).show()
+            showMessage("Thanks for updating the study spot")
             openSpotDetails(spotId)
         }
 
@@ -38,7 +38,7 @@ class LeaveSpotPromptActivity : AppCompatActivity() {
             LocationReminderManager.clearPendingReminder(this, spotId)
             LocationReminderManager.cancelReminder(this, spotId)
             LocationReminderManager.setEntered(this, spotId, true)
-            Toast.makeText(this, "Okay, we’ll keep tracking your visit", Toast.LENGTH_SHORT).show()
+            showMessage("Okay, we’ll keep tracking your visit")
             openSpotDetails(spotId)
         }
     }

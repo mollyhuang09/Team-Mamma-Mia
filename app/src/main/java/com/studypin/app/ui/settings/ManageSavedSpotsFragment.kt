@@ -6,7 +6,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.TextView
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -18,6 +17,7 @@ import com.studypin.app.R
 import com.studypin.app.data.SavedSpotRepository
 import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.model.StudySpot
+import com.studypin.app.ui.showMessage
 
 class ManageSavedSpotsFragment : Fragment() {
 
@@ -85,7 +85,7 @@ class ManageSavedSpotsFragment : Fragment() {
             .setPositiveButton("Remove") { _, _ ->
                 SavedSpotRepository.unsaveSpot(uid, spot.id) { success, error ->
                     if (isAdded && !success) {
-                        Toast.makeText(requireContext(), error ?: "Could not remove spot", Toast.LENGTH_LONG).show()
+                        showMessage(error ?: "Could not remove spot", long = true)
                     }
                 }
             }

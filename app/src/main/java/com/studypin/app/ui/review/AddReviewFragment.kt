@@ -9,7 +9,6 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
@@ -25,6 +24,7 @@ import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.model.StudySpotReview
 import com.studypin.app.ui.applyStatusBarInset
 import com.studypin.app.utils.ImageCaptureHelper
+import com.studypin.app.ui.showMessage
 import java.util.UUID
 
 class AddReviewFragment : Fragment() {
@@ -99,7 +99,7 @@ class AddReviewFragment : Fragment() {
 
         if (FirebaseAuth.getInstance().currentUser == null) {
             view.findViewById<View>(R.id.btnSubmitReview).isEnabled = false
-            Toast.makeText(requireContext(), "Sign in to submit a review", Toast.LENGTH_SHORT).show()
+            showMessage("Sign in to submit a review")
         }
 
         // Set initial rating if passed from previous screen
@@ -178,28 +178,28 @@ class AddReviewFragment : Fragment() {
                     visibility = View.VISIBLE
                 }
                 if (facesBlurred) {
-                    Toast.makeText(requireContext(), "Faces blurred for privacy", Toast.LENGTH_SHORT).show()
+                    showMessage("Faces blurred for privacy")
                 }
             },
             onFailure = {
-                if (isAdded) Toast.makeText(requireContext(), "Could not load photo", Toast.LENGTH_SHORT).show()
+                if (isAdded) showMessage("Could not load photo")
             }
         )
     }
 
     private fun submitReview(view: View) {
         if (selectedOverallRating == 0) {
-            Toast.makeText(requireContext(), "Please select a rating", Toast.LENGTH_SHORT).show()
+            showMessage("Please select a rating")
             return
         }
         if (verifyMode && selectedImageBitmap == null) {
-            Toast.makeText(requireContext(), "A photo is required to verify this spot", Toast.LENGTH_SHORT).show()
+            showMessage("A photo is required to verify this spot")
             return
         }
 
         val userId = FirebaseAuth.getInstance().currentUser?.uid
         if (verifyMode && userId == null) {
-            Toast.makeText(requireContext(), "Sign in to verify this spot", Toast.LENGTH_SHORT).show()
+            showMessage("Sign in to verify this spot")
             return
         }
 
@@ -215,13 +215,13 @@ class AddReviewFragment : Fragment() {
             StudySpotRepository.vouchSpot(spotId, userId!!)
                 .addOnSuccessListener {
                     if (!isAdded) return@addOnSuccessListener
-                    Toast.makeText(requireContext(), getString(R.string.spot_vouched), Toast.LENGTH_SHORT).show()
+                    showMessage(getString(R.string.spot_vouched))
                     uploadPhotoAndSaveReview(reviewId, reviewText, visitTime, crowdLevel, descriptors)
                 }
                 .addOnFailureListener { error ->
                     if (isAdded) {
                         view.findViewById<View>(R.id.btnSubmitReview).isEnabled = true
-                        Toast.makeText(requireContext(), error.message ?: "Could not verify this spot", Toast.LENGTH_LONG).show()
+                        showMessage(error.message ?: "Could not verify this spot", long = true)
                     }
                 }
         } else {
@@ -250,7 +250,7 @@ class AddReviewFragment : Fragment() {
             onError = { error ->
                 if (isAdded) {
                     view?.findViewById<View>(R.id.btnSubmitReview)?.isEnabled = true
-                    Toast.makeText(requireContext(), "Verified, but photo upload failed: ${error.message}", Toast.LENGTH_LONG).show()
+                    showMessage("Verified, but photo upload failed: ${error.message}", long = true)
                 }
             }
         )
@@ -284,10 +284,10 @@ class AddReviewFragment : Fragment() {
             if (!isAdded) return@addReview
             view?.findViewById<View>(R.id.btnSubmitReview)?.isEnabled = true
             if (success) {
-                Toast.makeText(requireContext(), "Review posted and saved to cloud!", Toast.LENGTH_SHORT).show()
+                showMessage("Review posted and saved to cloud!")
                 findNavController().navigateUp()
             } else {
-                Toast.makeText(requireContext(), "Could not save review: $error", Toast.LENGTH_LONG).show()
+                showMessage("Could not save review: $error", long = true)
             }
         }
     }

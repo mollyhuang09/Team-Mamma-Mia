@@ -6,7 +6,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.google.firebase.auth.FirebaseAuth
@@ -20,6 +19,7 @@ import com.studypin.app.data.SavedSpotRepository
 import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.data.UserProfileRepository
 import com.studypin.app.databinding.FragmentProfileBinding
+import com.studypin.app.ui.showMessage
 
 class ProfileFragment : Fragment() {
 
@@ -141,7 +141,7 @@ class ProfileFragment : Fragment() {
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 val displayName = input.text.toString().trim()
                 if (displayName.isEmpty()) {
-                    Toast.makeText(requireContext(), getString(R.string.display_name_required), Toast.LENGTH_SHORT).show()
+                    showMessage(getString(R.string.display_name_required))
                     return@setPositiveButton
                 }
                 val profileUpdates = UserProfileChangeRequest.Builder()
@@ -153,14 +153,14 @@ class ProfileFragment : Fragment() {
                             if (!isAdded) return@saveProfile
                             if (error == null) {
                                 displayUserInfo()
-                                Toast.makeText(requireContext(), getString(R.string.profile_saved), Toast.LENGTH_SHORT).show()
+                                showMessage(getString(R.string.profile_saved))
                             } else {
-                                Toast.makeText(requireContext(), "Profile sync failed: ${error.message}", Toast.LENGTH_LONG).show()
+                                showMessage("Profile sync failed: ${error.message}", long = true)
                             }
                         }
                     }
                     .addOnFailureListener { error ->
-                        Toast.makeText(requireContext(), "Could not update profile: ${error.message}", Toast.LENGTH_LONG).show()
+                        showMessage("Could not update profile: ${error.message}", long = true)
                     }
             }
             .show()

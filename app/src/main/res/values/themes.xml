@@ -2,17 +2,32 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.StudyPin" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
         <item name="colorSurface">@color/surface_color</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.StudyPin.MaterialAlertDialog</item>
     </style>
 
     <style name="Theme.StudyPin" parent="Base.Theme.StudyPin" />
+
+    <style name="ThemeOverlay.StudyPin.MaterialAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="colorPrimary">@color/brand_main</item>
+        <item name="colorSurface">@color/surface_color</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.StudyPin.Button.Text</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Widget.StudyPin.Button.Text</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.StudyPin.Dialog</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay.StudyPin.Dialog" parent="">
+        <item name="cornerSize">16dp</item>
+    </style>
 
     <style name="Theme.StudyPin.LeavePrompt" parent="Theme.Material3.DayNight.Dialog.Alert">
         <item name="android:windowMinWidthMajor">90%</item>
         <item name="android:windowMinWidthMinor">90%</item>
         <item name="android:windowIsFloating">true</item>
         <item name="android:windowNoTitle">true</item>
+        <item name="colorPrimary">@color/brand_main</item>
+        <item name="colorSurface">@color/surface_color</item>
     </style>
 
     <style name="CircleAppearance" parent="ShapeAppearance.Material3.MediumComponent">

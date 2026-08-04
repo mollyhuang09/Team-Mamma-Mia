@@ -1,6 +1,5 @@
 package com.studypin.app.ui.add
 
-import android.app.AlertDialog
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
@@ -12,7 +11,6 @@ import android.widget.AutoCompleteTextView
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
@@ -20,6 +18,7 @@ import androidx.fragment.app.setFragmentResultListener
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
 import com.studypin.app.R
@@ -28,6 +27,7 @@ import com.studypin.app.model.Capacity
 import com.studypin.app.model.StudySpot
 import com.studypin.app.utils.ImageCaptureHelper
 import com.studypin.app.utils.LocationUtils
+import com.studypin.app.ui.showMessage
 import java.util.Locale
 
 class AddSpotFragment : Fragment() {
@@ -151,7 +151,7 @@ class AddSpotFragment : Fragment() {
                 etAddress.setText(address)
             }
             view?.findViewById<Button>(R.id.btnPinOnMap)?.setText(R.string.location_set)
-            Toast.makeText(requireContext(), "Location pinned!", Toast.LENGTH_SHORT).show()
+            showMessage("Location pinned!")
         }
     }
 
@@ -165,33 +165,33 @@ class AddSpotFragment : Fragment() {
                 ivSpotPhoto.visibility = View.VISIBLE
                 layoutPhotoPlaceholder.visibility = View.GONE
                 if (facesBlurred) {
-                    Toast.makeText(requireContext(), "Faces blurred for privacy", Toast.LENGTH_SHORT).show()
+                    showMessage("Faces blurred for privacy")
                 }
             },
             onFailure = {
-                Toast.makeText(requireContext(), "Could not load photo", Toast.LENGTH_SHORT).show()
+                showMessage("Could not load photo")
             }
         )
     }
 
     private fun onSubmitClicked() {
         if (com.google.firebase.auth.FirebaseAuth.getInstance().currentUser == null) {
-            Toast.makeText(requireContext(), "Sign in to add a study spot", Toast.LENGTH_SHORT).show()
+            showMessage("Sign in to add a study spot")
             return
         }
 
         val name = etName.text.toString().trim()
 
         if (name.isEmpty()) {
-            Toast.makeText(requireContext(), getString(R.string.name_required), Toast.LENGTH_SHORT).show()
+            showMessage(getString(R.string.name_required))
             return
         }
         if (!locationExplicitlySet) {
-            Toast.makeText(requireContext(), getString(R.string.location_not_set), Toast.LENGTH_SHORT).show()
+            showMessage(getString(R.string.location_not_set))
             return
         }
         if (selectedImageBitmap == null) {
-            Toast.makeText(requireContext(), getString(R.string.photo_is_required), Toast.LENGTH_SHORT).show()
+            showMessage(getString(R.string.photo_is_required))
             return
         }
 
@@ -214,14 +214,14 @@ class AddSpotFragment : Fragment() {
                     showParentPrompt(possibleParent)
                 } else {
                     createSpot(parentId = null, isHiddenGem = false) {
-                        Toast.makeText(requireContext(), "Spot added for validation!", Toast.LENGTH_SHORT).show()
+                        showMessage("Spot added for validation!")
                     }
                 }
             },
             onError = { error ->
                 if (isAdded) {
                     btnSubmit.isEnabled = true
-                    Toast.makeText(requireContext(), "Could not check nearby spots: ${error.message}", Toast.LENGTH_LONG).show()
+                    showMessage("Could not check nearby spots: ${error.message}", long = true)
                 }
             }
         )
@@ -237,30 +237,30 @@ class AddSpotFragment : Fragment() {
     }
 
     private fun showVouchPrompt(spot: StudySpot) {
-        AlertDialog.Builder(requireContext())
+        MaterialAlertDialogBuilder(requireContext())
             .setTitle(getString(R.string.vouch_prompt_title))
             .setMessage(getString(R.string.vouch_prompt_message, spot.name))
             .setPositiveButton(getString(R.string.vouch_yes)) { _, _ ->
                 val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
                 if (userId == null) {
                     btnSubmit.isEnabled = true
-                    Toast.makeText(requireContext(), "Sign in to vouch for a spot", Toast.LENGTH_SHORT).show()
+                    showMessage("Sign in to vouch for a spot")
                     return@setPositiveButton
                 }
                 StudySpotRepository.vouchSpot(spot.id, userId).let { task ->
                     task.addOnSuccessListener {
-                        Toast.makeText(requireContext(), getString(R.string.spot_vouched), Toast.LENGTH_SHORT).show()
+                        showMessage(getString(R.string.spot_vouched))
                         clearForm()
                     }
                     task.addOnFailureListener { error ->
-                        Toast.makeText(requireContext(), error.message ?: "Could not save your vouch", Toast.LENGTH_LONG).show()
+                        showMessage(error.message ?: "Could not save your vouch", long = true)
                     }
                     task.addOnCompleteListener { btnSubmit.isEnabled = true }
                 }
             }
             .setNegativeButton(getString(R.string.vouch_no)) { _, _ ->
                 createSpot(parentId = null, isHiddenGem = false) {
-                    Toast.makeText(requireContext(), "New spot added!", Toast.LENGTH_SHORT).show()
+                    showMessage("New spot added!")
                 }
             }
             .show()
@@ -276,17 +276,17 @@ class AddSpotFragment : Fragment() {
     }
 
     private fun showParentPrompt(parent: StudySpot) {
-        AlertDialog.Builder(requireContext())
+        MaterialAlertDialogBuilder(requireContext())
             .setTitle("Hidden gem detected")
             .setMessage("This looks like it's inside \"${parent.name}\". Is this a hidden spot within that location?")
             .setPositiveButton("Yes, it's a hidden gem") { _, _ ->
                 createSpot(parentId = parent.id, isHiddenGem = true) {
-                    Toast.makeText(requireContext(), "Added as a hidden gem inside ${parent.name}!", Toast.LENGTH_SHORT).show()
+                    showMessage("Added as a hidden gem inside ${parent.name}!")
                 }
             }
             .setNegativeButton("No, it's separate") { _, _ ->
                 createSpot(parentId = null, isHiddenGem = false) {
-                    Toast.makeText(requireContext(), "Spot added!", Toast.LENGTH_SHORT).show()
+                    showMessage("Spot added!")
                 }
             }
             .show()
@@ -316,7 +316,7 @@ class AddSpotFragment : Fragment() {
 
 
         btnSubmit.isEnabled = false
-        Toast.makeText(requireContext(), "Uploading spot...", Toast.LENGTH_SHORT).show()
+        showMessage("Uploading spot...")
 
         selectedImageBitmap?.let { bitmap ->
             StudySpotRepository.uploadSpotImage(
@@ -354,7 +354,7 @@ class AddSpotFragment : Fragment() {
                             clearForm()
                         }
                         .addOnFailureListener { error ->
-                            Toast.makeText(requireContext(), "Could not save spot: ${error.message}", Toast.LENGTH_LONG).show()
+                            showMessage("Could not save spot: ${error.message}", long = true)
                         }
                         .addOnCompleteListener {
                             btnSubmit.isEnabled = true
@@ -362,12 +362,12 @@ class AddSpotFragment : Fragment() {
                 },
                 onError = { error ->
                     btnSubmit.isEnabled = true
-                    Toast.makeText(requireContext(), "Image upload failed: ${error.message}", Toast.LENGTH_LONG).show()
+                    showMessage("Image upload failed: ${error.message}", long = true)
                 }
             )
         } ?: run {
             btnSubmit.isEnabled = true
-            Toast.makeText(requireContext(), "Please select an image", Toast.LENGTH_SHORT).show()
+            showMessage("Please select an image")
         }
     }
 
