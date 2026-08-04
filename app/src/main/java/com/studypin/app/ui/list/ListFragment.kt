@@ -48,6 +48,9 @@ class ListFragment : Fragment() {
     // Always sort/filter from the full original list, never from the
     // currently-displayed (already-filtered) list.
     private var allSpots: List<StudySpot> = emptyList()
+
+    // Unfiltered spots (including nested hidden gems), used for gem-count lookups.
+    private var fullSpots: List<StudySpot> = emptyList()
     private var spotsListener: ListenerRegistration? = null
 
     override fun onCreateView(
@@ -128,7 +131,7 @@ class ListFragment : Fragment() {
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
         adapter = SpotListAdapter(emptyList()) { spot ->
-            val gemCount = allSpots.count { it.parentSpotId == spot.id }
+            val gemCount = fullSpots.count { it.parentSpotId == spot.id }
             if (gemCount > 0) {
                 val bundle = Bundle().apply {
                     putString("parentSpotId", spot.id)
@@ -148,6 +151,7 @@ class ListFragment : Fragment() {
         spotsListener = StudySpotRepository.observeSpots(
             onSuccess = { spots ->
                 if (!isAdded) return@observeSpots
+                fullSpots = spots
                 allSpots = spots.filter { it.parentSpotId == null }
                 adapter.updateList(emptyList(), spots)
                 applyFiltersAndSort()
@@ -220,7 +224,7 @@ class ListFragment : Fragment() {
             else -> result
         }
 
-        adapter.updateList(result)
+        adapter.updateList(result, fullSpots)
         updateListSummary(result.size)
         updateSelectedTagChips()
     }

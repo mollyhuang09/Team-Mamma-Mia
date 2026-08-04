@@ -10,7 +10,6 @@ import android.widget.LinearLayout
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.studypin.app.R
-import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.model.StudySpot
 import com.studypin.app.utils.ImageUtils
 import com.google.android.material.chip.Chip
@@ -68,7 +67,7 @@ class SpotListAdapter(
             allSpots.count { it.parentSpotId == spot.id }
         } else 0
         if (gemCount > 0) {
-            holder.tvHiddenGemBadge.text = "💎 $gemCount hidden gem${if (gemCount > 1) "s" else ""}"
+            holder.tvHiddenGemBadge.text = "💎"
             holder.tvHiddenGemBlock.visibility = View.VISIBLE
         } else {
             holder.tvHiddenGemBlock.visibility = View.GONE
@@ -76,11 +75,10 @@ class SpotListAdapter(
 
         val context = holder.itemView.context
         if (spot.isValidated) {
-            holder.tvVerifiedBadge.text = context.getString(R.string.spot_verified_badge)
+            holder.tvVerifiedBadge.text = "✅"
             holder.tvVerifiedBadge.setTextColor(context.getColor(R.color.verified_green))
         } else {
-            val remaining = (StudySpotRepository.REQUIRED_VOUCHES - spot.requestCount).coerceAtLeast(1)
-            holder.tvVerifiedBadge.text = context.getString(R.string.spot_needs_vouch_badge, remaining)
+            holder.tvVerifiedBadge.text = "🕓"
             holder.tvVerifiedBadge.setTextColor(context.getColor(R.color.pending_amber))
         }
 
