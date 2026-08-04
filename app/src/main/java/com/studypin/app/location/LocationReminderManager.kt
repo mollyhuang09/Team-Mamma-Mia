@@ -21,7 +21,7 @@ object LocationReminderManager {
     const val EXTRA_SPOT_NAME = "spot_name"
     const val EXTRA_SHOW_PROMPT = "show_leave_prompt"
 
-    const val GEOFENCE_RADIUS_METERS = 10f
+    const val GEOFENCE_RADIUS_METERS = 30f
 
     private const val PREFS_NAME = "location_reminders"
     private const val KEY_ENTERED_PREFIX = "entered_"
