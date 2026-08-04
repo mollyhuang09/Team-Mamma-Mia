@@ -58,6 +58,14 @@ service cloud.firestore {
       }
     }
 
+    match /userCheckIns/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.spotId is string;
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
     match /reports/{reportId} {
       allow create: if request.auth != null
         && request.resource.data.submittedBy == request.auth.uid;
