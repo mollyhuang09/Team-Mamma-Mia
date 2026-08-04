@@ -435,7 +435,7 @@ class SpotDetailFragment : Fragment() {
             tvStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.verified_green))
             btnVerify.visibility = View.GONE
         } else {
-            val remaining = (2 - spot.requestCount).coerceAtLeast(1)
+            val remaining = (StudySpotRepository.REQUIRED_VOUCHES - spot.requestCount).coerceAtLeast(1)
             tvStatus.text = getString(R.string.spot_detail_needs_confirmation, remaining)
             tvStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.pending_amber))
 
@@ -451,17 +451,11 @@ class SpotDetailFragment : Fragment() {
                 Toast.makeText(requireContext(), "Sign in to verify this spot", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            btnVerify.isEnabled = false
-            StudySpotRepository.vouchSpot(spot.id, userId)
-                .addOnSuccessListener {
-                    if (isAdded) Toast.makeText(requireContext(), getString(R.string.spot_vouched), Toast.LENGTH_SHORT).show()
-                }
-                .addOnFailureListener { error ->
-                    if (isAdded) {
-                        btnVerify.isEnabled = true
-                        Toast.makeText(requireContext(), error.message ?: "Could not verify this spot", Toast.LENGTH_LONG).show()
-                    }
-                }
+            val bundle = Bundle().apply {
+                putString("spotId", spot.id)
+                putBoolean("verifyMode", true)
+            }
+            findNavController().navigate(R.id.action_spotDetail_to_addReview, bundle)
         }
     }
 

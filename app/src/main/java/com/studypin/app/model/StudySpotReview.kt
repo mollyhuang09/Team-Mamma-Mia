@@ -20,7 +20,8 @@ data class StudySpotReview(
     val crowdLevel: String = "",
     val mediaCount: Int = 0,
     val helpfulCount: Int = 0,
-    val submittedAtLabel: String = ""
+    val submittedAtLabel: String = "",
+    val photoUrl: String? = null
 )
 
 /**

@@ -248,6 +248,7 @@ object ReviewRepository {
         "crowdLevel" to crowdLevel,
         "mediaCount" to mediaCount,
         "submittedAtLabel" to submittedAtLabel,
+        "photoUrl" to photoUrl,
         "createdAt" to FieldValue.serverTimestamp()
     )
 
@@ -268,7 +269,8 @@ object ReviewRepository {
                 visitTimeOfDay = getString("visitTimeOfDay").orEmpty(),
                 crowdLevel = getString("crowdLevel").orEmpty(),
                 mediaCount = (getLong("mediaCount") ?: 0L).toInt(),
-                submittedAtLabel = getString("submittedAtLabel").orEmpty()
+                submittedAtLabel = getString("submittedAtLabel").orEmpty(),
+                photoUrl = getString("photoUrl")
             )
         } catch (_: Exception) {
             null

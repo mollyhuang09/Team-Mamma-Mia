@@ -2,11 +2,8 @@ package com.studypin.app.ui.add
 
 import android.app.AlertDialog
 import android.graphics.Bitmap
-import android.graphics.Matrix
-import android.graphics.Rect
 import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,7 +15,6 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.os.bundleOf
-import androidx.exifinterface.media.ExifInterface
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
 import androidx.navigation.fragment.findNavController
@@ -26,13 +22,11 @@ import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
-import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.face.FaceDetection
-import com.google.mlkit.vision.face.FaceDetectorOptions
 import com.studypin.app.R
 import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.model.Capacity
 import com.studypin.app.model.StudySpot
+import com.studypin.app.utils.ImageCaptureHelper
 import com.studypin.app.utils.LocationUtils
 import java.util.Locale
 
@@ -162,112 +156,22 @@ class AddSpotFragment : Fragment() {
     }
 
     private fun processImage(uri: Uri) {
-        @Suppress("DEPRECATION")
-        val bitmap = MediaStore.Images.Media.getBitmap(requireContext().contentResolver, uri)
-        applyPrivacyFilter(correctOrientation(bitmap, uri))
-    }
-
-    private fun correctOrientation(bitmap: Bitmap, uri: Uri): Bitmap {
-        val degrees = requireContext().contentResolver.openInputStream(uri)?.use { stream ->
-            when (ExifInterface(stream).getAttributeInt(
-                ExifInterface.TAG_ORIENTATION,
-                ExifInterface.ORIENTATION_NORMAL
-            )) {
-                ExifInterface.ORIENTATION_ROTATE_90 -> 90
-                ExifInterface.ORIENTATION_ROTATE_180 -> 180
-                ExifInterface.ORIENTATION_ROTATE_270 -> 270
-                else -> 0
-            }
-        } ?: 0
-
-        if (degrees == 0) return bitmap
-
-        val matrix = Matrix().apply { postRotate(degrees.toFloat()) }
-        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-    }
-
-    private fun applyPrivacyFilter(originalBitmap: Bitmap) {
-        val options = FaceDetectorOptions.Builder()
-            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
-            .build()
-        val detector = FaceDetection.getClient(options)
-        val image = InputImage.fromBitmap(originalBitmap, 0)
-
-        detector.process(image)
-            .addOnSuccessListener { faces ->
-                if (faces.isEmpty()) {
-                    selectedImageBitmap = originalBitmap
-                    ivSpotPhoto.setImageBitmap(originalBitmap)
-                    ivSpotPhoto.visibility = View.VISIBLE
-                    layoutPhotoPlaceholder.visibility = View.GONE
-                } else {
-                    val mutableBitmap = originalBitmap.copy(Bitmap.Config.ARGB_8888, true)
-
-                    for (face in faces) {
-                        val box = face.boundingBox
-                        val dynamicBlockSize = (minOf(box.width(), box.height()) / 12).coerceAtLeast(8)
-                        pixelateRegion(mutableBitmap, box, dynamicBlockSize)
-                    }
-                    selectedImageBitmap = mutableBitmap
-                    ivSpotPhoto.setImageBitmap(mutableBitmap)
-                    ivSpotPhoto.visibility = View.VISIBLE
-                    layoutPhotoPlaceholder.visibility = View.GONE
-                    Toast.makeText(requireContext(), "Faces blurred for privacy", Toast.LENGTH_SHORT).show()
-                }
-            }
-            .addOnFailureListener {
-                selectedImageBitmap = originalBitmap
-                ivSpotPhoto.setImageBitmap(originalBitmap)
+        ImageCaptureHelper.processPickedImage(
+            context = requireContext(),
+            uri = uri,
+            onProcessed = { bitmap, facesBlurred ->
+                selectedImageBitmap = bitmap
+                ivSpotPhoto.setImageBitmap(bitmap)
                 ivSpotPhoto.visibility = View.VISIBLE
                 layoutPhotoPlaceholder.visibility = View.GONE
-                Toast.makeText(requireContext(), "Privacy filter failed, using original", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    private fun pixelateRegion(bitmap: Bitmap, region: Rect, blockSize: Int = 16) {
-        val left = region.left.coerceIn(0, bitmap.width)
-        val top = region.top.coerceIn(0, bitmap.height)
-        val right = region.right.coerceIn(0, bitmap.width)
-        val bottom = region.bottom.coerceIn(0, bitmap.height)
-
-        var blockY = top
-        while (blockY < bottom) {
-            val blockHeight = minOf(blockSize, bottom - blockY)
-            var blockX = left
-            while (blockX < right) {
-                val blockWidth = minOf(blockSize, right - blockX)
-
-                var redSum = 0L
-                var greenSum = 0L
-                var blueSum = 0L
-                var pixelCount = 0
-                for (y in blockY until blockY + blockHeight) {
-                    for (x in blockX until blockX + blockWidth) {
-                        val pixel = bitmap.getPixel(x, y)
-                        redSum += (pixel shr 16) and 0xFF
-                        greenSum += (pixel shr 8) and 0xFF
-                        blueSum += pixel and 0xFF
-                        pixelCount++
-                    }
+                if (facesBlurred) {
+                    Toast.makeText(requireContext(), "Faces blurred for privacy", Toast.LENGTH_SHORT).show()
                 }
-
-                if (pixelCount > 0) {
-                    val avgRed = (redSum / pixelCount).toInt()
-                    val avgGreen = (greenSum / pixelCount).toInt()
-                    val avgBlue = (blueSum / pixelCount).toInt()
-                    val avgColor = (0xFF shl 24) or (avgRed shl 16) or (avgGreen shl 8) or avgBlue
-
-                    for (y in blockY until (blockY + blockHeight)) {
-                        for (x in blockX until (blockX + blockWidth)) {
-                            bitmap.setPixel(x, y, avgColor)
-                        }
-                    }
-                }
-
-                blockX += blockSize
+            },
+            onFailure = {
+                Toast.makeText(requireContext(), "Could not load photo", Toast.LENGTH_SHORT).show()
             }
-            blockY += blockSize
-        }
+        )
     }
 
     private fun onSubmitClicked() {

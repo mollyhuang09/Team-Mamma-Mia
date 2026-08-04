@@ -22,6 +22,9 @@ object StudySpotRepository {
     private const val MAX_ENCODED_IMAGE_BYTES = 500_000
     private const val MAX_IMAGE_DIMENSION_PX = 800
 
+    /** Number of distinct user vouches required before a spot is auto-marked validated. */
+    const val REQUIRED_VOUCHES = 3
+
     // save a study spot
     fun addSpot(spot: StudySpot) = spots.document(spot.id).set(spot.toFirestoreMap())
 
@@ -146,7 +149,7 @@ object StudySpotRepository {
             spotRef,
             mapOf(
                 "requestCount" to nextCount,
-                "isValidated" to (nextCount >= 2),
+                "isValidated" to (nextCount >= REQUIRED_VOUCHES),
                 "vouchedBy" to FieldValue.arrayUnion(userId)
             )
         )

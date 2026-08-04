@@ -10,6 +10,7 @@ import android.widget.LinearLayout
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.studypin.app.R
+import com.studypin.app.data.StudySpotRepository
 import com.studypin.app.model.StudySpot
 import com.studypin.app.utils.ImageUtils
 import com.google.android.material.chip.Chip
@@ -78,7 +79,7 @@ class SpotListAdapter(
             holder.tvVerifiedBadge.text = context.getString(R.string.spot_verified_badge)
             holder.tvVerifiedBadge.setTextColor(context.getColor(R.color.verified_green))
         } else {
-            val remaining = (2 - spot.requestCount).coerceAtLeast(1)
+            val remaining = (StudySpotRepository.REQUIRED_VOUCHES - spot.requestCount).coerceAtLeast(1)
             holder.tvVerifiedBadge.text = context.getString(R.string.spot_needs_vouch_badge, remaining)
             holder.tvVerifiedBadge.setTextColor(context.getColor(R.color.pending_amber))
         }
